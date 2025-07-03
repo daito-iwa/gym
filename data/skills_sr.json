@@ -1,0 +1,212 @@
+[
+  {
+    "id": "IV.1",
+    "name": "Wende from circle (also from Russian wendeswing 180° or 270°)",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.2",
+    "name": "Chaguinian to wende",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.3",
+    "name": "From side support on end, circle or flair to handstand and travel 3/3 with 450° or more turn (Kolyvanov)",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.5",
+    "name": "DSA to handstand 3/3 with 450° or more turn",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.7",
+    "name": "On the end, Russian wendeswing with 360° or 540°",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.8",
+    "name": "On the end, Russian wendeswing with 720° or 900°",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.9",
+    "name": "On the end, Russian wendeswing with 1080° or more",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.10",
+    "name": "From pommels, circle with 1/4 turn to Russian wenderswing 270° on one pommel to handstand",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.13",
+    "name": "From side support wendeswing fwd. with ½ t. to support followed by wende",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.15",
+    "name": "DSA, reverse Stöckli or circle on one pommel through handstand",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.16",
+    "name": "DSA with hop bwd. through handstand on other end",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.20",
+    "name": "Circle or flair through handstand (also with ¾ t. with or without travel)",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.21",
+    "name": "Circle or flair with hop travel bwd. through handstand",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "IV.22",
+    "name": "180° Russian from one end of the horse to the other end through handstand to dismount",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "I.1",
+    "name": "Uprise fwd. to support",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.7",
+    "name": "From any support scale, swallow or swing bwd in support, roll forward to bwd swing in hang",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.8",
+    "name": "Uprise fwd and counter salto fwd. to bwd swing in hang (Chechi)",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.19",
+    "name": "From hang, felge upward to support",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.20",
+    "name": "Swing fwd. through hdst.",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.21",
+    "name": "Tucked double salto bwd. to hang (Guczoghy)",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.22",
+    "name": "Piked or straight double salto bwd. to hang (O’Neill)",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.25",
+    "name": "Dislocate bwd. piked or straight",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.31",
+    "name": "Uprise bwd. to support",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.32",
+    "name": "Uprise bwd. str. through handstand",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.37",
+    "name": "Inlocate piked or straight",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.38",
+    "name": "Backward swing to salto fwd. piked to support",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.39",
+    "name": "Honma straight",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.43",
+    "name": "Slow inlocate from hang",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.44",
+    "name": "Double salto fwd. tucked to hang",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "I.45",
+    "name": "Double salto fwd. piked or straight to hang (Jonasson)",
+    "group": "Group I",
+    "value_letter": "A",
+    "value": 0.1
+  }
+]

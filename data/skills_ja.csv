@@ -1,0 +1,12 @@
+id,apparatus,name,group,value_letter,description
+FX001,FX,"Sample Floor Skill A",1,"A","Sample description for Floor Skill A"
+FX002,FX,"Sample Floor Skill B",2,"B","Sample description for Floor Skill B"
+PH001,PH,"Sample Pommel Skill C",1,"C","Sample description for Pommel Skill C"
+PH002,PH,"Sample Pommel Skill D",3,"D","Sample description for Pommel Skill D"
+SR001,SR,"Sample Ring Skill E",2,"E","Sample description for Ring Skill E"
+SR002,SR,"Sample Ring Skill F",4,"F","Sample description for Ring Skill F"
+PB001,PB,"Sample Parallel Bars Skill G",3,"G","Sample description for Parallel Bars Skill G"
+HB001,HB,"Sample Horizontal Bar Skill H",5,"A","Sample description for Horizontal Bar Skill H"
+HB002,HB,"Tkatchev",3,"D","Also known as a back-toss, a fundamental release move."
+HB003,HB,"Piked Tkatchev",3,"D","Tkatchev performed in a piked position."
+HB004,HB,"Adler 1/2",2,"D","Forward Stalder with 1/2 turn to el-grip."
