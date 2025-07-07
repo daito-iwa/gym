@@ -534,6 +534,65 @@ Rules overview for each apparatus implemented in this app:
     
     return explanation
 
+def get_dismount_rules_explanation(lang="ja"):
+    """
+    終末技・着地に関するルールの説明を生成する
+    """
+    if lang == "ja":
+        explanation = """**終末技・着地に関するルール**
+
+このアプリで実装されている終末技・着地に関するルールをお答えします：
+
+**終末技の基本ルール：**
+- 全ての演技は終末技で終了する必要があります（ゆかと跳馬は除く）
+- 終末技は両足をそろえた直立姿勢で着地しなければなりません
+
+**着地加点について：**
+- **C難度以上の終末技で着地を止めた場合：0.1点の加点**
+  - 対象種目：あん馬を除く全種目
+  - 跳馬の場合：宙返りを伴う技のみ対象
+  - 着地時に足を動かさず、完全に静止する必要があります
+
+**減点について：**
+- 着地で足を動かした場合：実施減点（Eスコア）
+- 転倒した場合：大きな実施減点
+- 両足で着地しなかった場合：実施減点
+
+**注意事項：**
+- この着地加点（0.1点）はDスコアに含まれます
+- 実際の競技では審判が着地の安定性を厳格に判定します
+- アプリでは技選択時に終末技を指定できます
+
+このルールはアプリのDスコア計算機能に実装されています。"""
+    else:
+        explanation = """**Dismount and Landing Rules**
+
+The dismount and landing rules implemented in this app:
+
+**Basic Dismount Rules:**
+- All routines must end with a dismount (except floor and vault)
+- Dismounts must land in an upright position with feet together
+
+**Landing Bonus:**
+- **0.1 point bonus for C difficulty or higher dismounts with stuck landing**
+  - Applicable to: All events except pommel horse
+  - Vault: Only for skills with salto
+  - Must land completely still without moving feet
+
+**Deductions:**
+- Moving feet on landing: Execution deduction (E-score)
+- Falls: Major execution deductions  
+- Not landing on both feet: Execution deduction
+
+**Important Notes:**
+- This landing bonus (0.1 points) is included in the D-score
+- In actual competition, judges strictly evaluate landing stability
+- In the app, you can specify dismount skills when selecting routines
+
+These rules are implemented in the app's D-score calculation feature."""
+    
+    return explanation
+
 def calculate_demo_score(apparatus, skills_list, lang="ja"):
     """
     デモンストレーション用のスコア計算

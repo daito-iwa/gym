@@ -146,10 +146,30 @@ def chat(request: ChatRequest) -> ChatResponse:
     # Dスコア計算に関する質問かチェック
     question_lower = request.question.lower()
     
-    # 連続技に関する質問
-    connection_keywords = ["連続技", "連続", "コンビネーション", "ボーナス", "加点", "connection", "combination", "bonus"]
-    if any(keyword in question_lower for keyword in connection_keywords):
+    # 連続技に関する質問（より具体的な判定）
+    connection_keywords = ["連続技", "連続", "コンビネーション", "connection", "combination"]
+    connection_bonus_keywords = ["連続技ボーナス", "連続ボーナス", "connection bonus"]
+    
+    # 終末技や着地に関する質問は除外
+    ending_keywords = ["終末技", "着地", "止まっ", "landing", "dismount", "finish"]
+    is_ending_question = any(keyword in question_lower for keyword in ending_keywords)
+    
+    # 連続技の明確な言及があるか、連続技ボーナスに関する質問の場合のみ
+    is_connection_question = (any(keyword in question_lower for keyword in connection_keywords) or 
+                             any(keyword in question_lower for keyword in connection_bonus_keywords))
+    
+    if is_connection_question and not is_ending_question:
         rule_answer = get_dynamic_rule_answer(request.question, lang, "connection")
+        if rule_answer:
+            return ChatResponse(
+                session_id=session_id,
+                answer=rule_answer,
+                source_documents=[]
+            )
+    
+    # 終末技・着地に関する質問
+    if is_ending_question:
+        rule_answer = get_dynamic_rule_answer(request.question, lang, "dismount")
         if rule_answer:
             return ChatResponse(
                 session_id=session_id,
@@ -308,6 +328,10 @@ Please use the D-score calculation feature to see these rules in action."""
             result = d_score_calculator.get_all_apparatus_overview(lang)
             return result if result else _fallback_response(lang, "overview")
         
+        elif question_type == "dismount":
+            result = d_score_calculator.get_dismount_rules_explanation(lang)
+            return result if result else _fallback_response(lang, "dismount")
+        
         return None
         
     except Exception as e:
@@ -336,6 +360,11 @@ def _fallback_response(lang: str, question_type: str) -> str:
 
 難度値については、体操競技では一般的にA難度（0.1点）からJ難度（1.0点）まで設定されています。詳細はアプリのDスコア計算機能でご確認ください。"""
         
+        elif question_type == "dismount":
+            return f"""{base_message}
+
+終末技・着地については、C難度以上の終末技で着地を止めた場合に0.1点の加点があります（あん馬除く）。詳細はアプリのDスコア計算機能やルールブックをご確認ください。"""
+        
         else:
             return f"""{base_message}
 
@@ -358,6 +387,11 @@ For apparatus-specific rules, please try the actual calculations in the app's D-
             return f"""{base_message}
 
 Difficulty values in gymnastics typically range from A difficulty (0.1 points) to J difficulty (1.0 points). Please check the app's D-score calculation feature for details."""
+        
+        elif question_type == "dismount":
+            return f"""{base_message}
+
+For dismount and landing rules, there's a 0.1 point bonus for C difficulty or higher dismounts with stuck landings (except pommel horse). Please check the app's D-score feature or rulebook for details."""
         
         else:
             return f"""{base_message}
