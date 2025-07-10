@@ -1,5 +1,11 @@
 import 'package:flutter/foundation.dart';
 
+class Config {
+  // 後方互換性のため
+  static String get baseUrl => AppConfig.baseUrl;
+  static String get apiBaseUrl => AppConfig.apiBaseUrl;
+}
+
 class AppConfig {
   // 開発環境では適切なIPアドレスを使用
   static String get baseUrl {

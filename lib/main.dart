@@ -1433,9 +1433,9 @@ class _HomePageState extends State<HomePage> {
       'premiumPurchase': 'Premium Purchase',
       'cacheConfirm': 'Clear cache? This operation cannot be undone.',
       'deleteConfirm': 'Delete Confirmation',
-      'premiumUpgrade': 'Upgrade for $5/month',
+      'premiumUpgrade': 'Upgrade for \$5/month',
       'premiumFeatureDescription': 'is a premium feature',
-      'premiumMessage': 'Get unlimited access to D-Score calculation, all apparatus analysis, and analytics features for $5/month!',
+      'premiumMessage': 'Get unlimited access to D-Score calculation, all apparatus analysis, and analytics features for \$5/month!',
       
       // Forms
       'selectApparatus': 'Please select an apparatus',
@@ -2693,6 +2693,7 @@ class _HomePageState extends State<HomePage> {
       _routine,
       _dScoreResult,
       _currentAnalysis,
+      _currentLang,
     );
 
     final fileName = '${_selectedApparatus}_analysis_${DateTime.now().millisecondsSinceEpoch}.txt';
@@ -3683,7 +3684,7 @@ class _HomePageState extends State<HomePage> {
               ),
             )
           else if (_selectedApparatus == null)
-            const Card(
+            Card(
               child: Padding(
                 padding: EdgeInsets.all(40.0),
                 child: Center(
@@ -6335,7 +6336,7 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: Text(_getText('cancel')),
+          child: Text('Cancel'), // TODO: 翻訳対応
         ),
       ],
     );
@@ -6376,16 +6377,7 @@ class ChatMessage extends StatelessWidget {
     );
   }
   
-  @override
-  void dispose() {
-    if (_isPurchaseManagerInitialized) {
-      _purchaseManager.dispose();
-    }
-    if (_isAdManagerInitialized) {
-      _adManager.dispose();
-    }
-    super.dispose();
-  }
+  // dispose method removed - not needed in this class
 }
 
 // 演技構成保存ダイアログ
@@ -6435,7 +6427,7 @@ class _SaveRoutineDialogState extends State<_SaveRoutineDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_getText('cancel')),
+          child: Text('Cancel'), // TODO: 翻訳対応
         ),
         ElevatedButton(
           onPressed: () {
@@ -6522,7 +6514,7 @@ class _SavedRoutinesDialog extends StatelessWidget {
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.of(context).pop(),
-                                      child: Text(_getText('cancel')),
+                                      child: Text('Cancel'), // TODO: 翻訳対応
                                     ),
                                     ElevatedButton(
                                       onPressed: () {
@@ -6548,7 +6540,7 @@ class _SavedRoutinesDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_getText('close')),
+          child: Text('Close'), // TODO: 翻訳対応
         ),
       ],
     );
