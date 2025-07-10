@@ -114,14 +114,17 @@ class ShareExportService {
     List<Skill> routine,
     DScoreResult? dScoreResult,
     RoutineAnalysis? analysis,
+    String currentLang,
   ) {
     final buffer = StringBuffer();
     final dateFormatter = DateFormat('yyyy年MM月dd日 HH:mm:ss');
     
-    buffer.writeln('体操 D-スコア計算結果');
+    // 翻訳辞書を直接参照（静的メソッドのため）
+    final isJapanese = currentLang == '日本語';
+    buffer.writeln(isJapanese ? '体操 D-スコア計算結果' : 'Gymnastics D-Score Calculation Results');
     buffer.writeln('=' * 40);
-    buffer.writeln('生成日時: ${dateFormatter.format(DateTime.now())}');
-    buffer.writeln('種目: $apparatus');
+    buffer.writeln('${isJapanese ? '生成日時:' : 'Generated Time:'} ${dateFormatter.format(DateTime.now())}');
+    buffer.writeln('${isJapanese ? '種目:' : 'Apparatus:'} $apparatus');
     buffer.writeln();
     
     // 演技構成
@@ -1030,7 +1033,7 @@ class _HomePageState extends State<HomePage> {
         return AlertDialog(
           backgroundColor: Colors.grey[900],
           title: Text(
-            'プレミアム機能',
+            _getText('premiumFeatures'),
             style: TextStyle(color: Colors.blue[300]),
           ),
           content: Column(
@@ -1043,13 +1046,13 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(height: 16),
               Text(
-                '$featureName はプレミアム機能です',
+                '$featureName ${_getText('premiumFeatureDescription')}',
                 style: TextStyle(color: Colors.grey[300]),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8),
               Text(
-                '月額500円でD-Score計算、全種目分析、アナリティクス機能が使い放題！',
+                _getText('premiumMessage'),
                 style: TextStyle(color: Colors.grey[400], fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -1057,7 +1060,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              child: Text('キャンセル', style: TextStyle(color: Colors.grey[400])),
+              child: Text(_getText('cancel'), style: TextStyle(color: Colors.grey[400])),
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
@@ -1065,7 +1068,7 @@ class _HomePageState extends State<HomePage> {
                 backgroundColor: Colors.blue[600],
                 foregroundColor: Colors.white,
               ),
-              child: Text('アップグレード'),
+              child: Text(_getText('upgrade')),
               onPressed: () {
                 Navigator.of(context).pop();
                 _showSubscriptionPage();
@@ -1095,7 +1098,7 @@ class _HomePageState extends State<HomePage> {
         return AlertDialog(
           backgroundColor: Colors.grey[900],
           title: Text(
-            'プレミアム購入',
+            _getText('premiumPurchase'),
             style: TextStyle(color: Colors.blue[300]),
           ),
           content: Column(
@@ -1142,7 +1145,7 @@ class _HomePageState extends State<HomePage> {
                         foregroundColor: Colors.white,
                         minimumSize: Size(double.infinity, 50),
                       ),
-                      child: Text('購入する'),
+                      child: Text(_getText('purchase')),
                       onPressed: () async {
                         Navigator.of(context).pop();
                         await _purchasePremium();
@@ -1162,7 +1165,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              child: Text('キャンセル', style: TextStyle(color: Colors.grey[400])),
+              child: Text(_getText('cancel'), style: TextStyle(color: Colors.grey[400])),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
@@ -1245,6 +1248,283 @@ class _HomePageState extends State<HomePage> {
   String _session_id = Uuid().v4();
   bool _isLoading = false;
   String _currentLang = '日本語';
+  
+  // 翻訳辞書
+  Map<String, Map<String, String>> _appTexts = {
+    '日本語': {
+      // ナビゲーション
+      'ruleBookChat': 'ルールブックAIチャット',
+      'dScoreCalculator': 'Dスコア計算',
+      'allApparatus': '全種目一覧',
+      'routineAnalysis': '演技構成分析',
+      'adminPanel': '管理者パネル',
+      'settings': '設定',
+      'modeSelection': 'モード選択',
+      
+      // ボタン
+      'upgrade': 'アップグレード',
+      'purchase': '購入する',
+      'resetChat': 'チャットをリセット',
+      'getStatistics': '統計情報を取得',
+      'clearCache': 'キャッシュクリア',
+      'calculate': '計算実行',
+      'addSkill': '技を追加',
+      'changeSkill': '技を変更',
+      'connectionSettings': '連続技設定',
+      'connectWithPrevious': '前の技と繋げる',
+      'cancel': 'キャンセル',
+      'delete': '削除',
+      'save': '保存',
+      'confirm': '確認',
+      'close': '閉じる',
+      'back': '戻る',
+      'next': '次へ',
+      'retry': '再試行',
+      'send': '送信',
+      
+      // メッセージ
+      'loginSuccess': 'ログインに成功しました',
+      'accountCreated': 'アカウントが作成されました',
+      'cacheCleared': 'キャッシュをクリアしました',
+      'routineSaved': '演技構成を保存しました',
+      'loadingError': '読み込み中にエラーが発生しました',
+      'deleteError': '削除中にエラーが発生しました',
+      'analysisError': '分析中にエラーが発生しました',
+      'networkError': 'ネットワークエラーが発生しました',
+      'checkConnection': 'インターネット接続を確認してください',
+      'instagramError': 'Instagramを開くことができませんでした',
+      
+      // ダイアログ
+      'premiumFeatures': 'プレミアム機能',
+      'premiumPurchase': 'プレミアム購入',
+      'cacheConfirm': 'キャッシュをクリアしますか？この操作は取り消せません。',
+      'deleteConfirm': '削除確認',
+      'premiumUpgrade': '月額500円でアップグレード',
+      'premiumFeatureDescription': 'はプレミアム機能です',
+      'premiumMessage': '月額500円でD-Score計算、全種目分析、アナリティクス機能が使い放題！',
+      
+      // フォーム
+      'selectApparatus': '種目を選択してください',
+      'tapToEdit': '技をタップして編集',
+      'rulebookLanguage': 'ルールブックの言語:',
+      'language': '言語',
+      'skillName': '技名',
+      'difficulty': '難度',
+      'group': 'グループ',
+      
+      // エクスポート
+      'exportTitle': '体操 D-スコア計算結果',
+      'generatedTime': '生成日時:',
+      'apparatus': '種目:',
+      'routine': '演技構成:',
+      'dScoreResults': 'D-スコア結果:',
+      'totalScore': '合計スコア:',
+      'difficultyScore': '難度点:',
+      'connectionBonus': 'つなぎ加点:',
+      'groupBonus': 'グループボーナス:',
+      'skillCount': '技数:',
+      'averageDifficulty': '平均難度:',
+      'analysis': '分析結果:',
+      'completenessScore': '完成度スコア:',
+      'connectionBonusRatio': 'つなぎ加点比率:',
+      'missingGroups': '不足グループ:',
+      
+      // フィードバック
+      'feedbackTitle': 'フィードバック・バグ報告',
+      'feedbackMessage': 'アプリの改善点や不具合を報告してください。InstagramのDMでお気軽にお知らせください。',
+      'openInstagram': 'Instagramを開く',
+      
+      // 統計情報
+      'totalUsers': '総ユーザー数',
+      'activeUsers': 'アクティブユーザー数',
+      'premiumUsers': 'プレミアムユーザー数',
+      'totalCalculations': '総計算回数',
+      'averageSessionTime': '平均セッション時間',
+      'loadingStats': '統計情報を読み込み中...',
+      'loadingFailed': '統計情報の読み込みに失敗しました',
+      
+      // 管理者パネル
+      'adminDashboard': '管理者ダッシュボード',
+      'userManagement': 'ユーザー管理',
+      'systemStats': 'システム統計',
+      'errorLogs': 'エラーログ',
+      'settings': '設定',
+      
+      // 課金システム
+      'purchaseManager': '課金システム',
+      'subscriptionPlan': 'サブスクリプションプラン',
+      'monthlyPlan': '月額プラン',
+      'freePlan': '無料プラン',
+      'premiumPlan': 'プレミアムプラン',
+      'purchaseError': '購入処理でエラーが発生しました',
+      'purchaseSuccess': '購入が完了しました',
+      'restorePurchase': '購入を復元',
+      'manageSubscription': 'サブスクリプション管理',
+      
+      // 器具名
+      'floor': '床',
+      'pommelHorse': 'あん馬',
+      'stillRings': 'つり輪',
+      'vault': '跳馬',
+      'parallelBars': '平行棒',
+      'horizontalBar': '鉄棒',
+      
+      // その他
+      'version': 'バージョン',
+      'about': 'このアプリについて',
+      'privacyPolicy': 'プライバシーポリシー',
+      'termsOfService': '利用規約',
+      'contact': 'お問い合わせ',
+      'help': 'ヘルプ',
+      'tutorial': 'チュートリアル',
+      'logout': 'ログアウト',
+      'login': 'ログイン',
+      'profile': 'プロフィール',
+      'notifications': '通知',
+      'darkMode': 'ダークモード',
+      'lightMode': 'ライトモード',
+      'theme': 'テーマ',
+    },
+    'English': {
+      // Navigation
+      'ruleBookChat': 'Rulebook AI Chat',
+      'dScoreCalculator': 'D-Score Calculator',
+      'allApparatus': 'All Apparatus',
+      'routineAnalysis': 'Routine Analysis',
+      'adminPanel': 'Admin Panel',
+      'settings': 'Settings',
+      'modeSelection': 'Mode Selection',
+      
+      // Buttons
+      'upgrade': 'Upgrade',
+      'purchase': 'Purchase',
+      'resetChat': 'Reset Chat',
+      'getStatistics': 'Get Statistics',
+      'clearCache': 'Clear Cache',
+      'calculate': 'Calculate',
+      'addSkill': 'Add Skill',
+      'changeSkill': 'Change Skill',
+      'connectionSettings': 'Connection Settings',
+      'connectWithPrevious': 'Connect with Previous',
+      'cancel': 'Cancel',
+      'delete': 'Delete',
+      'save': 'Save',
+      'confirm': 'Confirm',
+      'close': 'Close',
+      'back': 'Back',
+      'next': 'Next',
+      'retry': 'Retry',
+      'send': 'Send',
+      
+      // Messages
+      'loginSuccess': 'Login successful',
+      'accountCreated': 'Account created',
+      'cacheCleared': 'Cache cleared',
+      'routineSaved': 'Routine saved',
+      'loadingError': 'Error occurred during loading',
+      'deleteError': 'Error occurred during deletion',
+      'analysisError': 'Error occurred during analysis',
+      'networkError': 'Network error occurred',
+      'checkConnection': 'Please check your internet connection',
+      'instagramError': 'Could not open Instagram',
+      
+      // Dialogs
+      'premiumFeatures': 'Premium Features',
+      'premiumPurchase': 'Premium Purchase',
+      'cacheConfirm': 'Clear cache? This operation cannot be undone.',
+      'deleteConfirm': 'Delete Confirmation',
+      'premiumUpgrade': 'Upgrade for $5/month',
+      'premiumFeatureDescription': 'is a premium feature',
+      'premiumMessage': 'Get unlimited access to D-Score calculation, all apparatus analysis, and analytics features for $5/month!',
+      
+      // Forms
+      'selectApparatus': 'Please select an apparatus',
+      'tapToEdit': 'Tap skill to edit',
+      'rulebookLanguage': 'Rulebook Language:',
+      'language': 'Language',
+      'skillName': 'Skill Name',
+      'difficulty': 'Difficulty',
+      'group': 'Group',
+      
+      // Export
+      'exportTitle': 'Gymnastics D-Score Calculation Results',
+      'generatedTime': 'Generated Time:',
+      'apparatus': 'Apparatus:',
+      'routine': 'Routine:',
+      'dScoreResults': 'D-Score Results:',
+      'totalScore': 'Total Score:',
+      'difficultyScore': 'Difficulty Score:',
+      'connectionBonus': 'Connection Bonus:',
+      'groupBonus': 'Group Bonus:',
+      'skillCount': 'Number of Skills:',
+      'averageDifficulty': 'Average Difficulty:',
+      'analysis': 'Analysis Results:',
+      'completenessScore': 'Completeness Score:',
+      'connectionBonusRatio': 'Connection Bonus Ratio:',
+      'missingGroups': 'Missing Groups:',
+      
+      // Feedback
+      'feedbackTitle': 'Feedback & Bug Report',
+      'feedbackMessage': 'Please report any improvement suggestions or bugs. Feel free to reach out via Instagram DM.',
+      'openInstagram': 'Open Instagram',
+      
+      // Statistics
+      'totalUsers': 'Total Users',
+      'activeUsers': 'Active Users',
+      'premiumUsers': 'Premium Users',
+      'totalCalculations': 'Total Calculations',
+      'averageSessionTime': 'Average Session Time',
+      'loadingStats': 'Loading statistics...',
+      'loadingFailed': 'Failed to load statistics',
+      
+      // Admin Panel
+      'adminDashboard': 'Admin Dashboard',
+      'userManagement': 'User Management',
+      'systemStats': 'System Statistics',
+      'errorLogs': 'Error Logs',
+      'settings': 'Settings',
+      
+      // Purchase System
+      'purchaseManager': 'Purchase Manager',
+      'subscriptionPlan': 'Subscription Plan',
+      'monthlyPlan': 'Monthly Plan',
+      'freePlan': 'Free Plan',
+      'premiumPlan': 'Premium Plan',
+      'purchaseError': 'Error occurred during purchase',
+      'purchaseSuccess': 'Purchase completed successfully',
+      'restorePurchase': 'Restore Purchase',
+      'manageSubscription': 'Manage Subscription',
+      
+      // Apparatus names
+      'floor': 'Floor Exercise',
+      'pommelHorse': 'Pommel Horse',
+      'stillRings': 'Still Rings',
+      'vault': 'Vault',
+      'parallelBars': 'Parallel Bars',
+      'horizontalBar': 'Horizontal Bar',
+      
+      // Others
+      'version': 'Version',
+      'about': 'About',
+      'privacyPolicy': 'Privacy Policy',
+      'termsOfService': 'Terms of Service',
+      'contact': 'Contact',
+      'help': 'Help',
+      'tutorial': 'Tutorial',
+      'logout': 'Logout',
+      'login': 'Login',
+      'profile': 'Profile',
+      'notifications': 'Notifications',
+      'darkMode': 'Dark Mode',
+      'lightMode': 'Light Mode',
+      'theme': 'Theme',
+    },
+  };
+  
+  // 翻訳ヘルパー関数
+  String _getText(String key) {
+    return _appTexts[_currentLang]![key] ?? _appTexts['English']![key] ?? key;
+  }
 
   // --- 認証関連の新しい状態 ---
   final _storage = const FlutterSecureStorage();
@@ -1512,8 +1792,8 @@ class _HomePageState extends State<HomePage> {
     String title,
     String message, {
     VoidCallback? onRetry,
-    String retryText = '再試行',
-    String cancelText = 'キャンセル',
+    String? retryText,
+    String? cancelText,
   }) async {
     if (!mounted) return;
     
@@ -1526,7 +1806,7 @@ class _HomePageState extends State<HomePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(cancelText),
+              child: Text(cancelText ?? _getText('cancel')),
             ),
             if (onRetry != null)
               ElevatedButton(
@@ -1534,7 +1814,7 @@ class _HomePageState extends State<HomePage> {
                   Navigator.of(context).pop();
                   onRetry();
                 },
-                child: Text(retryText),
+                child: Text(retryText ?? _getText('retry')),
               ),
           ],
         );
@@ -1558,7 +1838,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.red[700],
         duration: duration,
         action: SnackBarAction(
-          label: '閉じる',
+          label: _getText('close'),
           textColor: Colors.white,
           onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
         ),
@@ -1960,7 +2240,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              child: Text('キャンセル', style: TextStyle(color: Colors.grey[400])),
+              child: Text(_getText('cancel'), style: TextStyle(color: Colors.grey[400])),
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
@@ -1995,11 +2275,11 @@ class _HomePageState extends State<HomePage> {
         if (await canLaunchUrl(webUrl)) {
           await launchUrl(webUrl, mode: LaunchMode.externalApplication);
         } else {
-          _showMessage('Instagramを開くことができませんでした');
+          _showMessage(_getText('instagramError'));
         }
       }
     } catch (e) {
-      _showMessage('Instagramを開くことができませんでした: $e');
+      _showMessage('${_getText('instagramError')}: $e');
     }
   }
 
@@ -2087,8 +2367,8 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
-            '連続技設定',
+          title: Text(
+            _getText('connectionSettings'),
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           content: SizedBox(
@@ -2205,8 +2485,8 @@ class _HomePageState extends State<HomePage> {
                                     elevation: 2,
                                   ),
                                   icon: const Icon(Icons.link, size: 16),
-                                  label: const Text(
-                                    '前の技と繋げる',
+                                  label: Text(
+                                    _getText('connectWithPrevious'),
                                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                                   ),
                                 ),
@@ -2230,8 +2510,8 @@ class _HomePageState extends State<HomePage> {
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: const Text(
-                '閉じる',
+              child: Text(
+                _getText('close'),
                 style: TextStyle(fontSize: 16),
               ),
             ),
@@ -2661,7 +2941,7 @@ class _HomePageState extends State<HomePage> {
               featureName = 'アナリティクス';
             } else {
               targetMode = AppMode.admin;
-              featureName = '管理者パネル';
+              featureName = _getText('adminPanel');
             }
             
             // プレミアム機能アクセス制御
@@ -2699,7 +2979,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                 ],
               ),
-              label: 'Dスコア計算${_userSubscription.isFree ? ' ⭐' : ''}',
+              label: '${_getText('dScoreCalculator')}${_userSubscription.isFree ? ' ⭐' : ''}',
             ),
             BottomNavigationBarItem(
               icon: Stack(
@@ -2717,7 +2997,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                 ],
               ),
-              label: '全種目一覧${_userSubscription.isFree ? ' ⭐' : ''}',
+              label: '${_getText('allApparatus')}${_userSubscription.isFree ? ' ⭐' : ''}',
             ),
             BottomNavigationBarItem(
               icon: Stack(
@@ -2806,7 +3086,7 @@ class _HomePageState extends State<HomePage> {
                           minimumSize: Size(double.infinity, 36),
                         ),
                         onPressed: _showSubscriptionPage,
-                        child: Text('月額500円でアップグレード'),
+                        child: Text(_getText('premiumUpgrade')),
                       ),
                     ] else ...[
                       SizedBox(height: 8),
@@ -2826,7 +3106,7 @@ class _HomePageState extends State<HomePage> {
                 title: Row(
                   children: [
                     Expanded(
-                      child: Text('ルールブックの言語:', style: Theme.of(context).textTheme.titleMedium),
+                      child: Text(_getText('rulebookLanguage'), style: Theme.of(context).textTheme.titleMedium),
                     ),
                     DropdownButton<String>(
                       value: _currentLang,
@@ -2834,6 +3114,7 @@ class _HomePageState extends State<HomePage> {
                         setState(() {
                           _currentLang = newValue!;
                           _resetChat();
+                          // UIを更新するためにsetStateを呼び出す
                         });
                       },
                       items: <String>['日本語', 'English']
@@ -2849,10 +3130,10 @@ class _HomePageState extends State<HomePage> {
               ),
                Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                child: Text('モード選択', style: Theme.of(context).textTheme.titleSmall),
+                child: Text(_getText('modeSelection'), style: Theme.of(context).textTheme.titleSmall),
               ),
               RadioListTile<AppMode>(
-                title: const Text('ルールブックAIチャット'),
+                title: Text(_getText('ruleBookChat')),
                 value: AppMode.chat,
                 groupValue: _currentMode,
                 onChanged: (AppMode? value) {
@@ -2864,7 +3145,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               RadioListTile<AppMode>(
-                title: const Text('Dスコア計算'),
+                title: Text(_getText('dScoreCalculator')),
                 value: AppMode.dScore,
                 groupValue: _currentMode,
                 onChanged: (AppMode? value) {
@@ -2876,7 +3157,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               RadioListTile<AppMode>(
-                title: const Text('全種目一覧'),
+                title: Text(_getText('allApparatus')),
                 value: AppMode.allApparatus,
                 groupValue: _currentMode,
                 onChanged: (AppMode? value) {
@@ -2888,7 +3169,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               RadioListTile<AppMode>(
-                title: const Text('演技構成分析'),
+                title: Text(_getText('routineAnalysis')),
                 value: AppMode.analytics,
                 groupValue: _currentMode,
                 onChanged: (AppMode? value) {
@@ -2904,7 +3185,7 @@ class _HomePageState extends State<HomePage> {
               if (_isAdmin)
                 ListTile(
                   leading: const Icon(Icons.admin_panel_settings),
-                  title: const Text('管理者パネル'),
+                  title: Text(_getText('adminPanel')),
                   onTap: () {
                     setState(() {
                       _showAdminPanel = !_showAdminPanel;
@@ -3079,7 +3360,7 @@ class _HomePageState extends State<HomePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('キャンセル'),
+              child: Text(_getText('cancel')),
             ),
             TextButton(
               onPressed: () {
@@ -3134,7 +3415,7 @@ class _HomePageState extends State<HomePage> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedApparatus,
-                        hint: const Text('種目を選択してください'),
+                        hint: Text(_getText('selectApparatus')),
                         isExpanded: true,
                         onChanged: (String? newValue) {
                           if (newValue != null) {
@@ -3288,7 +3569,7 @@ class _HomePageState extends State<HomePage> {
                           TextButton.icon(
                             onPressed: _connectWithPrevious,
                             icon: const Icon(Icons.link, size: 16),
-                            label: const Text('前の技と繋げる'),
+                            label: Text(_getText('connectWithPrevious')),
                             style: TextButton.styleFrom(
                               foregroundColor: Colors.blue,
                             ),
@@ -3299,7 +3580,7 @@ class _HomePageState extends State<HomePage> {
                         TextButton.icon(
                           onPressed: _cancelEditingSkill,
                           icon: const Icon(Icons.cancel, size: 18),
-                          label: const Text('キャンセル'),
+                          label: Text(_getText('cancel')),
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.grey,
                           ),
@@ -3326,7 +3607,7 @@ class _HomePageState extends State<HomePage> {
                               _showConnectionDialog();
                             },
                             icon: const Icon(Icons.link, size: 16),
-                            label: const Text('連続技設定'),
+                            label: Text(_getText('connectionSettings')),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orange,
                               foregroundColor: Colors.white,
@@ -3364,7 +3645,7 @@ class _HomePageState extends State<HomePage> {
                               }
                             : null,
                           icon: const Icon(Icons.calculate),
-                          label: const Text('計算実行'),
+                          label: Text(_getText('calculate')),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
@@ -3407,7 +3688,7 @@ class _HomePageState extends State<HomePage> {
                 padding: EdgeInsets.all(40.0),
                 child: Center(
                   child: Text(
-                    'まずは種目を選択してください。',
+                    _getText('selectApparatus'),
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 ),
@@ -3660,7 +3941,7 @@ class _HomePageState extends State<HomePage> {
                   }
                 : null,
             icon: const Icon(Icons.add),
-            label: Text(_isEditingSkill ? '技を変更' : '技を追加'),
+            label: Text(_isEditingSkill ? _getText('changeSkill') : _getText('addSkill')),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
@@ -4573,7 +4854,7 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
-              '全種目一覧',
+              _getText('allApparatus'),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -4779,7 +5060,7 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
-              '演技構成分析',
+              _getText('routineAnalysis'),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -5626,7 +5907,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '管理者パネル',
+            _getText('adminPanel'),
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           SizedBox(height: 20),
@@ -6054,7 +6335,7 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: const Text('キャンセル'),
+          child: Text(_getText('cancel')),
         ),
       ],
     );
@@ -6154,7 +6435,7 @@ class _SaveRoutineDialogState extends State<_SaveRoutineDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('キャンセル'),
+          child: Text(_getText('cancel')),
         ),
         ElevatedButton(
           onPressed: () {
@@ -6241,7 +6522,7 @@ class _SavedRoutinesDialog extends StatelessWidget {
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.of(context).pop(),
-                                      child: const Text('キャンセル'),
+                                      child: Text(_getText('cancel')),
                                     ),
                                     ElevatedButton(
                                       onPressed: () {
@@ -6267,7 +6548,7 @@ class _SavedRoutinesDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('閉じる'),
+          child: Text(_getText('close')),
         ),
       ],
     );
