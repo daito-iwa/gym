@@ -14,8 +14,8 @@ class AppConfig {
       return 'http://localhost:8000';
     }
     
-    // ネイティブ環境の場合 - iOS シミュレータ用
-    return 'http://localhost:8000';
+    // ネイティブ環境の場合 - ローカルネットワークIPを使用
+    return 'http://192.168.40.218:8000';
   }
 
   // 本番環境用のURL（後で設定）

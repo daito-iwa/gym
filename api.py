@@ -1445,4 +1445,8 @@ async def get_revenue_analytics(admin_user: auth.User = Depends(auth.get_admin_u
         }
     except Exception as e:
         logger.error(f"Error getting revenue analytics: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve revenue analytics") 
+        raise HTTPException(status_code=500, detail="Failed to retrieve revenue analytics")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info") 
