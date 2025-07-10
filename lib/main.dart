@@ -631,15 +631,13 @@ class MyApp extends StatelessWidget {
         ),
         // Add other theme properties as needed
       ),
-      home: const HomePage(title: 'Gymnastics AI Chat'),
+      home: const HomePage(),
     );
   }
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
-
-  final String title;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
