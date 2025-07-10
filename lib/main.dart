@@ -1982,7 +1982,7 @@ class _HomePageState extends State<HomePage> {
 
   // Instagram DMを開く
   Future<void> _openInstagramDM() async {
-    final String instagramUsername = 'your_instagram_username'; // 実際のInstagramユーザー名に変更
+    final String instagramUsername = 'daito_iwasaki'; // 実際のInstagramユーザー名
     final String instagramUrl = 'https://instagram.com/direct/t/$instagramUsername';
     
     try {
