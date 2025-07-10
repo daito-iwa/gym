@@ -116,8 +116,8 @@ def setup_vectorstore(lang="en"):
             print(f"PyPDFLoaderでの読み込みも失敗しました: {e2}")
             raise Exception(f"PDFファイルの読み込みに失敗しました: {pdf_path}. エラー: {str(e2)}")
 
-    # テキストをチャンクに分割
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    # テキストをチャンクに分割（より細かく）
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=150)
     texts = text_splitter.split_documents(documents)
 
     if not texts:
@@ -164,10 +164,12 @@ def create_conversational_chain(vectorstore, lang="ja"):
     template = load_prompt_template(prompt_file)
     prompt = PromptTemplate(template=template, input_variables=["context", "chat_history", "question"])
 
-    # 3. retrieverの定義（検索パラメータを調整）
+    # 3. retrieverの定義（検索パラメータを大幅に改善）
     retriever = vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={'k': 15, 'fetch_k': 100}  # より多くの文書を取得
+        search_type="similarity",
+        search_kwargs={
+            'k': 20,  # 取得する文書数を増やす
+        }
     )
 
     # 4. 会話チェーンを組み立てる
