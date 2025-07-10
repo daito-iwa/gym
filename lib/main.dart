@@ -1526,6 +1526,24 @@ class _HomePageState extends State<HomePage> {
     return _appTexts[_currentLang]![key] ?? _appTexts['English']![key] ?? key;
   }
 
+  // AppBarタイトルを取得（モードと言語に応じて動的に変更）
+  String _getAppBarTitle() {
+    switch (_currentMode) {
+      case AppMode.chat:
+        return _currentLang == '日本語' ? 'AI チャット' : 'AI Chat';
+      case AppMode.dScore:
+        return _currentLang == '日本語' ? 'D スコア計算' : 'D-Score Calc';
+      case AppMode.allApparatus:
+        return _currentLang == '日本語' ? '全種目一覧' : 'All Apparatus';
+      case AppMode.analytics:
+        return _currentLang == '日本語' ? '演技構成分析' : 'Routine Analysis';
+      case AppMode.admin:
+        return _currentLang == '日本語' ? '管理者パネル' : 'Admin Panel';
+      default:
+        return _currentLang == '日本語' ? '体操アプリ' : 'Gymnastics App';
+    }
+  }
+
   // --- 認証関連の新しい状態 ---
   final _storage = const FlutterSecureStorage();
   bool _isAuthenticated = false;
@@ -2892,24 +2910,68 @@ class _HomePageState extends State<HomePage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.title),
+          titleSpacing: 0, // タイトル領域のスペーシングを最小化
+          title: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5, // 画面幅の50%まで使用
+            child: Text(
+              _getAppBarTitle(),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
           actions: [
-            // インポートボタン
-            IconButton(
-              icon: const Icon(Icons.file_upload),
-              onPressed: _importRoutineFromJson,
-              tooltip: 'JSONファイルからインポート',
-            ),
-            // フィードバックボタン
-            IconButton(
-              icon: const Icon(Icons.feedback),
-              onPressed: _showFeedbackDialog,
-              tooltip: 'フィードバック・バグ報告',
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: _logout,
-              tooltip: 'Logout',
+            // メニューボタン（複数の機能を統合）
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (String value) {
+                switch (value) {
+                  case 'import':
+                    _importRoutineFromJson();
+                    break;
+                  case 'feedback':
+                    _showFeedbackDialog();
+                    break;
+                  case 'logout':
+                    _logout();
+                    break;
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'import',
+                  child: Row(
+                    children: [
+                      Icon(Icons.file_upload, size: 20),
+                      SizedBox(width: 8),
+                      Text(_currentLang == '日本語' ? 'インポート' : 'Import'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'feedback',
+                  child: Row(
+                    children: [
+                      Icon(Icons.feedback, size: 20),
+                      SizedBox(width: 8),
+                      Text(_currentLang == '日本語' ? 'フィードバック' : 'Feedback'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, size: 20),
+                      SizedBox(width: 8),
+                      Text(_currentLang == '日本語' ? 'ログアウト' : 'Logout'),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
