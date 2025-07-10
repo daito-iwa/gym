@@ -1530,11 +1530,11 @@ class _HomePageState extends State<HomePage> {
   String _getAppBarTitle() {
     switch (_currentMode) {
       case AppMode.chat:
-        return _currentLang == '日本語' ? 'AI チャット' : 'AI Chat';
+        return _currentLang == '日本語' ? '体操 AI チャット' : 'Gymnastics AI Chat';
       case AppMode.dScore:
-        return _currentLang == '日本語' ? 'D スコア計算' : 'D-Score Calc';
+        return _currentLang == '日本語' ? 'D-Score 計算機' : 'D-Score Calculator';
       case AppMode.allApparatus:
-        return _currentLang == '日本語' ? '全種目一覧' : 'All Apparatus';
+        return _currentLang == '日本語' ? '全種目一覧' : 'All Apparatus List';
       case AppMode.analytics:
         return _currentLang == '日本語' ? '演技構成分析' : 'Routine Analysis';
       case AppMode.admin:
@@ -2912,11 +2912,11 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           titleSpacing: 0, // タイトル領域のスペーシングを最小化
           title: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5, // 画面幅の50%まで使用
+            width: MediaQuery.of(context).size.width * 0.75, // 画面幅の75%まで使用
             child: Text(
               _getAppBarTitle(),
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
