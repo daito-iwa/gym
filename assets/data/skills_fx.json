@@ -1,0 +1,359 @@
+[
+  {
+    "id": "1",
+    "name": "Forward handspring or flyspring",
+    "group": "Group II",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "4",
+    "name": "Handspring salto fwd. tuck",
+    "group": "Group II",
+    "value_letter": "C",
+    "value": 0.3
+  },
+  {
+    "id": "7",
+    "name": "Dive roll",
+    "group": "Group II",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "13",
+    "name": "Salto fwd. tucked or piked, also with ½ t.",
+    "group": "Group II",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "14",
+    "name": "Salto fwd. stretched, also with ½ t.",
+    "group": "Group II",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "16",
+    "name": "Double salto fwd. tucked, also with ½ t.",
+    "group": "Group II",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "17",
+    "name": "Double salto fwd. piked, also with ½ t.",
+    "group": "Group II",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "38",
+    "name": "Salto fwd. t. or p. to front support",
+    "group": "Group II",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "41",
+    "name": "Double salto fwd. tucked with 1/1 turn",
+    "group": "Group II",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "42",
+    "name": "Double salto fwd. tucked with 3/2 turn",
+    "group": "Group II",
+    "value_letter": "F",
+    "value": 0.6
+  },
+  {
+    "id": "46",
+    "name": "Jump fwd. with ½ t. to dbl. salto bwd. Tuck",
+    "group": "Group II",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "48",
+    "name": "Double salto fwd. stretched with 3/2 turn",
+    "group": "Group II",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "1",
+    "name": "Salto backwards tucked or piked",
+    "group": "Group III",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "2",
+    "name": "Salto backwards str. or Tempo salto bwd.",
+    "group": "Group III",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "3",
+    "name": "Double salto bwd. tucked",
+    "group": "Group III",
+    "value_letter": "C",
+    "value": 0.3
+  },
+  {
+    "id": "4",
+    "name": "Double salto bwd. t. with 1/1 t. Also Arabian double salto tuck with ½ t.",
+    "group": "Group III",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "5",
+    "name": "Double salto bwd. tucked with 2/1 t. or double salto bwd t. with 3/2 t. or salto bwd. str. 3/2 to fwd. salto tucked",
+    "group": "Group III",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "6",
+    "name": "Double salto bwd. tucked with 3/1 t.",
+    "group": "Group III",
+    "value_letter": "F",
+    "value": 0.6
+  },
+  {
+    "id": "7",
+    "name": "Salto backwards tucked or piked w. ½ t. or Arabian tucked or piked",
+    "group": "Group III",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "8",
+    "name": "Salto backwards str. w. ½ t.",
+    "group": "Group III",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "10",
+    "name": "Arabian jump bwd. to double salto fwd tucked",
+    "group": "Group III",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "11",
+    "name": "Arabian jump bwd. to double salto fwd piked, also with ½ turn",
+    "group": "Group III",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "12",
+    "name": "Double salto bwd. tucked with 5/2 t.",
+    "group": "Group III",
+    "value_letter": "F",
+    "value": 0.6
+  },
+  {
+    "id": "13",
+    "name": "Back handspring",
+    "group": "Group III",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "16",
+    "name": "Double salto bwd. piked",
+    "group": "Group III",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "18",
+    "name": "Triple salto bwd. tucked",
+    "group": "Group III",
+    "value_letter": "I",
+    "value": 0.9
+  },
+  {
+    "id": "24",
+    "name": "Triple salto bwd. piked",
+    "group": "Group III",
+    "value_letter": "J",
+    "value": 1.0
+  },
+  {
+    "id": "31",
+    "name": "Jump bwd. with ½ t. to roll fwd.",
+    "group": "Group III",
+    "value_letter": "A",
+    "value": 0.1
+  },
+  {
+    "id": "35",
+    "name": "Double salto straddled with 1/1 t.",
+    "group": "Group III",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "36",
+    "name": "Arabian Jump bwd. to dbl. salto fwd. str.",
+    "group": "Group III",
+    "value_letter": "F",
+    "value": 0.6
+  },
+  {
+    "id": "41",
+    "name": "Salto bwd. str. with 1/1 t and salto bwd piked",
+    "group": "Group III",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "42",
+    "name": "Salto bwd. str. with 2/1 t and salto bwd piked",
+    "group": "Group III",
+    "value_letter": "F",
+    "value": 0.6
+  },
+  {
+    "id": "47",
+    "name": "Double salto bwd. stretched and with ½ t.",
+    "group": "Group III",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "48",
+    "name": "Double salto bwd. str. with 3/2 t. or Arabian Jump bwd. to dbl. salto fwd. str. with 1/1 t.",
+    "group": "Group III",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "54",
+    "name": "Double salto bwd. stretched with 1/1 t. or Arabian jump bwd. to dbl. salto fwd. str. with ½ t.",
+    "group": "Group III",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "60",
+    "name": "Double salto bwd. str. with 2/1 t.",
+    "group": "Group III",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "66",
+    "name": "Double salto bwd. str. with 5/2 t.",
+    "group": "Group III",
+    "value_letter": "H",
+    "value": 0.8
+  },
+  {
+    "id": "72",
+    "name": "Double salto bwd. str. with 3/1 t.",
+    "group": "Group III",
+    "value_letter": "I",
+    "value": 0.9
+  },
+  {
+    "id": "2",
+    "name": "Salto fwd. tucked with 1/1 t., also with 3/2 t.",
+    "group": "Group IV",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "3",
+    "name": "Salto fwd. str. with 1/1 t., also with 3/2 t.",
+    "group": "Group IV",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "4",
+    "name": "Salto fwd. str. with 2/1 t.",
+    "group": "Group IV",
+    "value_letter": "C",
+    "value": 0.3
+  },
+  {
+    "id": "5",
+    "name": "Salto fwd. str. with 5/2 t.",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "6",
+    "name": "Salto fwd. str. with 3/1 t.",
+    "group": "Group IV",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "8",
+    "name": "Salto backwards str. w. 1/1 t",
+    "group": "Group IV",
+    "value_letter": "B",
+    "value": 0.2
+  },
+  {
+    "id": "9",
+    "name": "Salto bwd. str. with 3/2 t. or 2/1 t.",
+    "group": "Group IV",
+    "value_letter": "C",
+    "value": 0.3
+  },
+  {
+    "id": "10",
+    "name": "Salto bwd. str. with 5/2 t.",
+    "group": "Group IV",
+    "value_letter": "D",
+    "value": 0.4
+  },
+  {
+    "id": "11",
+    "name": "Salto bwd. str. with 7/2 t",
+    "group": "Group IV",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "36",
+    "name": "Salto fwd. str. with 7/2 t.",
+    "group": "Group IV",
+    "value_letter": "G",
+    "value": 0.7
+  },
+  {
+    "id": "14",
+    "name": "Salto backwards tucked w. 3/2 t.",
+    "group": "Group IV",
+    "value_letter": "C",
+    "value": 0.3
+  },
+  {
+    "id": "22",
+    "name": "Salto bwd. str. with 3/1 t.",
+    "group": "Group IV",
+    "value_letter": "E",
+    "value": 0.5
+  },
+  {
+    "id": "24",
+    "name": "Salto bwd. str. with 4/1 t.",
+    "group": "Group IV",
+    "value_letter": "F",
+    "value": 0.6
+  }
+]
