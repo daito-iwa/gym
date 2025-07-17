@@ -4,7 +4,7 @@
 <dict>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.daito.gym</string>
+		<string>$(AppIdentifierPrefix)com.daito.gymnastics_ai</string>
 	</array>
 	<key>get-task-allow</key>
 	<true/>
