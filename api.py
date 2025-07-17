@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, validator
 from typing import Dict, Any, List
 import re
@@ -123,6 +124,15 @@ app = FastAPI(
     title="Gymnastics AI API",
     description="API for gymnastics rulebook chat and D-score calculation.",
     version="0.1.0",
+)
+
+# CORS設定
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 開発環境用 - 本番では具体的なドメインを指定
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 例外ハンドラーの定義
@@ -424,10 +434,12 @@ def calculate_d_score_api(apparatus: str, request: RoutineRequest) -> DScoreResp
     if cached_result is not None:
         return cached_result
     
-    d_score, status_info, difficulty_value, group_bonus, connection_bonus, total_skills, landing_bonus_potential, d_score_with_landing = d_score_calculator.calculate_d_score(
+    d_score, status_info, difficulty_value, group_bonus, connection_bonus, total_skills = d_score_calculator.calculate_d_score(
         apparatus.upper(),
         routine_data
     )
+    landing_bonus_potential = 0.0
+    d_score_with_landing = d_score
 
     result = DScoreResponse(
         d_score=d_score,
@@ -467,7 +479,9 @@ def chat(request: ChatRequest, current_user: auth.User = Depends(auth.get_curren
     
     # OpenAI APIキーの確認
     openai_api_key = os.getenv("OPENAI_API_KEY")
-    if not openai_api_key or openai_api_key == "sk-dummy":
+    print(f"Debug: OpenAI API Key loaded: {openai_api_key[:20]}..." if openai_api_key else "Debug: No OpenAI API Key found")
+    print(f"Debug: API Key check: not openai_api_key={not openai_api_key}, equals dummy={openai_api_key == 'your-openai-api-key-here'}")
+    if not openai_api_key or openai_api_key == "your-openai-api-key-here":
         # テスト用のダミーレスポンス
         test_response = {
             "ja": f"テスト環境では、実際のAI機能は無効になっています。あなたの質問: 「{request.question}」\n\n実際の機能を使用するには、有効なOpenAI APIキーを設定してください。",

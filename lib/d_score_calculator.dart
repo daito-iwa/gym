@@ -1,31 +1,99 @@
 import 'dart:math';
 
+// ローマ数字変換関数
+int _parseRomanNumeral(String? roman) {
+  if (roman == null || roman.isEmpty) return 0;
+  
+  final romanToInt = {
+    'Ⅰ': 1, 'I': 1,
+    'Ⅱ': 2, 'II': 2,
+    'Ⅲ': 3, 'III': 3,
+    'Ⅳ': 4, 'IV': 4,
+    'Ⅴ': 5, 'V': 5,
+  };
+  
+  return romanToInt[roman.trim()] ?? 0;
+}
+
+// 難度レター変換関数
+double _parseValueLetter(String? letter) {
+  if (letter == null || letter.isEmpty) return 0.0;
+  
+  final letterToValue = {
+    'A': 0.1,
+    'B': 0.2,
+    'C': 0.3,
+    'D': 0.4,
+    'E': 0.5,
+    'F': 0.6,
+    'G': 0.7,
+    'H': 0.8,
+    'I': 0.9,
+    'J': 1.0,
+  };
+  
+  return letterToValue[letter.trim().toUpperCase()] ?? 0.0;
+}
+
 // Skillクラスはd_score_calculator.dartに移動し、main.dartからはインポートして使うようにする
 class Skill {
+  final String id;
   final String name;
   final String valueLetter;
   final int group;
   final double value;
+  final String description;
+  final String apparatus;
 
   Skill({
+    required this.id,
     required this.name,
     required this.valueLetter,
     required this.group,
     required this.value,
+    required this.description,
+    required this.apparatus,
   });
 
  factory Skill.fromMap(Map<String, dynamic> map) {
-    const difficultyValues = { "A": 0.1, "B": 0.2, "C": 0.3, "D": 0.4, "E": 0.5, "F": 0.6, "G": 0.7, "H": 0.8, "I": 0.9, "J": 1.0 };
-    final romanMap = {'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5};
-    final groupStr = map['group']?.toString() ?? '';
-    final groupRoman = groupStr.replaceAll('Group ', '');
-    final groupNumber = romanMap[groupRoman] ?? 0;
+    final skillName = map['name']?.toString() ?? '';
+    
+    // デバッグ情報
+    print('Skill.fromMap CSV Processing: name="$skillName", raw_data=$map');
+    
+    // CSVからグループを正しく解析（ローマ数字対応）
+    int groupNumber = _parseRomanNumeral(map['group']?.toString());
+    
+    // CSVから難度レターを取得
+    final valueLetter = map['value_letter']?.toString() ?? '';
+    
+    // 難度レターから数値を計算
+    double value = _parseValueLetter(valueLetter);
+    
+    // フォールバック値（CSVデータが不正な場合のみ）
+    if (groupNumber <= 0) {
+      print('警告: グループが不正です。技名="$skillName", グループ="${map['group']}", デフォルト値=1を使用');
+      groupNumber = 1;
+    }
+    
+    if (value <= 0.0 || valueLetter.isEmpty) {
+      print('警告: 難度が不正です。技名="$skillName", 難度レター="$valueLetter", デフォルト値=0.1を使用');
+      value = 0.1;
+    }
+    
+    final finalValueLetter = valueLetter.isNotEmpty ? valueLetter : 'A';
+    
+    // デバッグ情報
+    print('Skill.fromMap CSV Result: name="$skillName", group=$groupNumber, value=$value, letter=$finalValueLetter');
 
     return Skill(
-      name: map['name']?.toString() ?? '',
-      valueLetter: map['value_letter']?.toString() ?? '',
+      id: map['id']?.toString() ?? '',
+      name: skillName,
+      valueLetter: finalValueLetter,
       group: groupNumber,
-      value: difficultyValues[map['value_letter']] ?? 0.0,
+      value: value,
+      description: map['description']?.toString() ?? '',
+      apparatus: map['apparatus']?.toString() ?? '',
     );
   }
 }
@@ -71,12 +139,10 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   // 構成内の全ての技をフラットなリストにする
   final allSkills = routine.expand((group) => group).toList();
 
-  // TODO: 技数が上限を超える場合、最適な組み合わせを探すロジックを実装する
-  // 今回は、上限を超えた場合は価値の高い順に技を選択する簡易的な実装を行う
+  // 技数が上限を超える場合、グループボーナスも考慮した最適な組み合わせを探す
   List<Skill> countedSkills;
   if (allSkills.length > countLimit) {
-      allSkills.sort((a, b) => b.value.compareTo(a.value));
-      countedSkills = allSkills.sublist(0, countLimit);
+      countedSkills = _selectOptimalSkillCombination(allSkills, countLimit, rules);
   } else {
       countedSkills = allSkills;
   }
@@ -147,4 +213,85 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
     requiredGroups: rules["groups_required"] as int,
     totalSkills: allSkills.length,
   );
+}
+
+/// 技数上限を超える場合の最適な技の組み合わせを選択する関数
+/// グループボーナスと難度点の合計を最大化する
+List<Skill> _selectOptimalSkillCombination(List<Skill> allSkills, int countLimit, Map<String, dynamic> rules) {
+  if (allSkills.length <= countLimit) {
+    return allSkills;
+  }
+
+  final bonusPerGroup = rules["bonus_per_group"] as double;
+  
+  // 各グループごとに技をソートして整理
+  final Map<int, List<Skill>> skillsByGroup = {};
+  for (final skill in allSkills) {
+    skillsByGroup.putIfAbsent(skill.group, () => []).add(skill);
+  }
+  
+  // 各グループ内で価値順にソート
+  for (final groupSkills in skillsByGroup.values) {
+    groupSkills.sort((a, b) => b.value.compareTo(a.value));
+  }
+  
+  double bestScore = 0.0;
+  List<Skill> bestCombination = [];
+  
+  // 可能な組み合わせを探索（グリーディアプローチ + 局所探索）
+  // まずは各グループから最低1つずつ選んで、残りを価値順で埋める戦略
+  final groups = skillsByGroup.keys.toList();
+  
+  for (int minSkillsPerGroup = 0; minSkillsPerGroup <= 2; minSkillsPerGroup++) {
+    final combination = <Skill>[];
+    final usedGroups = <int>{};
+    
+    // 各グループから最低限の技を選択
+    for (final group in groups) {
+      final groupSkills = skillsByGroup[group]!;
+      final skillsToTake = minSkillsPerGroup < groupSkills.length ? minSkillsPerGroup : groupSkills.length;
+      for (int i = 0; i < skillsToTake && combination.length < countLimit; i++) {
+        combination.add(groupSkills[i]);
+        usedGroups.add(group);
+      }
+    }
+    
+    // 残り枠を価値の高い技で埋める
+    final remainingSkills = <Skill>[];
+    for (final entry in skillsByGroup.entries) {
+      final group = entry.key;
+      final groupSkills = entry.value;
+      final skipCount = usedGroups.contains(group) ? minSkillsPerGroup : 0;
+      for (int i = skipCount; i < groupSkills.length; i++) {
+        remainingSkills.add(groupSkills[i]);
+      }
+    }
+    
+    remainingSkills.sort((a, b) => b.value.compareTo(a.value));
+    
+    for (final skill in remainingSkills) {
+      if (combination.length >= countLimit) break;
+      combination.add(skill);
+      usedGroups.add(skill.group);
+    }
+    
+    // スコアを計算
+    final difficultyValue = combination.fold<double>(0.0, (sum, skill) => sum + skill.value);
+    final groupBonus = usedGroups.length * bonusPerGroup;
+    final totalScore = difficultyValue + groupBonus;
+    
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
+      bestCombination = List.from(combination);
+    }
+  }
+  
+  // フォールバック: 単純に価値順で選択
+  if (bestCombination.isEmpty) {
+    final sortedSkills = List<Skill>.from(allSkills);
+    sortedSkills.sort((a, b) => b.value.compareTo(a.value));
+    bestCombination = sortedSkills.sublist(0, countLimit);
+  }
+  
+  return bestCombination;
 } 
