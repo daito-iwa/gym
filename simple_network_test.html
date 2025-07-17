@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Network Test</title>
+</head>
+<body>
+    <h1>Network Connectivity Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        // Test 1: Simple fetch to root endpoint
+        results.innerHTML += '<h3>Test 1: GET /</h3>';
+        fetch('http://localhost:8000/')
+            .then(response => {
+                results.innerHTML += `<p style="color: green;">✓ GET / success: ${response.status}</p>`;
+                return response.text();
+            })
+            .then(data => {
+                results.innerHTML += `<p>Response: ${data.substring(0, 100)}...</p>`;
+            })
+            .catch(error => {
+                results.innerHTML += `<p style="color: red;">✗ GET / failed: ${error.message}</p>`;
+            });
+        
+        // Test 2: OPTIONS request
+        results.innerHTML += '<h3>Test 2: OPTIONS /token</h3>';
+        fetch('http://localhost:8000/token', { method: 'OPTIONS' })
+            .then(response => {
+                results.innerHTML += `<p style="color: green;">✓ OPTIONS /token success: ${response.status}</p>`;
+            })
+            .catch(error => {
+                results.innerHTML += `<p style="color: red;">✗ OPTIONS /token failed: ${error.message}</p>`;
+            });
+        
+        // Test 3: Simple POST to token endpoint
+        setTimeout(() => {
+            results.innerHTML += '<h3>Test 3: POST /token</h3>';
+            fetch('http://localhost:8000/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'username=testuser&password=test123'
+            })
+            .then(response => {
+                results.innerHTML += `<p style="color: green;">✓ POST /token success: ${response.status}</p>`;
+                return response.json();
+            })
+            .then(data => {
+                results.innerHTML += `<p>Token received: ${data.access_token ? 'YES' : 'NO'}</p>`;
+            })
+            .catch(error => {
+                results.innerHTML += `<p style="color: red;">✗ POST /token failed: ${error.message}</p>`;
+            });
+        }, 1000);
+    </script>
+</body>
+</html>

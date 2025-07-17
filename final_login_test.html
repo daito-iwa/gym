@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>ログインテスト - 最終版</h1>
+    <button onclick="testLogin()">ログインテスト実行</button>
+    <div id="results"></div>
+    
+    <script>
+        async function testLogin() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<div class="info">テスト開始...</div>';
+            
+            try {
+                // Step 1: サーバー接続テスト
+                results.innerHTML += '<div class="info">1. サーバー接続テスト...</div>';
+                const healthCheck = await fetch('http://localhost:8000/');
+                results.innerHTML += `<div class="success">✓ サーバー接続成功 (${healthCheck.status})</div>`;
+                
+                // Step 2: CORS プリフライトテスト
+                results.innerHTML += '<div class="info">2. CORS テスト...</div>';
+                const corsTest = await fetch('http://localhost:8000/token', { method: 'OPTIONS' });
+                results.innerHTML += `<div class="success">✓ CORS 成功 (${corsTest.status})</div>`;
+                
+                // Step 3: ログインリクエスト
+                results.innerHTML += '<div class="info">3. ログインリクエスト...</div>';
+                const loginResponse = await fetch('http://localhost:8000/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=testuser&password=test123'
+                });
+                
+                if (loginResponse.ok) {
+                    const data = await loginResponse.json();
+                    results.innerHTML += `<div class="success">✓ ログイン成功！</div>`;
+                    results.innerHTML += `<div class="info">トークン: ${data.access_token.substring(0, 50)}...</div>`;
+                } else {
+                    const errorData = await loginResponse.json();
+                    results.innerHTML += `<div class="error">✗ ログイン失敗: ${errorData.detail}</div>`;
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<div class="error">✗ エラー: ${error.message}</div>`;
+                console.error('Login test error:', error);
+            }
+        }
+        
+        // ページ読み込み時に自動実行
+        window.onload = function() {
+            setTimeout(testLogin, 500);
+        };
+    </script>
+</body>
+</html>

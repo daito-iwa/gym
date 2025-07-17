@@ -9,8 +9,8 @@ class Config {
 enum Environment { development, staging, production }
 
 class AppConfig {
-  // 環境設定 - ビルド時に変更可能
-  static const Environment _environment = Environment.development;
+  // 環境設定 - オフライン版はproductionに設定
+  static const Environment _environment = Environment.production;
   
   // 環境別URL設定
   static const Map<Environment, String> _urls = {

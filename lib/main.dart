@@ -2078,11 +2078,33 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _tryAutoLogin(); // アプリ起動時に自動ログインを試みる
+    _setupOfflinePremiumAccess(); // オフライン版：プレミアム機能を有効化
     _loadSavedRoutines(); // 保存された演技構成を読み込み
-    _initializePurchaseManager(); // 課金システム初期化
-    _initializeAdManager(); // 広告システム初期化
     _refreshSkillsData(); // スキルデータを更新
+    // 課金システムと広告システムは無効化（オフライン版）
+  }
+  
+  // オフライン版：プレミアム機能を有効化
+  void _setupOfflinePremiumAccess() {
+    print('オフライン版：プレミアム機能を自動有効化');
+    
+    // プレミアム機能を全て有効化
+    _userSubscription = UserSubscription(
+      tier: UserTier.premium,
+      subscriptionStart: DateTime.now().subtract(Duration(days: 30)),
+      subscriptionEnd: DateTime.now().add(Duration(days: 365)),
+    );
+    
+    // 認証状態を設定
+    _isAuthenticated = true;
+    _token = 'offline-premium-token';
+    
+    // 初期化完了
+    setState(() {
+      _isLoading = false;
+    });
+    
+    print('オフライン版：プレミアム機能が利用可能です');
   }
   
   // スキルデータを更新
@@ -2325,20 +2347,19 @@ class _HomePageState extends State<HomePage> {
     String? fullName,
     bool isLogin,
   ) async {
-    print('認証処理開始（緊急修正）: username=$username, isLogin=$isLogin');
+    print('オフライン版：認証をバイパス');
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // 緊急修正：開発モードでは常にログイン成功
-      print('開発モード：ログイン成功を強制');
-      await Future.delayed(Duration(milliseconds: 500)); // 短い待機
+      // オフライン版：認証を完全バイパス
+      await Future.delayed(Duration(milliseconds: 300)); // 短い待機
       
-      // 偽のトークンを設定
-      _token = 'dev-token-12345';
+      // オフライン版トークンを設定
+      _token = 'offline-premium-token';
       
-      // プレミアムユーザー情報を簡単に設定
+      // プレミアム機能を全て有効化
       _userSubscription = UserSubscription(
         tier: UserTier.premium,
         subscriptionStart: DateTime.now().subtract(Duration(days: 30)),
@@ -2352,7 +2373,7 @@ class _HomePageState extends State<HomePage> {
       });
       
       _resetChat();
-      _showSuccessSnackBar('プレミアムユーザーでログインしました（開発モード）');
+      _showSuccessSnackBar('オフライン版：全機能が利用可能です');
       return;
       
       // 元のコード（コメントアウト）
