@@ -142,8 +142,6 @@ pathspec==0.12.1
 pdfminer.six==20250506
 pdfplumber==0.11.7
 prometheus-client==0.21.1
-fastapi
-uvicorn
 # Additions for Authentication
 passlib[bcrypt]
 python-jose[cryptography]
@@ -151,5 +149,3 @@ fastapi[all]
 python-multipart
 # Web Dashboard
 plotly==5.22.0
-pandas==2.3.0
- 
