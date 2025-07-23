@@ -4,14 +4,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
     <application
-        android:label="Gymnastics AI"
+        android:label="Gym AI"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         
-        <!-- AdMob App ID (テスト用) -->
+        <!-- AdMob App ID (本番用) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-8022160047771829~7031829042"/>
         
         <!-- AdMob設定 -->
         <meta-data

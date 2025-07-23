@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'config.dart';
+import 'social_auth_manager.dart';
 
 class AuthScreen extends StatefulWidget {
   final Function(String, String, String?, String?, bool) onSubmit;
+  final Function(SocialAuthResult)? onSocialAuthSuccess;
   final bool isLoading;
 
   const AuthScreen({
     Key? key,
     required this.onSubmit,
+    this.onSocialAuthSuccess,
     required this.isLoading,
   }) : super(key: key);
 
@@ -94,13 +97,30 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   }
 
   bool _canSubmit() {
-    // 完全削除：常にtrue
-    return true;
+    if (_isPasswordReset) {
+      if (_isResetTokenSent) {
+        return _enteredResetToken.isNotEmpty && _enteredNewPassword.length >= 7;
+      } else {
+        return _enteredEmail.contains('@');
+      }
+    } else if (_isLogin) {
+      return _enteredUsername.length >= 4 && _enteredPassword.length >= 7;
+    } else {
+      return _enteredUsername.length >= 4 && 
+             _enteredPassword.length >= 7 && 
+             _enteredEmail.contains('@') && 
+             _enteredFullName.isNotEmpty;
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    
+    // テスト用のデフォルト値を設定
+    _enteredUsername = 'testuser';
+    _enteredPassword = 'testpass123';
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -314,7 +334,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: Text(
-                      'Gymnastics AI Chat',
+                      'Gymnastics AI',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -375,14 +395,21 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   if (!_isPasswordReset)
                     TextFormField(
                       key: const ValueKey('username'),
+                      initialValue: _enteredUsername,
                       validator: (value) {
+                        print('ユーザー名バリデーション: value="$value"');
                         if (value == null || value.isEmpty || value.length < 4) {
+                          print('ユーザー名バリデーション失敗');
                           return _getText('usernameError');
                         }
+                        print('ユーザー名バリデーション成功');
                         return null;
                       },
                       onSaved: (value) {
                         _enteredUsername = value!;
+                      },
+                      onChanged: (value) {
+                        _enteredUsername = value;
                       },
                       decoration: InputDecoration(
                         labelText: _getText('username'),
@@ -536,14 +563,21 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   if (!_isPasswordReset)
                     TextFormField(
                       key: const ValueKey('password'),
+                      initialValue: _enteredPassword,
                       validator: (value) {
+                        print('パスワードバリデーション: value="$value", length=${value?.length ?? 0}');
                         if (value == null || value.length < 7) {
+                          print('パスワードバリデーション失敗');
                           return _getText('passwordError');
                         }
+                        print('パスワードバリデーション成功');
                         return null;
                       },
                       onSaved: (value) {
                         _enteredPassword = value!;
+                      },
+                      onChanged: (value) {
+                        _enteredPassword = value;
                       },
                       decoration: InputDecoration(
                         labelText: _getText('password'),
@@ -606,8 +640,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                       ),
                       onPressed: () {
-                        // 最終修正: 無条件でログイン実行
-                        widget.onSubmit('testuser', 'testpass123', null, null, true);
+                        print('ログインボタンが押されました');
+                        print('現在の値: username="${_enteredUsername}", password="${_enteredPassword}"');
+                        print('フォームの状態をチェック中...');
+                        _trySubmit();
                       },
                       child: Text(
                         _isPasswordReset 
@@ -618,6 +654,40 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           color: Colors.white,
                         ),
                       ),
+                    ),
+                  const SizedBox(height: 16),
+                  // ソーシャル認証オプション（パスワードリセット時以外）
+                  if (!_isPasswordReset && !widget.isLoading)
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: Colors.grey[600])),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'または',
+                                style: TextStyle(color: Colors.grey[400]),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: Colors.grey[600])),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        SocialAuthOptions(
+                          onAuthSuccess: (result) {
+                            if (widget.onSocialAuthSuccess != null) {
+                              widget.onSocialAuthSuccess!(result);
+                            }
+                          },
+                          onAuthError: (error) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(error)),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   if (!widget.isLoading) ...[
                     // パスワードリセット時の戻るボタン

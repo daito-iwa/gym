@@ -1,0 +1,261 @@
+// Firebase Cloud Messaging管理クラス
+
+import 'dart:async';
+// import 'package:firebase_messaging/firebase_messaging.dart'; // 一時的に無効化
+import 'package:flutter/foundation.dart';
+
+// プッシュ通知管理クラス
+class FCMManager {
+  static final FCMManager _instance = FCMManager._internal();
+  factory FCMManager() => _instance;
+  FCMManager._internal();
+  
+  // late FirebaseMessaging _messaging; // 一時的に無効化
+  bool _initialized = false;
+  String? _fcmToken;
+  
+  // 通知カテゴリ
+  static const String NOTIFICATION_CHANNEL_GENERAL = 'general';
+  static const String NOTIFICATION_CHANNEL_SUBSCRIPTION = 'subscription';
+  static const String NOTIFICATION_CHANNEL_REMINDERS = 'reminders';
+  static const String NOTIFICATION_CHANNEL_UPDATES = 'updates';
+  
+  // 初期化
+  Future<void> initialize() async {
+    try {
+      if (_initialized) return;
+      
+      // _messaging = FirebaseMessaging.instance; // 一時的に無効化
+      
+      // 通知権限のリクエスト
+      await _requestPermission();
+      
+      // FCMトークンを取得
+      _fcmToken = await _messaging.getToken();
+      print('FCM: Token - $_fcmToken');
+      
+      // フォアグラウンドメッセージ処理の設定
+      _setupForegroundMessageHandling();
+      
+      // 通知タップ処理の設定  
+      _setupNotificationTapHandling();
+      
+      _initialized = true;
+      print('FCM: FCM Manager initialized successfully');
+      
+    } catch (e) {
+      print('FCM: Failed to initialize FCM Manager: $e');
+      _initialized = false;
+    }
+  }
+  
+  // 通知権限のリクエスト
+  Future<void> _requestPermission() async {
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      announcement: false,
+    );
+    
+    print('FCM: Permission status - ${settings.authorizationStatus}');
+    
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('FCM: Notification permission granted');
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      print('FCM: Provisional notification permission granted');
+    } else {
+      print('FCM: Notification permission denied');
+    }
+  }
+  
+  // フォアグラウンドメッセージ処理の設定
+  void _setupForegroundMessageHandling() {
+    // FirebaseMessaging.onMessage.listen((RemoteMessage message) { // 一時的に無効化
+      print('FCM: Foreground message received - ${message.messageId}');
+      print('FCM: Title: ${message.notification?.title}');
+      print('FCM: Body: ${message.notification?.body}');
+      print('FCM: Data: ${message.data}');
+      
+      // フォアグラウンドでの通知表示処理
+      _handleForegroundMessage(message);
+    });
+  }
+  
+  // 通知タップ処理の設定
+  void _setupNotificationTapHandling() {
+    // アプリがバックグラウンドから開かれた場合
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('FCM: App opened from background notification - ${message.messageId}');
+      _handleNotificationTap(message);
+    });
+    
+    // アプリが完全に終了した状態から開かれた場合
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        print('FCM: App opened from terminated state - ${message.messageId}');
+        _handleNotificationTap(message);
+      }
+    });
+  }
+  
+  // フォアグラウンドメッセージの処理
+  void _handleForegroundMessage(RemoteMessage message) {
+    final notification = message.notification;
+    if (notification != null) {
+      // アプリ内通知バナーの表示などを実装
+      _showInAppNotification(
+        title: notification.title ?? 'Gymnastics AI',
+        body: notification.body ?? '',
+        data: message.data,
+      );
+    }
+  }
+  
+  // 通知タップ時の処理
+  void _handleNotificationTap(RemoteMessage message) {
+    final data = message.data;
+    
+    // データに基づいて適切な画面に遷移
+    if (data.containsKey('screen')) {
+      final screen = data['screen'];
+      print('FCM: Navigating to screen - $screen');
+      
+      switch (screen) {
+        case 'subscription':
+          _navigateToSubscription();
+          break;
+        case 'chat':
+          _navigateToChat();
+          break;
+        case 'updates':
+          _navigateToUpdates();
+          break;
+        default:
+          print('FCM: Unknown screen - $screen');
+      }
+    }
+  }
+  
+  // アプリ内通知バナーの表示
+  void _showInAppNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) {
+    // 実際の実装では、OverlayやSnackBarを使用してバナーを表示
+    print('FCM: In-app notification - $title: $body');
+  }
+  
+  // 特定のトピックに購読
+  Future<void> subscribeToTopic(String topic) async {
+    if (!_initialized) return;
+    
+    try {
+      await _messaging.subscribeToTopic(topic);
+      print('FCM: Subscribed to topic - $topic');
+    } catch (e) {
+      print('FCM: Error subscribing to topic $topic: $e');
+    }
+  }
+  
+  // トピックの購読解除
+  Future<void> unsubscribeFromTopic(String topic) async {
+    if (!_initialized) return;
+    
+    try {
+      await _messaging.unsubscribeFromTopic(topic);
+      print('FCM: Unsubscribed from topic - $topic');
+    } catch (e) {
+      print('FCM: Error unsubscribing from topic $topic: $e');
+    }
+  }
+  
+  // ユーザーティアに基づくトピック管理
+  Future<void> updateSubscriptionsForUserTier(String userTier) async {
+    if (!_initialized) return;
+    
+    try {
+      // 全ユーザー共通のトピック
+      await subscribeToTopic('general_updates');
+      await subscribeToTopic('app_news');
+      
+      switch (userTier.toLowerCase()) {
+        case 'guest':
+          await subscribeToTopic('guest_promotions');
+          await unsubscribeFromTopic('premium_features');
+          break;
+        case 'registered':
+          await subscribeToTopic('upgrade_promotions');
+          await unsubscribeFromTopic('guest_promotions');
+          break;
+        case 'premium':
+          await subscribeToTopic('premium_features');
+          await unsubscribeFromTopic('upgrade_promotions');
+          break;
+      }
+    } catch (e) {
+      print('FCM: Error updating subscriptions for user tier $userTier: $e');
+    }
+  }
+  
+  // FCMトークンの取得
+  Future<String?> getFCMToken() async {
+    if (!_initialized) return null;
+    
+    try {
+      return await _messaging.getToken();
+    } catch (e) {
+      print('FCM: Error getting FCM token: $e');
+      return null;
+    }
+  }
+  
+  // 通知の有効/無効設定
+  Future<void> setNotificationEnabled(bool enabled) async {
+    if (!_initialized) return;
+    
+    try {
+      if (enabled) {
+        await _messaging.setAutoInitEnabled(true);
+      } else {
+        await _messaging.setAutoInitEnabled(false);
+      }
+      print('FCM: Notification enabled: $enabled');
+    } catch (e) {
+      print('FCM: Error setting notification enabled: $e');
+    }
+  }
+  
+  // 初期化状態の確認
+  bool get isInitialized => _initialized;
+  
+  // FCMトークンの取得
+  String? get fcmToken => _fcmToken;
+  
+  // デバッグ情報の取得
+  Map<String, dynamic> getDebugInfo() {
+    return {
+      'initialized': _initialized,
+      'token': _fcmToken,
+      'messaging_enabled': _initialized,
+      'platform': defaultTargetPlatform.toString(),
+    };
+  }
+  
+  // 画面遷移メソッド（実装は呼び出し元で処理）
+  void _navigateToSubscription() {
+    print('FCM: Navigate to subscription screen');
+  }
+  
+  void _navigateToChat() {
+    print('FCM: Navigate to chat screen');
+  }
+  
+  void _navigateToUpdates() {
+    print('FCM: Navigate to updates screen');
+  }
+}

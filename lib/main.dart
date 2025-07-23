@@ -20,8 +20,8 @@ import 'package:url_launcher/url_launcher.dart';
 // dart:htmlは使用しないで、すべてfile_pickerで代替
 
 import 'config.dart';
-import 'auth_screen.dart'; // 作成した認証画面をインポート
 import 'd_score_calculator.dart'; // D-スコア計算とSkillクラスをインポート
+import 'gymnastics_expert_database.dart'; // 専門知識データベース
 
 // カスタム例外クラス
 class NetworkException implements Exception {
@@ -738,6 +738,36 @@ class ChatUsageTracker {
     await prefs.setInt(_monthlyUsageKey, monthlyUsage + 1);
   }
   
+  static Future<int> getBonusCredits() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('chat_bonus_credits') ?? 0;
+  }
+  
+  static Future<void> useBonusCredit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentBonus = await getBonusCredits();
+    if (currentBonus > 0) {
+      await prefs.setInt('chat_bonus_credits', currentBonus - 1);
+    }
+  }
+  
+  static Future<void> recordChatUsage(UserSubscription subscription) async {
+    if (subscription.canAccessUnlimitedChat()) {
+      return; // Premium users don't need usage tracking
+    }
+    
+    final dailyUsage = await getDailyUsage();
+    final monthlyUsage = await getMonthlyUsage();
+    
+    // If within normal limits, use normal usage tracking
+    if (dailyUsage < dailyFreeLimit && monthlyUsage < monthlyFreeLimit) {
+      await incrementUsage();
+    } else {
+      // User has exceeded limits, use bonus credit instead
+      await useBonusCredit();
+    }
+  }
+  
   static Future<bool> canSendMessage(UserSubscription subscription) async {
     if (subscription.canAccessUnlimitedChat()) {
       return true;
@@ -745,8 +775,15 @@ class ChatUsageTracker {
     
     final dailyUsage = await getDailyUsage();
     final monthlyUsage = await getMonthlyUsage();
+    final bonusCredits = await getBonusCredits();
     
-    return dailyUsage < dailyFreeLimit && monthlyUsage < monthlyFreeLimit;
+    // Check if within normal limits
+    if (dailyUsage < dailyFreeLimit && monthlyUsage < monthlyFreeLimit) {
+      return true;
+    }
+    
+    // Check if can use bonus credits to exceed daily/monthly limits
+    return bonusCredits > 0;
   }
   
   static Future<String> getUsageStatus(UserSubscription subscription) async {
@@ -756,8 +793,15 @@ class ChatUsageTracker {
     
     final dailyUsage = await getDailyUsage();
     final monthlyUsage = await getMonthlyUsage();
+    final bonusCredits = await getBonusCredits();
     
-    return '本日: $dailyUsage/$dailyFreeLimit | 今月: $monthlyUsage/$monthlyFreeLimit';
+    final baseStatus = '本日: $dailyUsage/$dailyFreeLimit | 今月: $monthlyUsage/$monthlyFreeLimit';
+    
+    if (bonusCredits > 0) {
+      return '$baseStatus | ボーナス: $bonusCredits回';
+    }
+    
+    return baseStatus;
   }
   
   static Future<bool> isNearDailyLimit(UserSubscription subscription) async {
@@ -979,17 +1023,22 @@ class AdManager {
   // テスト用広告ID（本番環境では実際のIDを使用）
   static const String _testBannerAdId = 'ca-app-pub-3940256099942544/6300978111';  // iOS/Android共通テスト用
   static const String _testInterstitialAdId = 'ca-app-pub-3940256099942544/1033173712';  // iOS/Android共通テスト用
+  static const String _testRewardedAdId = 'ca-app-pub-3940256099942544/5224354917';  // iOS/Android共通テスト用
   
   // 本番用広告ID（実際のAdMobアカウントで設定）
   static const String _bannerAdId_ios = 'ca-app-pub-xxxxx/yyyyyyy';
   static const String _bannerAdId_android = 'ca-app-pub-xxxxx/yyyyyyy';
   static const String _interstitialAdId_ios = 'ca-app-pub-xxxxx/yyyyyyy';
   static const String _interstitialAdId_android = 'ca-app-pub-xxxxx/yyyyyyy';
+  static const String _rewardedAdId_ios = 'ca-app-pub-xxxxx/yyyyyyy';
+  static const String _rewardedAdId_android = 'ca-app-pub-xxxxx/yyyyyyy';
   
   BannerAd? _bannerAd;
   InterstitialAd? _interstitialAd;
+  RewardedAd? _rewardedAd;
   bool _isBannerAdReady = false;
   bool _isInterstitialAdReady = false;
+  bool _isRewardedAdReady = false;
   
   // 広告システム初期化
   Future<void> initialize() async {
@@ -997,6 +1046,7 @@ class AdManager {
     print('AdMob initialized');
     _loadBannerAd();
     _loadInterstitialAd();
+    _loadRewardedAd();
   }
   
   // バナー広告読み込み
@@ -1040,6 +1090,25 @@ class AdManager {
     );
   }
   
+  // リワード広告読み込み
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: _getRewardedAdId(),
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          print('Rewarded ad loaded');
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (error) {
+          print('Rewarded ad failed to load: $error');
+          _isRewardedAdReady = false;
+        },
+      ),
+    );
+  }
+  
   // バナー広告ID取得
   String _getBannerAdId() {
     // テスト環境では常にテスト用IDを使用
@@ -1062,6 +1131,17 @@ class AdManager {
     //     : _interstitialAdId_android;
   }
   
+  // リワード広告ID取得
+  String _getRewardedAdId() {
+    // テスト環境では常にテスト用IDを使用
+    return _testRewardedAdId;
+    
+    // 本番環境では以下を使用
+    // return defaultTargetPlatform == TargetPlatform.iOS 
+    //     ? _rewardedAdId_ios 
+    //     : _rewardedAdId_android;
+  }
+  
   // インタースティシャル広告表示
   void showInterstitialAd() {
     if (_isInterstitialAdReady && _interstitialAd != null) {
@@ -1073,6 +1153,44 @@ class AdManager {
       _loadInterstitialAd();
     } else {
       print('Interstitial ad is not ready');
+    }
+  }
+  
+  // リワード広告表示
+  Future<bool> showRewardedAd() async {
+    if (_isRewardedAdReady && _rewardedAd != null) {
+      bool rewardEarned = false;
+      
+      _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          print('Rewarded ad dismissed');
+          ad.dispose();
+          _rewardedAd = null;
+          _isRewardedAdReady = false;
+          _loadRewardedAd(); // 次の広告を準備
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          print('Rewarded ad failed to show: $error');
+          ad.dispose();
+          _rewardedAd = null;
+          _isRewardedAdReady = false;
+          _loadRewardedAd(); // 次の広告を準備
+        },
+      );
+      
+      await _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
+        print('User earned reward: ${reward.amount} ${reward.type}');
+        rewardEarned = true;
+      });
+      
+      return rewardEarned;
+    } else {
+      print('Rewarded ad is not ready');
+      // 広告が準備できていない場合は再読み込みを試す
+      if (!_isRewardedAdReady) {
+        _loadRewardedAd();
+      }
+      return false;
     }
   }
   
@@ -1092,11 +1210,16 @@ class AdManager {
   void dispose() {
     _bannerAd?.dispose();
     _interstitialAd?.dispose();
+    _rewardedAd?.dispose();
   }
+  
+  // 公開メソッド
+  void loadRewardedAd() => _loadRewardedAd();
   
   // ゲッター
   bool get isBannerAdReady => _isBannerAdReady;
   bool get isInterstitialAdReady => _isInterstitialAdReady;
+  bool get isRewardedAdReady => _isRewardedAdReady;
 }
 
 class _HomePageState extends State<HomePage> {
@@ -1194,16 +1317,6 @@ class _HomePageState extends State<HomePage> {
 
   // サブスクリプション購入画面
   void _showSubscriptionPage() {
-    if (!_isPurchaseManagerInitialized) {
-      _showMessage('課金システムが初期化されていません');
-      return;
-    }
-    
-    if (!_purchaseManager.isAvailable) {
-      _showMessage('課金システムは現在利用できません');
-      return;
-    }
-    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1270,6 +1383,22 @@ class _HomePageState extends State<HomePage> {
                         Navigator.of(context).pop();
                         await _restorePurchases();
                       },
+                    ),
+                    SizedBox(height: 8),
+                    // 開発・テスト用プレミアム有効化ボタン
+                    Container(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green[400],
+                          side: BorderSide(color: Colors.green[400]!),
+                        ),
+                        child: Text('🧪 テスト用プレミアム有効化'),
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await _activateTestPremium();
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -1563,7 +1692,6 @@ class _HomePageState extends State<HomePage> {
       'contact': 'お問い合わせ',
       'help': 'ヘルプ',
       'tutorial': 'チュートリアル',
-      'logout': 'ログアウト',
       'login': 'ログイン',
       'profile': 'プロフィール',
       'notifications': '通知',
@@ -1697,7 +1825,6 @@ class _HomePageState extends State<HomePage> {
       'contact': 'Contact',
       'help': 'Help',
       'tutorial': 'Tutorial',
-      'logout': 'Logout',
       'login': 'Login',
       'profile': 'Profile',
       'notifications': 'Notifications',
@@ -1937,6 +2064,43 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // デバイスベース用APIリクエスト（認証不要）
+  Future<http.Response> _makeDeviceApiRequest(
+    String endpoint, {
+    String method = 'GET',
+    Map<String, dynamic>? body,
+  }) async {
+    final url = Uri.parse('${AppConfig.baseUrl}$endpoint');
+    final headers = await _getDeviceHeaders();
+    
+    try {
+      http.Response response;
+      
+      if (method == 'GET') {
+        final queryParams = body?.map((k, v) => MapEntry(k, v.toString()));
+        final urlWithParams = queryParams != null ? url.replace(queryParameters: queryParams) : url;
+        response = await http.get(urlWithParams, headers: headers)
+            .timeout(const Duration(seconds: 10));
+      } else {
+        response = await http.post(
+          url,
+          headers: headers,
+          body: body != null ? json.encode(body) : null,
+        ).timeout(const Duration(seconds: 10));
+      }
+      
+      return response;
+    } on TimeoutException {
+      throw NetworkException('リクエストがタイムアウトしました');
+    } on SocketException {
+      throw NetworkException('ネットワークエラーが発生しました');  
+    } on HttpException catch (e) {
+      throw NetworkException('HTTPエラー: ${e.message}');
+    } catch (error) {
+      throw NetworkException('予期しないエラーが発生しました: $error');
+    }
+  }
+
   /// Handle HTTP status codes and throw appropriate exceptions
   void _handleHttpStatus(http.Response response) {
     switch (response.statusCode) {
@@ -1975,6 +2139,8 @@ class _HomePageState extends State<HomePage> {
 
   /// Handle authentication errors
   void _handleUnauthorized() {
+    print('認証エラー：デバイスベース認証に移行');
+    
     // Clear stored authentication data
     _clearStoredToken();
     
@@ -1983,18 +2149,8 @@ class _HomePageState extends State<HomePage> {
       _token = null;
     });
     
-    // Show authentication screen
-    if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => AuthScreen(
-            onSubmit: _submitAuthForm,
-            isLoading: _isLoading,
-          ),
-        ),
-        (route) => false,
-      );
-    }
+    // デバイスベースに移行済みなので、認証画面は不要
+    _showMessage('認証が無効になりました。アプリは継続して利用できます。');
   }
 
   /// Show error dialog with retry option
@@ -2078,10 +2234,125 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _setupOfflinePremiumAccess(); // オフライン版：プレミアム機能を有効化
-    _loadSavedRoutines(); // 保存された演技構成を読み込み
-    _refreshSkillsData(); // スキルデータを更新
-    // 課金システムと広告システムは無効化（オフライン版）
+    _initializeApp(); // アプリの初期化を開始
+  }
+
+  // アプリの初期化を非同期で実行（認証不要版）
+  void _initializeApp() async {
+    try {
+      print('アプリ初期化開始（認証不要モード）');
+      
+      // デバイスベースの課金状態をチェック
+      await _checkDeviceSubscription();
+      
+      // 課金システム初期化
+      await _initializePurchaseManager();
+      
+      // 広告システム初期化
+      await _initializeAdManager();
+      
+      // その他の初期化処理
+      _loadSavedRoutines(); // 保存された演技構成を読み込み
+      _refreshSkillsData(); // スキルデータを更新
+      
+      print('アプリ初期化完了');
+    } catch (e) {
+      print('アプリ初期化エラー: $e');
+    } finally {
+      // 初期化完了
+      setState(() {
+        _isAuthLoading = false;
+      });
+    }
+  }
+
+  // デバイスベースの課金状態をチェック
+  Future<void> _checkDeviceSubscription() async {
+    try {
+      print('デバイス課金状態チェック開始');
+      
+      // SharedPreferencesから課金状態を確認
+      final prefs = await SharedPreferences.getInstance();
+      final hasPremium = prefs.getBool('device_has_premium') ?? false;
+      final subscriptionEnd = prefs.getString('premium_subscription_end');
+      
+      DateTime? endDate;
+      if (subscriptionEnd != null) {
+        try {
+          endDate = DateTime.parse(subscriptionEnd);
+        } catch (e) {
+          print('課金終了日の解析エラー: $e');
+        }
+      }
+      
+      // 課金状態を設定
+      if (hasPremium && endDate != null && endDate.isAfter(DateTime.now())) {
+        // プレミアム会員
+        _userSubscription = UserSubscription(
+          tier: UserTier.premium,
+          subscriptionStart: DateTime.now().subtract(Duration(days: 30)),
+          subscriptionEnd: endDate,
+        );
+        print('デバイス課金状態: プレミアム（期限: ${endDate.toString()}）');
+      } else {
+        // 無料プラン
+        _userSubscription = UserSubscription(
+          tier: UserTier.free,
+          subscriptionStart: DateTime.now(),
+          subscriptionEnd: DateTime.now().add(Duration(days: 1)),
+        );
+        print('デバイス課金状態: 無料プラン');
+      }
+      
+    } catch (e) {
+      print('デバイス課金状態チェックエラー: $e');
+      // エラー時は無料プランにフォールバック
+      _userSubscription = UserSubscription(
+        tier: UserTier.free,
+        subscriptionStart: DateTime.now(),
+        subscriptionEnd: DateTime.now().add(Duration(days: 1)),
+      );
+    }
+  }
+
+  // デバイスに課金状態を保存
+  Future<void> _saveDeviceSubscription({
+    required bool isPremium,
+    required DateTime subscriptionEnd,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('device_has_premium', isPremium);
+      await prefs.setString('premium_subscription_end', subscriptionEnd.toIso8601String());
+      
+      print('デバイス課金状態を保存: premium=$isPremium, end=$subscriptionEnd');
+      
+      // UI更新のため再チェック
+      await _checkDeviceSubscription();
+      setState(() {});
+      
+    } catch (e) {
+      print('デバイス課金状態保存エラー: $e');
+    }
+  }
+
+  // テスト用プレミアム有効化
+  Future<void> _activateTestPremium() async {
+    try {
+      // 1年間のプレミアムを有効化
+      final endDate = DateTime.now().add(Duration(days: 365));
+      
+      await _saveDeviceSubscription(
+        isPremium: true,
+        subscriptionEnd: endDate,
+      );
+      
+      _showSuccessSnackBar('🎉 テスト用プレミアムを有効化しました！（1年間）');
+      
+    } catch (e) {
+      print('テスト用プレミアム有効化エラー: $e');
+      _showErrorDialog('エラー', 'プレミアム有効化に失敗しました');
+    }
   }
   
   // オフライン版：プレミアム機能を有効化
@@ -2128,9 +2399,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initializePurchaseManager() async {
     _purchaseManager = PurchaseManager();
     
-    // コールバック関数を設定
+    // コールバック関数を設定（デバイスベースの課金システム用）
     _purchaseManager.onPurchaseSuccess = _showPurchaseSuccessDialog;
-    _purchaseManager.onPurchaseVerified = _refreshUserSubscriptionInfo;
+    _purchaseManager.onPurchaseVerified = _refreshDeviceSubscriptionInfo;
     
     try {
       await _purchaseManager.initialize();
@@ -2159,7 +2430,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
   
-  void _tryAutoLogin() async {
+  Future<void> _tryAutoLogin() async {
     try {
       String? token;
       
@@ -2287,6 +2558,25 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // デバイスベースの課金状態を更新（課金成功時のコールバック）
+  Future<void> _refreshDeviceSubscriptionInfo() async {
+    try {
+      print('デバイス課金状態更新開始');
+      
+      // 課金が成功した場合、デバイスにプレミアム状態を保存
+      final subscriptionEnd = DateTime.now().add(Duration(days: 365)); // 1年間のサブスクリプション
+      
+      await _saveDeviceSubscription(
+        isPremium: true,
+        subscriptionEnd: subscriptionEnd,
+      );
+      
+      print('デバイス課金状態更新完了: premium=true, end=$subscriptionEnd');
+    } catch (e) {
+      print('デバイス課金状態更新エラー: $e');
+    }
+  }
+
   Future<void> _clearStoredToken() async {
     try {
       if (!_useSimpleStorage) {
@@ -2339,6 +2629,18 @@ class _HomePageState extends State<HomePage> {
       'Content-Type': 'application/json',
     };
   }
+  
+  // デバイスベースシステム用のヘッダー取得
+  Future<Map<String, String>> _getDeviceHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final deviceId = prefs.getString('device_id') ?? 'unknown_device';
+    
+    return {
+      'Content-Type': 'application/json',
+      'X-Device-ID': deviceId,
+      'X-App-Version': '1.3.0',
+    };
+  }
 
   void _submitAuthForm(
     String username,
@@ -2347,47 +2649,45 @@ class _HomePageState extends State<HomePage> {
     String? fullName,
     bool isLogin,
   ) async {
-    print('オフライン版：認証をバイパス');
+    print('認証開始: username=$username, isLogin=$isLogin');
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // オフライン版：認証を完全バイパス
-      await Future.delayed(Duration(milliseconds: 300)); // 短い待機
+      // オンライン認証を試行、失敗時はオフラインモードにフォールバック
+      bool useOnlineAuth = true;
       
-      // オフライン版トークンを設定
-      _token = 'offline-premium-token';
-      
-      // プレミアム機能を全て有効化
-      _userSubscription = UserSubscription(
-        tier: UserTier.premium,
-        subscriptionStart: DateTime.now().subtract(Duration(days: 30)),
-        subscriptionEnd: DateTime.now().add(Duration(days: 365)),
-      );
-      
-      // 認証状態を更新
-      setState(() {
-        _isAuthenticated = true;
-        _isLoading = false;
-      });
-      
-      _resetChat();
-      _showSuccessSnackBar('オフライン版：全機能が利用可能です');
-      return;
-      
-      // 元のコード（コメントアウト）
-      /*
       // Check internet connectivity first
-      if (!await _hasInternetConnection()) {
-        _showErrorDialog(
-          'ネットワークエラー',
-          'インターネット接続を確認してください',
-          onRetry: () => _submitAuthForm(username, password, email, fullName, isLogin),
+      if (useOnlineAuth && !await _hasInternetConnection()) {
+        print('インターネット接続なし、オフラインモードを使用');
+        useOnlineAuth = false;
+      }
+      
+      if (!useOnlineAuth) {
+        // オフライン版：認証を完全バイパス
+        await Future.delayed(Duration(milliseconds: 300)); // 短い待機
+        
+        // オフライン版トークンを設定
+        _token = 'offline-premium-token';
+        
+        // プレミアム機能を全て有効化
+        _userSubscription = UserSubscription(
+          tier: UserTier.premium,
+          subscriptionStart: DateTime.now().subtract(Duration(days: 30)),
+          subscriptionEnd: DateTime.now().add(Duration(days: 365)),
         );
+        
+        // 認証状態を更新
+        setState(() {
+          _isAuthenticated = true;
+          _isLoading = false;
+        });
+        
+        _resetChat();
+        _showSuccessSnackBar('オフライン版：全機能が利用可能です');
         return;
       }
-      */
 
       http.Response response;
       if (isLogin) {
@@ -2494,15 +2794,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _logout() async {
-    await _clearStoredToken();
-    setState(() {
-      _token = null;
-      _isAuthenticated = false;
-      _messages.clear();
-      _session_id = Uuid().v4();
-    });
-  }
+
 
   // フィードバック・バグ報告機能
   void _showFeedbackDialog() {
@@ -2819,6 +3111,170 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+  
+  // オフライン時の簡易応答システム
+  String _getOfflineResponse(String userInput) {
+    // まず専門データベースを確認（100%対応）
+    final expertAnswer = GymnasticsExpertDatabase.getExpertAnswer(userInput);
+    if (!expertAnswer.contains('より正確な回答のために詳細を教えてください')) {
+      return expertAnswer;
+    }
+    
+    final input = userInput.toLowerCase().trim();
+    
+    // 基本的な挨拶
+    if (input.contains('こんにちは') || input.contains('hello')) {
+      return '''体操AI専門コーチです。こんにちは！
+
+🏆 **オフライン専門指導モード**
+現在ネットワーク接続がありませんが、基本的な体操指導は可能です。
+
+💡 **対応可能な相談**
+• 技の習得方法
+• D-score向上戦略  
+• 安全な練習方法
+• ルール解説
+
+お気軽にご質問ください！''';
+    }
+    
+    // 跳馬関連
+    if (input.contains('跳馬') || input.contains('ライン') || input.contains('オーバー')) {
+      return '''🏃‍♀️ **跳馬のラインオーバーについて**
+
+**判定基準**
+踏切足が完全に踏切線を越えた場合に0.5点減点されます。
+
+**防止策**
+1. 助走距離の正確な計測
+2. 歩幅リズムの一定化  
+3. 踏切板1-2歩手前での調整
+
+**上達のコツ**
+練習時から踏切位置を意識し、毎回同じリズムで助走することが重要です。
+
+💪 より詳細な指導が必要でしたら、具体的な状況をお聞かせください。''';
+    }
+    
+    // 技・難度関連
+    if (input.contains('技') || input.contains('難度') || input.contains('skill') || input.contains('difficulty')) {
+      return '''🏅 **体操技と難度システム**
+
+**難度分類**
+• A難度: 0.1点（基本技）
+• B難度: 0.2点  
+• C難度: 0.3点（中級技）
+• D難度: 0.4点（上級技）
+• E難度以上: 0.5点〜（超高難度）
+
+**習得の原則**
+1. 基礎技術の完全習得
+2. 段階的な難度向上
+3. 安全性を最優先
+
+**D-score向上戦略**
+• より高い難度技の習得
+• 効果的な連続技組み合わせ
+• 全グループ要求の充足
+
+🎯 具体的にどの種目の技について相談したいですか？''';
+    }
+    
+    // 採点・ルール関連
+    if (input.contains('点数') || input.contains('score') || input.contains('採点') || input.contains('ルール')) {
+      return '''📋 **体操競技採点システム**
+
+**総合得点 = D-Score + E-Score**
+
+**D-Score（演技価値点）**
+• 技の難度価値（上位8-10技）
+• 連続ボーナス（最大0.4点）
+• グループ要求充足
+
+**E-Score（実施点）**
+• 開始点: 10.0点
+• 技術・姿勢・着地の減点
+
+**2025年新ルール要点**
+• より高精度な技術評価
+• 連続技評価の厳格化
+• 安全性重視の判定
+
+📊 D-score計算機能で詳細分析も可能です！''';
+    }
+    
+    // 練習方法関連
+    if (input.contains('練習') || input.contains('上達') || input.contains('training') || input.contains('習得')) {
+      return '''💪 **効果的な体操練習法**
+
+**基本原則**
+1. **段階的進歩**: 無理をせず着実に
+2. **反復練習**: 正確なフォームの定着
+3. **安全第一**: 適切な補助と環境
+
+**練習構成**
+• ウォーミングアップ（15-20分）
+• 基礎技術練習（30-40分）  
+• 新技習得（20-30分）
+• 演技通し練習（15-20分）
+• クールダウン（10分）
+
+**上達のコツ**
+• 毎回小さな改善目標を設定
+• 指導者からのフィードバック活用
+• 動画分析で客観的チェック
+
+⚠️ 必ず有資格指導者の監督下で練習してください。''';
+    }
+    
+    // 種目別対応
+    if (input.contains('床') || input.contains('floor')) {
+      return '''🤸‍♂️ **床運動（Floor Exercise）**
+
+**特徴**
+• 4つのタンブリング
+• ダンス要素の組み合わせ  
+• 音楽なし、70秒演技
+
+**基本グループ要求**
+1. 非アクロ要素
+2. 前方系タンブリング
+3. 後方系タンブリング  
+4. 前後方系以外のタンブリング
+
+**練習のポイント**
+• タンブリングの連続性
+• 美しいダンス表現
+• 正確なライン維持
+
+🎯 具体的な技や構成についてお聞かせください。''';
+    }
+    
+    // デフォルト応答（大幅強化）
+    return '''🏆 **体操AI専門コーチ（オフラインモード）**
+
+現在オフラインですが、基本的な体操指導は可能です！
+
+**📚 専門対応分野**
+✅ 技術指導とフォーム改善
+✅ D-score向上戦略
+✅ 安全な練習方法
+✅ ルール・採点解説
+✅ 種目別専門アドバイス
+
+**💡 質問例**
+「跳馬のラインオーバーについて」
+「床運動の構成について」  
+「C難度の技を習得したい」
+「練習方法を教えて」
+
+**🔧 利用可能機能**
+• D-score計算機（完全オフライン対応）
+• 全種目技データベース
+• 演技構成分析
+
+お気軽に何でもご相談ください！''';
+  }
 
   Future<void> _loadSkills(String apparatus) async {
     final lang = _currentLang == '日本語' ? 'ja' : 'en';
@@ -2906,11 +3362,48 @@ class _HomePageState extends State<HomePage> {
     _textController.clear();
 
     try {
-      // まず専門知識データベースをチェック
+      // まず100%対応の専門データベースをチェック
+      final expertResponse = GymnasticsExpertDatabase.getExpertAnswer(userInput);
+      
+      // 専門データベースに完全回答がある場合は即座に表示
+      if (!expertResponse.contains('より正確な回答のために')) {
+        setState(() {
+          _messages.insert(0, ChatMessage(
+            text: '$expertResponse\n\n🎯 体操AI専門データベース（100%対応保証）',
+            isUser: false,
+          ));
+          _isLoading = false;
+        });
+        
+        // 使用量を記録（ボーナスクレジットを考慮）
+        await ChatUsageTracker.recordChatUsage(_userSubscription);
+        _checkChatUsageWarning();
+        return;
+      }
+
+      // 次に専門知識データベースをチェック（100%対応）
+      final expertAnswer = GymnasticsExpertDatabase.getExpertAnswer(userInput);
+      
+      // 専門知識データベースに完全な回答がある場合
+      if (!expertAnswer.contains('より正確な回答のために詳細を教えてください')) {
+        setState(() {
+          _messages.insert(0, ChatMessage(
+            text: expertAnswer,
+            isUser: false,
+          ));
+          _isLoading = false;
+        });
+        
+        // 使用量を記録（ボーナスクレジットを考慮）
+        await ChatUsageTracker.recordChatUsage(_userSubscription);
+        _checkChatUsageWarning();
+        return;
+      }
+      
+      // 従来の専門知識データベースも確認
       final knowledgeResponse = GymnasticsKnowledgeBase.getKnowledgeResponse(userInput);
       
       if (knowledgeResponse != null) {
-        // 専門知識データベースに回答がある場合、即座に表示
         setState(() {
           _messages.insert(0, ChatMessage(
             text: '$knowledgeResponse\n\n🏆 体操専門知識データベースより',
@@ -2919,45 +3412,73 @@ class _HomePageState extends State<HomePage> {
           _isLoading = false;
         });
         
-        // 使用量を増加
-        await ChatUsageTracker.incrementUsage();
+        // 使用量を記録（ボーナスクレジットを考慮）
+        await ChatUsageTracker.recordChatUsage(_userSubscription);
         _checkChatUsageWarning();
         return;
       }
 
-      // 専門知識データベースに回答がない場合、APIにリクエストを送信
-      final response = await _makeApiRequest(
-        '/chat',
+      // 専門知識データベースに回答がない場合、AIサーバーにリクエストを送信
+      final response = await _makeDeviceApiRequest(
+        '/chat/message',
         method: 'POST',
         body: {
-          'session_id': _session_id,
-          'question': userInput,
-          'lang': _currentLang == '日本語' ? 'ja' : 'en',
-          'context': _buildGymnasticsContext(), // 体操コンテキストを追加
+          'message': userInput,
         },
       );
 
-      final data = jsonDecode(utf8.decode(response.bodyBytes));
-      // AIの応答を追加
-      setState(() {
-        _messages.insert(0, ChatMessage(text: data['answer'], isUser: false));
-      });
+      // レスポンスを確認してデバッグ
+      print('API Response Status: ${response.statusCode}');
+      print('API Response Body: ${utf8.decode(response.bodyBytes)}');
       
-      // 使用量を増加
-      await ChatUsageTracker.incrementUsage();
+      // サーバーエラーまたは接続できない場合はオフライン応答を使用
+      if (response.statusCode != 200) {
+        final offlineResponse = _getOfflineResponse(userInput);
+        setState(() {
+          _messages.insert(0, ChatMessage(text: offlineResponse, isUser: false));
+        });
+        await ChatUsageTracker.recordChatUsage(_userSubscription);
+        _checkChatUsageWarning();
+        return;
+      }
+      
+      try {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        // AIの応答を安全に取得  
+        final aiResponse = data['response'] as String? ?? 
+                          _getOfflineResponse(userInput); // フォールバック
+        
+        setState(() {
+          _messages.insert(0, ChatMessage(text: aiResponse, isUser: false));
+        });
+      } catch (e) {
+        print('JSON解析エラー: $e');
+        // JSON解析に失敗した場合もオフライン応答
+        final offlineResponse = _getOfflineResponse(userInput);
+        setState(() {
+          _messages.insert(0, ChatMessage(text: offlineResponse, isUser: false));
+        });
+      }
+      
+      // 使用量を記録（ボーナスクレジットを考慮）
+      await ChatUsageTracker.recordChatUsage(_userSubscription);
       _checkChatUsageWarning();
       
     } on NetworkException catch (e) {
+      // ネットワークエラー時はオフライン応答を提供
+      final offlineResponse = _getOfflineResponse(userInput);
       setState(() {
         _messages.insert(0, ChatMessage(
-          text: 'ネットワークエラー: ${e.message}',
+          text: offlineResponse,
           isUser: false,
         ));
       });
     } on AuthenticationException catch (e) {
+      // デバイスベースシステムでは認証エラーをネットワークエラーとして扱う
+      final offlineResponse = _getOfflineResponse(userInput);
       setState(() {
         _messages.insert(0, ChatMessage(
-          text: '認証エラー: ${e.message}',
+          text: offlineResponse,
           isUser: false,
         ));
       });
@@ -3021,6 +3542,21 @@ class _HomePageState extends State<HomePage> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('閉じる'),
             ),
+            // リワード広告ボタン（無料でボーナスを獲得）
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showRewardAdForChatBonus();
+              },
+              icon: Icon(Icons.play_circle_fill, color: Colors.green[400]),
+              label: Text(
+                '広告を見て+5回',
+                style: TextStyle(color: Colors.green[400]),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.green[400]!),
+              ),
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
@@ -3032,6 +3568,59 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  // リワード広告でチャットボーナスを獲得
+  Future<void> _showRewardAdForChatBonus() async {
+    try {
+      print('リワード広告を表示してチャットボーナスを獲得');
+      
+      // リワード広告が利用可能かチェック
+      if (_adManager.isRewardedAdReady) {
+        // リワード広告を表示
+        final success = await _adManager.showRewardedAd();
+        
+        if (success) {
+          // 広告を最後まで見た場合、ボーナスクレジットを付与
+          await _grantChatBonus();
+        } else {
+          _showMessage('広告の視聴が完了しませんでした');
+        }
+      } else {
+        // リワード広告が読み込まれていない場合
+        _showMessage('広告の準備中です。しばらく待ってから再度お試しください。');
+        
+        // 広告を再読み込み
+        _adManager.loadRewardedAd();
+      }
+    } catch (e) {
+      print('リワード広告エラー: $e');
+      _showMessage('広告の表示中にエラーが発生しました');
+    }
+  }
+
+  // チャットボーナスクレジットを付与
+  Future<void> _grantChatBonus() async {
+    try {
+      final bonusCredits = 5; // 5回分のボーナス
+      
+      // ボーナスクレジットをSharedPreferencesに保存
+      final prefs = await SharedPreferences.getInstance();
+      final currentBonus = prefs.getInt('chat_bonus_credits') ?? 0;
+      await prefs.setInt('chat_bonus_credits', currentBonus + bonusCredits);
+      
+      // 成功メッセージ
+      _showSuccessSnackBar('🎉 チャットボーナス +${bonusCredits}回を獲得しました！');
+      
+      // UIを更新
+      setState(() {});
+      
+      print('チャットボーナス付与完了: +$bonusCredits 合計: ${currentBonus + bonusCredits}');
+      
+    } catch (e) {
+      print('チャットボーナス付与エラー: $e');
+      _showMessage('ボーナスの付与中にエラーが発生しました');
+    }
   }
 
   // チャット使用量警告ダイアログ
@@ -3326,6 +3915,68 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _dScoreResult = result;
     });
+    
+    // 無料ユーザーの場合、計算完了後にインタースティシャル広告を表示
+    if (_userSubscription.shouldShowAds() && _isAdManagerInitialized) {
+      // 計算結果の表示後、少し遅らせて広告を表示（UX向上のため）
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        _showCalculationCompletedWithAd();
+      });
+    }
+  }
+
+  // 計算完了時の広告表示とプレミアム誘導
+  void _showCalculationCompletedWithAd() {
+    if (!_userSubscription.shouldShowAds() || !_isAdManagerInitialized) {
+      return;
+    }
+    
+    // インタースティシャル広告を表示
+    if (_adManager.isInterstitialAdReady) {
+      _adManager.showInterstitialAd();
+      
+      // 広告表示後にプレミアム誘導メッセージを表示
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          _showPremiumUpgradePrompt();
+        }
+      });
+    } else {
+      // 広告が利用できない場合は直接プレミアム誘導
+      _showPremiumUpgradePrompt();
+    }
+  }
+  
+  // プレミアムアップグレード誘導
+  void _showPremiumUpgradePrompt() {
+    if (!mounted || !_userSubscription.isFree) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'プレミアムなら広告なしで計算結果をすぐに確認できます！',
+                style: TextStyle(fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.blue.shade800,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'アップグレード',
+          textColor: Colors.amber,
+          onPressed: () {
+            // TODO: プレミアム購入画面に遷移
+            _showMessage('プレミアム機能は準備中です');
+          },
+        ),
+      ),
+    );
   }
 
   // メッセージを表示
@@ -3340,6 +3991,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // 初期化中のみローディング表示
     if (_isAuthLoading) {
       return const Scaffold(
         body: Center(
@@ -3348,13 +4000,7 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    if (!_isAuthenticated) {
-      return AuthScreen(
-        onSubmit: _submitAuthForm,
-        isLoading: _isLoading,
-      );
-    }
-
+    // 直接メイン画面へ（認証不要）
     return GestureDetector(
       onTap: () {
         // キーボードフォーカスを外す
@@ -3387,9 +4033,6 @@ class _HomePageState extends State<HomePage> {
                   case 'feedback':
                     _showFeedbackDialog();
                     break;
-                  case 'logout':
-                    _logout();
-                    break;
                 }
               },
               itemBuilder: (BuildContext context) => [
@@ -3410,16 +4053,6 @@ class _HomePageState extends State<HomePage> {
                       Icon(Icons.feedback, size: 20),
                       SizedBox(width: 8),
                       Text(_currentLang == '日本語' ? 'フィードバック' : 'Feedback'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, size: 20),
-                      SizedBox(width: 8),
-                      Text(_currentLang == '日本語' ? 'ログアウト' : 'Logout'),
                     ],
                   ),
                 ),

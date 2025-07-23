@@ -116,8 +116,12 @@ def setup_vectorstore(lang="en"):
             print(f"PyPDFLoaderでの読み込みも失敗しました: {e2}")
             raise Exception(f"PDFファイルの読み込みに失敗しました: {pdf_path}. エラー: {str(e2)}")
 
-    # テキストをチャンクに分割（より細かく）
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=150)
+    # テキストをチャンクに分割（体操ルールブック用に最適化）
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1200,  # 技の詳細説明が含まれるよう大きめに
+        chunk_overlap=300,  # 文脈保持のためオーバーラップを増加
+        separators=["\n\n", "\n", "。", ".", " ", ""]  # 日本語・英語両対応
+    )
     texts = text_splitter.split_documents(documents)
 
     if not texts:
@@ -156,19 +160,24 @@ def create_conversational_chain(vectorstore, lang="ja"):
     """
     会話の文脈を考慮し、ルールブックから情報を検索して回答を生成するチェーンを作成する。
     """
-    # 1. LLMの定義
-    llm = ChatOpenAI(model="gpt-4o", temperature=0.7)
+    # 1. LLMの定義（体操ルール専用に最適化）
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",  # コスト効率とパフォーマンスのバランス
+        temperature=0.3,      # 正確性重視で低めに設定
+        max_tokens=2000       # 詳細な回答が可能な長さ
+    )
 
     # 2. プロンプトの定義
     prompt_file = f"prompts/rulebook_chat_{lang}.txt"
     template = load_prompt_template(prompt_file)
     prompt = PromptTemplate(template=template, input_variables=["context", "chat_history", "question"])
 
-    # 3. retrieverの定義（検索パラメータを大幅に改善）
+    # 3. retrieverの定義（体操ルールブック検索に最適化）
     retriever = vectorstore.as_retriever(
-        search_type="similarity",
+        search_type="mmr",  # Maximum Marginal Relevance で多様性も考慮
         search_kwargs={
-            'k': 20,  # 取得する文書数を増やす
+            'k': 25,           # より多くのドキュメントから選択
+            'lambda_mult': 0.7 # 関連性と多様性のバランス調整
         }
     )
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ad-services-config>
+    <!-- Configure Ad Privacy API features -->
+    <privacy-sandbox-enabled>true</privacy-sandbox-enabled>
+    <topics-enabled>true</topics-enabled>
+    <protected-audiences-enabled>true</protected-audiences-enabled>
+    <attribution-reporting-enabled>true</attribution-reporting-enabled>
+</ad-services-config>

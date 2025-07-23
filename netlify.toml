@@ -1,0 +1,60 @@
+[build]
+  # ビルドコマンドとパブリッシュディレクトリ
+  command = "flutter build web --release"
+  publish = "build/web"
+  
+  # 環境変数
+  [build.environment]
+    FLUTTER_WEB = "true"
+
+# Netlify デプロイ設定
+[context.production]
+  command = "flutter build web --release"
+
+[context.deploy-preview]
+  command = "flutter build web --release"
+
+# Single Page Application用のリダイレクト設定
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# セキュリティヘッダー
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# API 用のCORS設定（プリフライトリクエスト対応）
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
+# 静的ファイルのキャッシュ設定
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/favicon.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+# PWA manifest.json の適切なContent-Type
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"

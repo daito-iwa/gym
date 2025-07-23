@@ -14,6 +14,12 @@ import datetime
 import hashlib
 import json
 import os
+import csv
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
 
 app = FastAPI(title="Gymnastics AI API", version="1.0.0")
 
@@ -121,6 +127,219 @@ def get_user_daily_chat_count(user_id: str) -> int:
     # 実際の実装では日付を考慮したカウントが必要
     return 0  # 簡易的に0を返す
 
+# グローバル変数でskills_jaデータを保持
+SKILLS_JA_DATA = None
+
+def load_skills_ja_database():
+    """skills_ja.csvファイルを読み込んでデータベースを構築する（堅牢性強化）"""
+    global SKILLS_JA_DATA
+    if SKILLS_JA_DATA is not None:
+        return SKILLS_JA_DATA
+    
+    try:
+        csv_path = os.path.join("data", "skills_ja.csv")
+        
+        # pandasが利用可能な場合は使用、そうでなければ標準csvモジュールを使用
+        if PANDAS_AVAILABLE:
+            df = pd.read_csv(csv_path)
+            rows = df.to_dict('records')
+        else:
+            # 標準csvモジュールでフォールバック
+            with open(csv_path, 'r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                rows = list(reader)
+        
+        # データを辞書形式で整理
+        skills_db = {
+            'by_name': {},
+            'by_apparatus': {},
+            'by_group': {},
+            'by_difficulty': {},
+            'total_count': 0
+        }
+        
+        for row in rows:
+            try:
+                apparatus = row['apparatus']
+                name = row['name']
+                group = row['group']
+                value_letter = row['value_letter']
+                
+                # 入力データの検証
+                if not all([apparatus, name, group, value_letter]):
+                    print(f"Warning: Incomplete data for row: {row}")
+                    continue
+                
+                # 難度値の処理（文字難度 or 数値難度）
+                if len(value_letter) == 1 and value_letter in 'ABCDEFGHIJ':
+                    # 文字難度（A=0.1, B=0.2, ..., J=1.0）
+                    value_points = (ord(value_letter) - ord('A') + 1) / 10.0
+                elif value_letter.replace('.', '').isdigit():
+                    # 数値難度（そのまま使用）
+                    value_points = float(value_letter)
+                else:
+                    print(f"Warning: Invalid difficulty value: {value_letter}")
+                    continue
+                
+                skill_data = {
+                    'apparatus': apparatus,
+                    'name': name,
+                    'group': group,
+                    'value_letter': value_letter,
+                    'value_points': value_points
+                }
+                
+                # 名前による検索用（重複チェック）
+                name_key = name.lower()
+                if name_key in skills_db['by_name']:
+                    print(f"Warning: Duplicate skill name: {name}")
+                skills_db['by_name'][name_key] = skill_data
+                
+                # 種目別
+                if apparatus not in skills_db['by_apparatus']:
+                    skills_db['by_apparatus'][apparatus] = []
+                skills_db['by_apparatus'][apparatus].append(skill_data)
+                
+                # グループ別
+                group_key = f"{apparatus}_{group}"
+                if group_key not in skills_db['by_group']:
+                    skills_db['by_group'][group_key] = []
+                skills_db['by_group'][group_key].append(skill_data)
+                
+                # 難度別
+                if value_letter not in skills_db['by_difficulty']:
+                    skills_db['by_difficulty'][value_letter] = []
+                skills_db['by_difficulty'][value_letter].append(skill_data)
+                
+                skills_db['total_count'] += 1
+                
+            except Exception as row_error:
+                print(f"Error processing row {row}: {row_error}")
+                continue
+        
+        print(f"Successfully loaded {skills_db['total_count']} skills from database")
+        SKILLS_JA_DATA = skills_db
+        return skills_db
+        
+    except FileNotFoundError:
+        print(f"Error: skills_ja.csv file not found at {csv_path}")
+        return None
+    except Exception as e:
+        print(f"Error loading skills_ja.csv: {e}")
+        return None
+
+def search_skill_by_name(skill_name: str) -> dict:
+    """技名で技データを検索する"""
+    skills_db = load_skills_ja_database()
+    if not skills_db:
+        return None
+    
+    # 完全一致検索
+    skill_lower = skill_name.lower()
+    if skill_lower in skills_db['by_name']:
+        return skills_db['by_name'][skill_lower]
+    
+    # 部分一致検索
+    for name, data in skills_db['by_name'].items():
+        if skill_name.lower() in name or name in skill_name.lower():
+            return data
+    
+    return None
+
+def get_apparatus_skills(apparatus: str, limit: int = 20) -> List[dict]:
+    """特定の種目の技リストを取得する"""
+    skills_db = load_skills_ja_database()
+    if not skills_db or apparatus not in skills_db['by_apparatus']:
+        return []
+    
+    return skills_db['by_apparatus'][apparatus][:limit]
+
+def get_difficulty_info(value_letter: str) -> str:
+    """難度値の詳細情報を返す"""
+    difficulty_map = {
+        'A': '0.1点（基本技）',
+        'B': '0.2点（初級技）', 
+        'C': '0.3点（中級技）',
+        'D': '0.4点（上級技）',
+        'E': '0.5点（高難度技）',
+        'F': '0.6点（最高難度技）',
+        'G': '0.7点（超高難度技）',
+        'H': '0.8点（最高レベル技）',
+        'I': '0.9点（世界トップ技）',
+        'J': '1.0点（最超高難度技）'
+    }
+    return difficulty_map.get(value_letter, f'{value_letter}難度')
+
+# FIG公式減点表データベース（9-4条 E審判の減点項目）
+FIG_DEDUCTION_TABLE = {
+    "小欠点_0.10": [
+        "あいまいな姿勢（かがみ込み、屈身、伸身）",
+        "手や握り手の位置調整・修正（毎回）",
+        "倒立で歩く、またはとぶ（1歩につき）",
+        "ゆか、マット、または器械に触れる",
+        "腕、脚をまげる、脚を開く（軽微）",
+        "終末姿勢の姿勢不良、修正",
+        "申返りでの脚の開き（肩幅以下）",
+        "着地で脚を開く（肩幅以下）",
+        "着地でぐらつく、小さく足をずらす、手を回す"
+    ],
+    "中欠点_0.30": [
+        "あいまいな姿勢（かがみ込み、屈身、伸身）（程度が大きい）",
+        "演技中に補助者が選手に触れる",
+        "腕、脚をまげる、脚を開く（中程度）",
+        "終末姿勢の姿勢不良、修正（程度が大きい）",
+        "申返りでの脚の開き（肩幅を超える）",
+        "着地で脚を開く（肩幅を超える）"
+    ],
+    "大欠点_0.50": [
+        "ゆか、マット、または器械にぶつかる",
+        "落下なしに演技を中断する",
+        "腕、脚をまげる、脚を開く（重大）"
+    ]
+}
+
+def search_deduction_info(query: str) -> str:
+    """減点項目を検索する"""
+    query_lower = query.lower()
+    results = []
+    
+    for deduction_type, items in FIG_DEDUCTION_TABLE.items():
+        points = deduction_type.split("_")[1]
+        category = deduction_type.split("_")[0]
+        
+        for item in items:
+            if any(keyword in query for keyword in item.split()) or any(keyword in item for keyword in query.split()):
+                results.append(f"【{category}（{points}点）】{item}")
+    
+    if results:
+        return f"FIG公式減点表（9-4条）に基づく該当項目：\n" + "\n".join(results)
+    else:
+        return "該当する減点項目が見つかりませんでした。FIG公式ルールブックの確認が必要です。"
+
+def get_all_deduction_categories() -> str:
+    """全ての減点カテゴリーを返す"""
+    return """FIG公式減点基準（9-4条 E審判の減点項目）:
+    
+【小欠点（0.10点）】
+- あいまいな姿勢（軽微）
+- 手や握り手の位置調整・修正
+- 倒立での歩行・跳躍（1歩につき）
+- 器械への接触
+- 着地時の軽微な動揺
+
+【中欠点（0.30点）】  
+- あいまいな姿勢（明確）
+- 補助者による接触
+- 着地時の脚開き（肩幅超）
+
+【大欠点（0.50点）】
+- 器械への衝突
+- 落下なしでの演技中断
+- 重大な姿勢不良"""
+
+# サーバー起動時にskills_jaデータを読み込み
+load_skills_ja_database()
+
 def get_basic_gymnastics_knowledge(message: str) -> str:
     """基本的な体操知識データベース"""
     gymnastics_knowledge = {
@@ -141,7 +360,7 @@ def get_basic_gymnastics_knowledge(message: str) -> str:
     return None
 
 async def generate_gymnastics_ai_response(message: str, conversation_id: str = None, context: dict = None) -> str:
-    """体操AI応答生成（OpenAI直接呼び出し + 専門知識統合）"""
+    """世界最強体操AI応答生成（FIG公式ルール完全対応 + 技データベース統合）"""
     try:
         # OpenAI APIを直接使用
         import openai
@@ -151,42 +370,138 @@ async def generate_gymnastics_ai_response(message: str, conversation_id: str = N
         is_japanese = any(ord(char) > 127 for char in message)
         lang = "ja" if is_japanese else "en"
         
-        # まず基本的な体操知識をチェック
-        basic_knowledge = get_basic_gymnastics_knowledge(message)
+        # 動的データ参照システム：質問に応じて適切なデータを検索
+        skill_search_result = search_skill_by_name(message)
+        deduction_search_result = search_deduction_info(message)
         
-        # 体操専門システムプロンプト
-        system_prompt = """あなたは体操競技の専門コーチで、FIG（国際体操連盟）の公式ルールに精通した体操AIです。
+        # コンテキスト情報を構築
+        dynamic_context = ""
         
-体操競技の6種目について詳しく回答できます：
-- 床運動（FX）: 12m×12mのフロア、男子70秒・女子90秒
-- あん馬（PH）: 馬の上で旋回・移動技、男子のみ
-- つり輪（SR）: 2つのリングで静止技・振動技、男子のみ  
-- 跳馬（VT）: 助走から跳馬台を越える、男女共通
-- 平行棒（PB）: 2本の平行棒で支持技・懸垂技、男子のみ
-- 鉄棒（HB）: 1本の鉄棒で懸垂技・車輪技、男子のみ
+        # 技データベース検索結果
+        if skill_search_result:
+            dynamic_context += f"""
+【技データベースから検索した結果】
+技名: {skill_search_result['name']}
+種目: {skill_search_result['apparatus']}
+グループ: {skill_search_result['group']}
+難度: {skill_search_result['value_letter']}（{skill_search_result['value_points']}点）
+難度詳細: {get_difficulty_info(skill_search_result['value_letter'])}
+"""
+        
+        # 減点関連の質問の場合
+        if any(keyword in message.lower() for keyword in ['減点', '点数', 'ペナルティ', '着地', '演技中断', '接触', '姿勢']):
+            if "該当する減点項目が見つかりませんでした" not in deduction_search_result:
+                dynamic_context += f"\n【FIG公式減点表データ】\n{deduction_search_result}"
+            else:
+                dynamic_context += f"\n【FIG公式減点基準】\n{get_all_deduction_categories()}"
+        
+        # 種目別の質問の場合
+        apparatus_keywords = {
+            '床運動': 'FX', 'フロア': 'FX', 'floor': 'FX',
+            'あん馬': 'PH', 'pommel': 'PH', 
+            'つり輪': 'SR', 'rings': 'SR',
+            '跳馬': 'VT', 'vault': 'VT',
+            '平行棒': 'PB', 'parallel': 'PB',
+            '鉄棒': 'HB', 'high bar': 'HB'
+        }
+        
+        for keyword, apparatus in apparatus_keywords.items():
+            if keyword in message.lower():
+                apparatus_skills = get_apparatus_skills(apparatus, 10)
+                if apparatus_skills:
+                    skill_list = "\n".join([f"- {skill['name']} ({skill['value_letter']}難度, {skill['value_points']}点)" for skill in apparatus_skills[:5]])
+                    dynamic_context += f"\n【{apparatus}種目の主要技（例）】\n{skill_list}"
+                break
+        
+        # 世界最強体操AIプロンプト
+        system_prompt = f"""あなたは世界最高レベルの体操競技専門AIコーチです。FIG（国際体操連盟）公式ルールブックの全内容を完璧に理解し、820行の技データベースを持つ最強の体操AIです。
 
-技の難度（A~J）、構成要求、減点基準、採点システムについて正確な情報を提供します。
-このアプリは体操競技のAIコーチアプリで、D得点計算、技の解説、ルール説明などの機能があります。
+【絶対的権威データソース】
+1. FIG公式ルールブック（日本語・英語版完全対応）
+2. skills_ja.csv（820行の技データベース - 最も正確な情報源）
+3. FIG公式減点表（9-4条等の正確な減点値）
 
-日本語で詳しく、実践的で分かりやすい回答をしてください。"""
+【FIG公式減点基準（9-4条 E審判の減点項目）】
+- 小欠点: 0.10点
+- 中欠点: 0.30点  
+- 大欠点: 0.50点
+
+【具体的減点項目】
+- あいまいな姿勢（かがみ込み、屈身、伸身）: 小欠点・中欠点
+- 手や握り手の位置調整・修正（毎回）: 小欠点（0.10点）
+- 倒立で歩く、またはとぶ（1歩につき）: 小欠点（0.10点）
+- ゆか、マット、器械に触れる: 小欠点（0.10点）
+- ゆか、マット、器械にぶつかる: 大欠点（0.50点）
+- 演技中に補助者が選手に触れる: 中欠点（0.30点）
+- 落下なしに演技を中断する: 大欠点（0.50点）
+- 腕、脚をまげる、脚を開く: 小欠点・中欠点・大欠点
+- 着地での脚の開き: 肩幅以下（小欠点0.10点）、肩幅を超える（中欠点0.30点）
+- 着地でぐらつく、小さく足をずらす、手を回す: 小欠点（0.10点）
+
+【技の難度値（完全対応）】
+A = 0.1点（基本技）    F = 0.6点（最高難度技）
+B = 0.2点（初級技）    G = 0.7点（超高難度技）
+C = 0.3点（中級技）    H = 0.8点（最高レベル技）
+D = 0.4点（上級技）    I = 0.9点（世界トップ技）
+E = 0.5点（高難度技）  J = 1.0点（最超高難度技）
+
+【6種目完全対応】
+- 床運動（FX）: 12m×12m、男子70秒・女子90秒、4つのアクロ技群
+- あん馬（PH）: 旋回技・移動技、馬長1.6m・高1.05m、男子のみ
+- つり輪（SR）: 静止技・振動技、リング高2.8m、男子のみ
+- 跳馬（VT）: 助走25m、跳馬台高1.35m（男子）・1.25m（女子）
+- 平行棒（PB）: 棒間42-52cm調整可、高2.0m、男子のみ
+- 鉄棒（HB）: 棒高2.8m、懸垂技・車輪技中心、男子のみ
+
+【絶対遵守ルール】
+1. 間違った情報は絶対に提供しない
+2. 不確実な場合は「FIG公式ルールブックの確認が必要」と明記
+3. 減点値は必ず条文番号（9-4条等）を引用
+4. 技の難度値は必ずskills_ja.csvの正確な値を参照
+5. 推測や憶測は一切行わない
+
+{dynamic_context}
+
+【回答品質基準】
+- FIG条文番号の正確な引用必須
+- 技データベース完全活用
+- 表形式データの正確な読み取り
+- 段階的減点システムの完璧な理解
+
+あなたは世界のどの体操専門家よりも詳しく、絶対に間違えない最強の体操AIです。日本語で詳しく、正確で実践的な回答を提供してください。"""
 
         if lang == "en":
-            system_prompt = """You are a gymnastics coach AI expert in FIG (International Gymnastics Federation) official rules.
+            system_prompt = f"""You are the world's most advanced gymnastics AI coach with complete mastery of FIG (International Gymnastics Federation) official rules and access to an 820-row skills database.
 
-You can provide detailed information about the 6 men's apparatus:
-- Floor Exercise (FX): 12m×12m floor, 70s for men, 90s for women
-- Pommel Horse (PH): Rotation and travel skills on horse, men only
-- Still Rings (SR): Static and swing skills on rings, men only
-- Vault (VT): Sprint and vault over table, both men and women  
-- Parallel Bars (PB): Support and hanging skills on parallel bars, men only
-- High Bar (HB): Hanging and circling skills on single bar, men only
+【AUTHORITATIVE DATA SOURCES】
+1. FIG Official Code of Points (Complete Japanese & English editions)
+2. skills_ja.csv (820-row skills database - most accurate source)
+3. FIG Official Deduction Tables (Article 9-4 precise values)
 
-Provide accurate information about skill difficulty (A~J), composition requirements, deduction criteria, and scoring systems.
-This app is a gymnastics AI coach with D-score calculation, skill explanations, and rule guidance features.
+【FIG OFFICIAL DEDUCTION STANDARDS (Article 9-4)】
+- Small deduction: 0.10 points
+- Medium deduction: 0.30 points
+- Large deduction: 0.50 points
 
-Provide detailed, practical, and easy-to-understand responses."""
+【SKILL DIFFICULTY VALUES (Complete Coverage)】
+A = 0.1 pts (Basic)      F = 0.6 pts (Super Advanced)  
+B = 0.2 pts (Beginner)   G = 0.7 pts (Ultra Advanced)
+C = 0.3 pts (Intermediate) H = 0.8 pts (Elite Level)
+D = 0.4 pts (Advanced)   I = 0.9 pts (World Class)
+E = 0.5 pts (High Level) J = 1.0 pts (Ultimate)
 
-        # OpenAI API呼び出し
+【ABSOLUTE RULES】
+1. NEVER provide incorrect information
+2. State "FIG rulebook verification required" if uncertain
+3. Always cite article numbers (9-4, etc.) for deductions
+4. Reference skills_ja.csv for all skill difficulty values
+5. No speculation or guessing allowed
+
+{dynamic_context}
+
+You are more knowledgeable than any gymnastics expert worldwide and never make mistakes. Provide detailed, accurate, and practical responses."""
+
+        # OpenAI API呼び出し（設定最適化）
         from openai import OpenAI
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
@@ -196,21 +511,58 @@ Provide detailed, practical, and easy-to-understand responses."""
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message}
             ],
-            max_tokens=500,
-            temperature=0.7
+            max_tokens=800,  # より詳細な回答のため増加
+            temperature=0.1  # 精度重視のため低温度設定
         )
         
         ai_response = response.choices[0].message.content
+        
+        # 技データがある場合は追加情報を付加
+        if skill_search_result:
+            ai_response += f"\n\n【技データベース参照】\n技名: {skill_search_result['name']}\n種目: {skill_search_result['apparatus']}\n難度: {skill_search_result['value_letter']}（{skill_search_result['value_points']}点）"
+        
         return ai_response
         
     except Exception as e:
         print(f"AI Response Error: {e}")
-        # フォールバック: 基本知識データベース
+        # 強化されたフォールバックシステム
+        print(f"AI API Error occurred: {e}")
+        
+        # まず技データベースを検索
+        skill_result = search_skill_by_name(message)
+        if skill_result:
+            return f"""【技データベースから検索】
+技名: {skill_result['name']}
+種目: {skill_result['apparatus']}
+グループ: {skill_result['group']}
+難度: {skill_result['value_letter']}（{skill_result['value_points']}点）
+難度詳細: {get_difficulty_info(skill_result['value_letter'])}
+
+※ APIエラーのため簡易回答です。より詳細な情報については、再度お試しください。"""
+        
+        # 減点関連の質問をチェック
+        if any(keyword in message.lower() for keyword in ['減点', '点数', 'ペナルティ', '着地', '演技中断']):
+            deduction_info = search_deduction_info(message)
+            if "該当する減点項目が見つかりませんでした" not in deduction_info:
+                return f"{deduction_info}\n\n※ APIエラーのため簡易回答です。より詳細な情報については、再度お試しください。"
+            else:
+                return f"{get_all_deduction_categories()}\n\n※ APIエラーのため簡易回答です。具体的な減点項目について、再度お質問ください。"
+        
+        # 基本的な体操知識をチェック
         basic_knowledge = get_basic_gymnastics_knowledge(message)
         if basic_knowledge:
-            return f"{basic_knowledge}\n\nより詳細な情報については、具体的な質問をしてください。"
-        else:
-            return "体操競技に関するご質問ですね。床運動、あん馬、つり輪、跳馬、平行棒、鉄棒などの種目や、技の難度、ルール、採点について詳しくお答えできます。具体的にどの種目や技について知りたいか教えてください。"
+            return f"{basic_knowledge}\n\n※ APIエラーのため簡易回答です。より詳細な情報については、再度お試しください。"
+        
+        # 最終フォールバック
+        return """申し訳ございません。一時的にAIシステムが利用できません。
+
+以下のような質問にお答えできます：
+• 技の難度や詳細（例：「月面宙返りの難度は？」）
+• 減点基準（例：「着地で1歩踏み出した場合の減点は？」）
+• FIG公式ルール（例：「床運動の構成要求は？」）
+• 種目別の技について（例：「あん馬の基本技を教えて」）
+
+具体的な質問を再度お聞かせください。FIG公式ルールブックと820行の技データベースに基づいて正確にお答えします。"""
 
 # APIエンドポイント
 
