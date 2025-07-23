@@ -33,4 +33,4 @@ HEALTHCHECK --interval=60s --timeout=30s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:$PORT/health || exit 1
 
 # Cloud Run用アプリケーション起動（本番用なので--reloadを削除）
-CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
