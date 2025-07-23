@@ -804,6 +804,53 @@ async def get_conversations(current_user = Depends(get_current_user)):
         ]
     }
 
+@app.get("/chat/welcome")
+async def get_welcome_message(current_user = Depends(get_current_user)):
+    """初回チャット用ウェルカムメッセージ"""
+    try:
+        subscription_tier = current_user["subscription_tier"]
+        daily_limit = get_daily_chat_limit(subscription_tier)
+        
+        # サブスクリプション層に応じたメッセージ
+        if subscription_tier == "premium" or subscription_tier == "pro":
+            limit_text = "無制限でご利用いただけます"
+        else:
+            limit_text = f"1日{daily_limit}回まで"
+        
+        welcome_message = f"""🏅 **体操AIコーチへようこそ！**
+
+私は体操競技の専門AIコーチです。以下のことについてお答えできます：
+
+**🤸 技術指導**
+• 床運動、あん馬、つり輪、跳馬、平行棒、鉄棒の技について
+• 技の習得方法や改善アドバイス
+• 演技構成の提案
+
+**📋 ルール・採点**
+• FIG（国際体操連盟）公式ルールの解説
+• D得点（技の難度）の計算方法
+• 減点や構成要求について
+
+**💡 例えば、こんな質問ができます：**
+• "前方宙返りのコツを教えて"
+• "床運動の構成要求は？"
+• "あん馬の基本技を知りたい"
+• "鉄棒の車輪のやり方は？"
+
+あなたは{subscription_tier}プランで、チャットを{limit_text}ご利用いただけます。
+
+何でもお気軽にご質問ください！ 🚀"""
+
+        return {
+            "message": welcome_message,
+            "conversation_id": f"welcome_{current_user['id']}",
+            "message_type": "welcome"
+        }
+        
+    except Exception as e:
+        print(f"Welcome message error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate welcome message")
+
 @app.post("/routines")
 async def save_routine(routine_data: RoutineData, current_user = Depends(get_current_user)):
     """演技構成保存"""
