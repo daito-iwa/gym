@@ -1,15 +1,20 @@
-# Google App Engine エントリーポイント
+from fastapi import FastAPI
+from pydantic import BaseModel
 import os
-import sys
 
-# パス設定
-sys.path.insert(0, os.path.dirname(__file__))
+app = FastAPI()
 
-# サーバーアプリケーションをインポート
-from server import app
+class ChatMessage(BaseModel):
+    message: str
 
-if __name__ == "__main__":
-    # 開発環境での実行用
-    port = int(os.environ.get("PORT", 8080))
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=port)
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+@app.post("/chat/message")
+def chat_endpoint(data: ChatMessage):
+    return {"response": f"体操AIです: {data.message}"}
