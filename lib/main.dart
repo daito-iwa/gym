@@ -1957,9 +1957,15 @@ class _HomePageState extends State<HomePage> {
   /// Check if device has internet connectivity
   Future<bool> _hasInternetConnection() async {
     try {
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      // 実際のサーバーに接続テスト
+      final response = await http.get(
+        Uri.parse('${Config.apiBaseUrl}/health'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(Duration(seconds: 10));
+      
+      return response.statusCode == 200;
     } catch (e) {
+      print('Server connection test failed: $e');
       return false;
     }
   }
@@ -2655,13 +2661,18 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
-      // オンライン認証を試行、失敗時はオフラインモードにフォールバック
+      // オンライン認証を強制使用（デバッグ用）
       bool useOnlineAuth = true;
       
       // Check internet connectivity first
-      if (useOnlineAuth && !await _hasInternetConnection()) {
-        print('インターネット接続なし、オフラインモードを使用');
+      final hasConnection = await _hasInternetConnection();
+      print('Server connection test result: $hasConnection');
+      
+      if (useOnlineAuth && !hasConnection) {
+        print('サーバー接続失敗、オフラインモードを使用');
         useOnlineAuth = false;
+      } else {
+        print('サーバー接続成功、オンラインモードを使用');
       }
       
       if (!useOnlineAuth) {
@@ -3362,11 +3373,11 @@ class _HomePageState extends State<HomePage> {
     _textController.clear();
 
     try {
-      // まず100%対応の専門データベースをチェック
-      final expertResponse = GymnasticsExpertDatabase.getExpertAnswer(userInput);
+      // デバッグ用：直接サーバーに送信（ローカルデータベースをスキップ）
+      print('Sending message to server: $userInput');
       
-      // 専門データベースに完全回答がある場合は即座に表示
-      if (!expertResponse.contains('より正確な回答のために')) {
+      // 一時的にローカルDBをスキップしてサーバー優先
+      if (false) { // ローカルDBを無効化
         setState(() {
           _messages.insert(0, ChatMessage(
             text: '$expertResponse\n\n🎯 体操AI専門データベース（100%対応保証）',
