@@ -380,7 +380,7 @@ async def generate_gymnastics_ai_response(message: str, conversation_id: str = N
         # 技データベース検索結果
         if skill_search_result:
             dynamic_context += f"""
-【技データベースから検索した結果】
+技データベースから検索した結果:
 技名: {skill_search_result['name']}
 種目: {skill_search_result['apparatus']}
 グループ: {skill_search_result['group']}
@@ -391,9 +391,9 @@ async def generate_gymnastics_ai_response(message: str, conversation_id: str = N
         # 減点関連の質問の場合
         if any(keyword in message.lower() for keyword in ['減点', '点数', 'ペナルティ', '着地', '演技中断', '接触', '姿勢']):
             if "該当する減点項目が見つかりませんでした" not in deduction_search_result:
-                dynamic_context += f"\n【FIG公式減点表データ】\n{deduction_search_result}"
+                dynamic_context += f"\nFIG公式減点表データ:\n{deduction_search_result}"
             else:
-                dynamic_context += f"\n【FIG公式減点基準】\n{get_all_deduction_categories()}"
+                dynamic_context += f"\nFIG公式減点基準:\n{get_all_deduction_categories()}"
         
         # 種目別の質問の場合
         apparatus_keywords = {
@@ -410,23 +410,23 @@ async def generate_gymnastics_ai_response(message: str, conversation_id: str = N
                 apparatus_skills = get_apparatus_skills(apparatus, 10)
                 if apparatus_skills:
                     skill_list = "\n".join([f"- {skill['name']} ({skill['value_letter']}難度, {skill['value_points']}点)" for skill in apparatus_skills[:5]])
-                    dynamic_context += f"\n【{apparatus}種目の主要技（例）】\n{skill_list}"
+                    dynamic_context += f"\n{apparatus}種目の主要技（例）:\n{skill_list}"
                 break
         
-        # 世界最強体操AIプロンプト
-        system_prompt = f"""あなたは世界最高レベルの体操競技専門AIコーチです。FIG（国際体操連盟）公式ルールブックの全内容を完璧に理解し、820行の技データベースを持つ最強の体操AIです。
+        # 体操AI専門プロンプト
+        system_prompt = f"""あなたは体操競技の専門AIコーチです。FIG（国際体操連盟）公式ルールに精通し、820行の技データベースを持つ体操AIです。
 
-【絶対的権威データソース】
-1. FIG公式ルールブック（日本語・英語版完全対応）
-2. skills_ja.csv（820行の技データベース - 最も正確な情報源）
-3. FIG公式減点表（9-4条等の正確な減点値）
+データソース:
+1. FIG公式ルールブック（日本語・英語版対応）
+2. skills_ja.csv（820行の技データベース）
+3. FIG公式減点表（9-4条の正確な減点値）
 
-【FIG公式減点基準（9-4条 E審判の減点項目）】
+FIG公式減点基準（9-4条 E審判の減点項目）:
 - 小欠点: 0.10点
 - 中欠点: 0.30点  
 - 大欠点: 0.50点
 
-【具体的減点項目】
+具体的減点項目:
 - あいまいな姿勢（かがみ込み、屈身、伸身）: 小欠点・中欠点
 - 手や握り手の位置調整・修正（毎回）: 小欠点（0.10点）
 - 倒立で歩く、またはとぶ（1歩につき）: 小欠点（0.10点）
@@ -438,14 +438,14 @@ async def generate_gymnastics_ai_response(message: str, conversation_id: str = N
 - 着地での脚の開き: 肩幅以下（小欠点0.10点）、肩幅を超える（中欠点0.30点）
 - 着地でぐらつく、小さく足をずらす、手を回す: 小欠点（0.10点）
 
-【技の難度値（完全対応）】
+技の難度値:
 A = 0.1点（基本技）    F = 0.6点（最高難度技）
 B = 0.2点（初級技）    G = 0.7点（超高難度技）
 C = 0.3点（中級技）    H = 0.8点（最高レベル技）
 D = 0.4点（上級技）    I = 0.9点（世界トップ技）
 E = 0.5点（高難度技）  J = 1.0点（最超高難度技）
 
-【6種目完全対応】
+6種目対応:
 - 床運動（FX）: 12m×12m、男子70秒・女子90秒、4つのアクロ技群
 - あん馬（PH）: 旋回技・移動技、馬長1.6m・高1.05m、男子のみ
 - つり輪（SR）: 静止技・振動技、リング高2.8m、男子のみ
@@ -453,7 +453,7 @@ E = 0.5点（高難度技）  J = 1.0点（最超高難度技）
 - 平行棒（PB）: 棒間42-52cm調整可、高2.0m、男子のみ
 - 鉄棒（HB）: 棒高2.8m、懸垂技・車輪技中心、男子のみ
 
-【絶対遵守ルール】
+基本ルール:
 1. 間違った情報は絶対に提供しない
 2. 不確実な場合は「FIG公式ルールブックの確認が必要」と明記
 3. 減点値は必ず条文番号（9-4条等）を引用
@@ -462,13 +462,13 @@ E = 0.5点（高難度技）  J = 1.0点（最超高難度技）
 
 {dynamic_context}
 
-【回答品質基準】
+回答品質基準:
 - FIG条文番号の正確な引用必須
 - 技データベース完全活用
 - 表形式データの正確な読み取り
 - 段階的減点システムの完璧な理解
 
-あなたは世界のどの体操専門家よりも詳しく、絶対に間違えない最強の体操AIです。日本語で詳しく、正確で実践的な回答を提供してください。"""
+日本語で詳しく、正確で実践的な回答を提供してください。簡潔で分かりやすく答えてください。"""
 
         if lang == "en":
             system_prompt = f"""You are the world's most advanced gymnastics AI coach with complete mastery of FIG (International Gymnastics Federation) official rules and access to an 820-row skills database.
@@ -519,7 +519,7 @@ You are more knowledgeable than any gymnastics expert worldwide and never make m
         
         # 技データがある場合は追加情報を付加
         if skill_search_result:
-            ai_response += f"\n\n【技データベース参照】\n技名: {skill_search_result['name']}\n種目: {skill_search_result['apparatus']}\n難度: {skill_search_result['value_letter']}（{skill_search_result['value_points']}点）"
+            ai_response += f"\n\n技データベース参照:\n技名: {skill_search_result['name']}\n種目: {skill_search_result['apparatus']}\n難度: {skill_search_result['value_letter']}（{skill_search_result['value_points']}点）"
         
         return ai_response
         
@@ -531,7 +531,7 @@ You are more knowledgeable than any gymnastics expert worldwide and never make m
         # まず技データベースを検索
         skill_result = search_skill_by_name(message)
         if skill_result:
-            return f"""【技データベースから検索】
+            return f"""技データベースから検索:
 技名: {skill_result['name']}
 種目: {skill_result['apparatus']}
 グループ: {skill_result['group']}
@@ -1096,6 +1096,53 @@ async def restore_purchases(restore_data: dict, current_user = Depends(get_curre
 async def send_chat_message(chat_data: ChatMessage, current_user = Depends(get_current_user)):
     """体操AI専用チャットメッセージ"""
     try:
+        # 新規ユーザーに対するウェルカムメッセージの自動送信
+        user_id = current_user["id"]
+        if user_id not in fake_db.get("chat_history", {}):
+            # 初回チャットユーザーの場合、ウェルカムメッセージを生成
+            subscription_tier = current_user["subscription_tier"]
+            daily_limit = get_daily_chat_limit(subscription_tier)
+            
+            if subscription_tier == "premium" or subscription_tier == "pro":
+                limit_text = "無制限で"
+            else:
+                limit_text = f"1日{daily_limit}回まで"
+            
+            welcome_message = f"""🏅 体操AIコーチへようこそ！
+
+私は体操競技の専門AIコーチです。以下のことについてお答えできます：
+
+🤸 技術指導
+• 床運動、あん馬、つり輪、跳馬、平行棒、鉄棒の技について
+• 技の習得方法や改善アドバイス
+• 演技構成の提案
+
+📋 ルール・採点
+• FIG（国際体操連盟）公式ルールの解説
+• D得点（技の難度）の計算方法
+• 減点や構成要求について
+
+💡 例えば、こんな質問ができます：
+• "前方宙返りのコツを教えて"
+• "床運動の構成要求は？"
+• "あん馬の基本技を知りたい"
+• "鉄棒の車輪のやり方は？"
+
+あなたは{subscription_tier}プランで、チャットを{limit_text}ご利用いただけます。
+
+何でもお気軽にご質問ください！ 🚀"""
+            
+            # ウェルカムメッセージを返し、チャット履歴に記録
+            fake_db.setdefault("chat_history", {})[user_id] = [{"type": "welcome", "sent": True}]
+            
+            return {
+                "response": welcome_message,
+                "conversation_id": f"welcome_{user_id}",
+                "usage_count": 0,
+                "remaining_count": daily_limit if daily_limit > 0 else -1,
+                "message_type": "welcome"
+            }
+        
         # 使用制限チェック
         daily_limit = get_daily_chat_limit(current_user["subscription_tier"])
         usage_count = get_user_daily_chat_count(current_user["id"])
