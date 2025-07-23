@@ -22,15 +22,15 @@ COPY . .
 RUN mkdir -p data prompts db_ja db_en
 
 # 権限設定
-RUN chmod +x main.py
+RUN chmod +x server.py
 
 # Cloud RunはPORT環境変数を使用
 ENV PORT 8080
 EXPOSE 8080
 
 # ヘルスチェック
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=30s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:$PORT/health || exit 1
 
 # Cloud Run用アプリケーション起動（本番用なので--reloadを削除）
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port $PORT"]

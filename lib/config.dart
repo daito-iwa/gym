@@ -9,28 +9,30 @@ class Config {
 enum Environment { development, staging, production }
 
 class AppConfig {
-  // 環境設定 - オフライン版はproductionに設定
+  // 環境設定 - 本番環境に切り替え可能
+  // 開発時: Environment.development
+  // 本番時: Environment.production
   static const Environment _environment = Environment.production;
   
   // 環境別URL設定
   static const Map<Environment, String> _urls = {
-    Environment.development: 'http://127.0.0.1:8000',
+    Environment.development: 'http://127.0.0.1:8888',
     Environment.staging: 'https://staging-api.your-domain.com',
-    Environment.production: 'https://api.your-domain.com',
+    Environment.production: 'https://gymnastics-ai-96488789666.asia-northeast1.run.app',
   };
   
   // Web環境用の開発サーバーURL
   static const Map<Environment, String> _webUrls = {
-    Environment.development: 'http://localhost:8000',
+    Environment.development: 'http://127.0.0.1:8888',
     Environment.staging: 'https://staging-api.your-domain.com',
-    Environment.production: 'https://api.your-domain.com',
+    Environment.production: 'https://gymnastics-ai-96488789666.asia-northeast1.run.app',
   };
   
-  // ネイティブ環境用の開発サーバーURL
+  // ネイティブ環境用の開発サーバーURL  
   static const Map<Environment, String> _nativeUrls = {
-    Environment.development: 'http://192.168.40.218:8000',
+    Environment.development: 'http://127.0.0.1:8888',
     Environment.staging: 'https://staging-api.your-domain.com',
-    Environment.production: 'https://api.your-domain.com',
+    Environment.production: 'https://gymnastics-ai-96488789666.asia-northeast1.run.app',
   };
 
   // 現在の環境
