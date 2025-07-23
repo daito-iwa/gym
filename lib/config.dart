@@ -12,25 +12,25 @@ class AppConfig {
   // 環境設定 - 本番環境に切り替え可能
   // 開発時: Environment.development
   // 本番時: Environment.production
-  static const Environment _environment = Environment.production;
+  static const Environment _environment = Environment.development;
   
   // 環境別URL設定
   static const Map<Environment, String> _urls = {
-    Environment.development: 'http://127.0.0.1:8888',
+    Environment.development: 'http://127.0.0.1:8891',
     Environment.staging: 'https://staging-api.your-domain.com',
     Environment.production: 'https://gymnastics-ai-96488789666.asia-northeast1.run.app',
   };
   
   // Web環境用の開発サーバーURL
   static const Map<Environment, String> _webUrls = {
-    Environment.development: 'http://127.0.0.1:8888',
+    Environment.development: 'http://127.0.0.1:8891',
     Environment.staging: 'https://staging-api.your-domain.com',
     Environment.production: 'https://gymnastics-ai-96488789666.asia-northeast1.run.app',
   };
   
   // ネイティブ環境用の開発サーバーURL  
   static const Map<Environment, String> _nativeUrls = {
-    Environment.development: 'http://127.0.0.1:8888',
+    Environment.development: 'http://127.0.0.1:8891',
     Environment.staging: 'https://staging-api.your-domain.com',
     Environment.production: 'https://gymnastics-ai-96488789666.asia-northeast1.run.app',
   };
