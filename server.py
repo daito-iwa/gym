@@ -121,8 +121,27 @@ def get_user_daily_chat_count(user_id: str) -> int:
     # 実際の実装では日付を考慮したカウントが必要
     return 0  # 簡易的に0を返す
 
+def get_basic_gymnastics_knowledge(message: str) -> str:
+    """基本的な体操知識データベース"""
+    gymnastics_knowledge = {
+        "床運動": "床運動（FX）は体操競技の1つで、12m×12mのフロアで演技を行います。男子は70秒、女子は90秒の制限時間内で、アクロバット系の技と体操系の技を組み合わせて演技します。",
+        "あん馬": "あん馬（PH）は男子体操の種目で、馬の上で旋回や移動などの技を行います。馬の長さは1.6m、高さは1.05mです。",
+        "つり輪": "つり輪（SR）は男子体操の種目で、2つのリングを使って静止技と振動技を組み合わせて演技します。",
+        "跳馬": "跳馬（VT）は体操競技の種目で、助走をつけて跳馬台を越える競技です。男女共通の種目です。",
+        "平行棒": "平行棒（PB）は男子体操の種目で、2本の平行な棒の上で支持技と懸垂技を組み合わせて演技します。",
+        "鉄棒": "鉄棒（HB）は男子体操の種目で、1本の鉄棒で懸垂技と車輪技を中心とした演技を行います。",
+        "アプリ": "このアプリは体操競技のAIコーチです。技の解説、ルール説明、D得点計算などの機能があります。プレミアムプランでは無制限チャットが可能です。"
+    }
+    
+    message_lower = message.lower()
+    for key, value in gymnastics_knowledge.items():
+        if key in message or key.lower() in message_lower:
+            return value
+    
+    return None
+
 async def generate_gymnastics_ai_response(message: str, conversation_id: str = None, context: dict = None) -> str:
-    """体操AI応答生成（rulebook_ai.py統合）"""
+    """体操AI応答生成（rulebook_ai.py統合 + フォールバック対応）"""
     try:
         # rulebook_ai.pyをインポート
         from rulebook_ai import setup_vectorstore, create_conversational_chain
@@ -137,12 +156,28 @@ async def generate_gymnastics_ai_response(message: str, conversation_id: str = N
         
         # AI応答生成
         result = chain.invoke({"question": message})
-        return result.get("answer", "申し訳ございませんが、応答の生成中にエラーが発生しました。")
+        answer = result.get("answer", "")
+        
+        # 空の応答や関連情報なしの場合はフォールバック
+        if not answer or "関連情報が見つかりませんでした" in answer or "検索範囲では" in answer:
+            basic_knowledge = get_basic_gymnastics_knowledge(message)
+            if basic_knowledge:
+                return f"{basic_knowledge}\n\nより詳細な情報や具体的なルールについては、より具体的な質問をしてください。"
+            else:
+                return "体操競技に関するご質問ですね。床運動、あん馬、つり輪、跳馬、平行棒、鉄棒などの種目や、技の難度、ルール、採点について詳しくお答えできます。具体的にどの種目や技について知りたいか教えてください。"
+        
+        return answer
         
     except ImportError:
-        return f"体操AIより: {message}についてお答えします。現在システムメンテナンス中のため、基本的な回答のみ提供しています。"
+        basic_knowledge = get_basic_gymnastics_knowledge(message)
+        if basic_knowledge:
+            return f"{basic_knowledge}\n\n現在システムメンテナンス中のため、基本的な情報のみ提供しています。"
+        return f"体操AI（メンテナンスモード）: {message}についてお答えします。システムメンテナンス中のため、基本的な回答のみ提供しています。"
     except Exception as e:
         print(f"AI Response Error: {e}")
+        basic_knowledge = get_basic_gymnastics_knowledge(message)
+        if basic_knowledge:
+            return f"{basic_knowledge}\n\n一時的にシステムに不具合が発生していますが、基本的な情報をお答えしました。"
         return "申し訳ございませんが、現在AIシステムが一時的に利用できません。しばらく経ってから再度お試しください。"
 
 # APIエンドポイント
