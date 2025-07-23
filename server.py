@@ -141,44 +141,76 @@ def get_basic_gymnastics_knowledge(message: str) -> str:
     return None
 
 async def generate_gymnastics_ai_response(message: str, conversation_id: str = None, context: dict = None) -> str:
-    """体操AI応答生成（rulebook_ai.py統合 + フォールバック対応）"""
+    """体操AI応答生成（OpenAI直接呼び出し + 専門知識統合）"""
     try:
-        # rulebook_ai.pyをインポート
-        from rulebook_ai import setup_vectorstore, create_conversational_chain
+        # OpenAI APIを直接使用
+        import openai
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         
         # 日本語を優先的に検出
         is_japanese = any(ord(char) > 127 for char in message)
         lang = "ja" if is_japanese else "en"
         
-        # ベクトルストアとチェーンを設定
-        vectorstore = setup_vectorstore(lang)
-        chain = create_conversational_chain(vectorstore, lang)
-        
-        # AI応答生成
-        result = chain.invoke({"question": message})
-        answer = result.get("answer", "")
-        
-        # 空の応答や関連情報なしの場合はフォールバック
-        if not answer or "関連情報が見つかりませんでした" in answer or "検索範囲では" in answer:
-            basic_knowledge = get_basic_gymnastics_knowledge(message)
-            if basic_knowledge:
-                return f"{basic_knowledge}\n\nより詳細な情報や具体的なルールについては、より具体的な質問をしてください。"
-            else:
-                return "体操競技に関するご質問ですね。床運動、あん馬、つり輪、跳馬、平行棒、鉄棒などの種目や、技の難度、ルール、採点について詳しくお答えできます。具体的にどの種目や技について知りたいか教えてください。"
-        
-        return answer
-        
-    except ImportError:
+        # まず基本的な体操知識をチェック
         basic_knowledge = get_basic_gymnastics_knowledge(message)
-        if basic_knowledge:
-            return f"{basic_knowledge}\n\n現在システムメンテナンス中のため、基本的な情報のみ提供しています。"
-        return f"体操AI（メンテナンスモード）: {message}についてお答えします。システムメンテナンス中のため、基本的な回答のみ提供しています。"
+        
+        # 体操専門システムプロンプト
+        system_prompt = """あなたは体操競技の専門コーチで、FIG（国際体操連盟）の公式ルールに精通した体操AIです。
+        
+体操競技の6種目について詳しく回答できます：
+- 床運動（FX）: 12m×12mのフロア、男子70秒・女子90秒
+- あん馬（PH）: 馬の上で旋回・移動技、男子のみ
+- つり輪（SR）: 2つのリングで静止技・振動技、男子のみ  
+- 跳馬（VT）: 助走から跳馬台を越える、男女共通
+- 平行棒（PB）: 2本の平行棒で支持技・懸垂技、男子のみ
+- 鉄棒（HB）: 1本の鉄棒で懸垂技・車輪技、男子のみ
+
+技の難度（A~J）、構成要求、減点基準、採点システムについて正確な情報を提供します。
+このアプリは体操競技のAIコーチアプリで、D得点計算、技の解説、ルール説明などの機能があります。
+
+日本語で詳しく、実践的で分かりやすい回答をしてください。"""
+
+        if lang == "en":
+            system_prompt = """You are a gymnastics coach AI expert in FIG (International Gymnastics Federation) official rules.
+
+You can provide detailed information about the 6 men's apparatus:
+- Floor Exercise (FX): 12m×12m floor, 70s for men, 90s for women
+- Pommel Horse (PH): Rotation and travel skills on horse, men only
+- Still Rings (SR): Static and swing skills on rings, men only
+- Vault (VT): Sprint and vault over table, both men and women  
+- Parallel Bars (PB): Support and hanging skills on parallel bars, men only
+- High Bar (HB): Hanging and circling skills on single bar, men only
+
+Provide accurate information about skill difficulty (A~J), composition requirements, deduction criteria, and scoring systems.
+This app is a gymnastics AI coach with D-score calculation, skill explanations, and rule guidance features.
+
+Provide detailed, practical, and easy-to-understand responses."""
+
+        # OpenAI API呼び出し
+        from openai import OpenAI
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=500,
+            temperature=0.7
+        )
+        
+        ai_response = response.choices[0].message.content
+        return ai_response
+        
     except Exception as e:
         print(f"AI Response Error: {e}")
+        # フォールバック: 基本知識データベース
         basic_knowledge = get_basic_gymnastics_knowledge(message)
         if basic_knowledge:
-            return f"{basic_knowledge}\n\n一時的にシステムに不具合が発生していますが、基本的な情報をお答えしました。"
-        return "申し訳ございませんが、現在AIシステムが一時的に利用できません。しばらく経ってから再度お試しください。"
+            return f"{basic_knowledge}\n\nより詳細な情報については、具体的な質問をしてください。"
+        else:
+            return "体操競技に関するご質問ですね。床運動、あん馬、つり輪、跳馬、平行棒、鉄棒などの種目や、技の難度、ルール、採点について詳しくお答えできます。具体的にどの種目や技について知りたいか教えてください。"
 
 # APIエンドポイント
 
