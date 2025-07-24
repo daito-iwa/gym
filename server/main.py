@@ -14,9 +14,9 @@ import json
 import csv
 import re
 
-# OpenAI APIクライアント
+# OpenAI APIクライアント（v0.28対応）
 try:
-    from openai import OpenAI
+    import openai
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -32,10 +32,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# OpenAIクライアント初期化
+# OpenAIクライアント初期化（v0.28）
 openai_client = None
 if OPENAI_AVAILABLE and os.getenv("OPENAI_API_KEY"):
-    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    try:
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        openai_client = openai
+        print(f"✅ OpenAI v0.28 client initialized")
+    except Exception as e:
+        print(f"⚠️ OpenAI initialization failed: {e}")
+        openai_client = None
 
 # 体操技データベース（簡化版）
 GYMNASTICS_SKILLS = {}
@@ -121,8 +127,9 @@ async def generate_ultimate_ai_response(message: str) -> str:
 
     try:
         if openai_client:
-            # OpenAI GPT-4で応答生成
-            response = openai_client.chat.completions.create(
+            print(f"🤖 Using OpenAI API v0.28")
+            # OpenAI GPT-4で応答生成（v0.28）
+            response = openai_client.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -131,7 +138,6 @@ async def generate_ultimate_ai_response(message: str) -> str:
                 max_tokens=1000,
                 temperature=0.7
             )
-            
             ai_response = response.choices[0].message.content
             
             # 技データがある場合は追加情報を付加
@@ -217,6 +223,8 @@ async def send_chat_message(chat_data: ChatMessage, current_user = Depends(get_c
     """🏆 世界最強体操AI チャットエンドポイント"""
     try:
         print(f"🏆 Ultimate AI processing: {chat_data.message}")
+        print(f"🏆 OpenAI available: {OPENAI_AVAILABLE}, Client: {openai_client is not None}")
+        print(f"🏆 API Key set: {bool(os.getenv('OPENAI_API_KEY'))}")
         
         # 世界最強AI応答生成
         response_text = await generate_ultimate_ai_response(chat_data.message)
