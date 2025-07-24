@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import datetime
 
-app = FastAPI(title="Gym AI Server", version="2.0.0")
+app = FastAPI(title="Gym AI Server", version="3.0.0")
 
 # CORS設定
 app.add_middleware(
@@ -28,7 +28,7 @@ class ChatMessage(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Gym AI Server", "version": "2.0.0", "status": "running"}
+    return {"message": "Gym AI Server", "version": "3.0.0", "status": "running"}
 
 @app.get("/health")
 async def health_check():
@@ -38,7 +38,7 @@ async def health_check():
 async def send_chat_message(chat_data: ChatMessage):
     """体操AI専用チャットメッセージ - 認証なし"""
     return {
-        "response": f"**🤖 体操専門AI v2.0**\n\nご質問「{chat_data.message}」にお答えします。\n\nサーバーが正常に動作しています！",
+        "response": f"**🤖 体操専門AI v3.0**\n\nご質問「{chat_data.message}」にお答えします。\n\nCloud Runサーバーが正常に動作しています！",
         "conversation_id": "test_conv_1",
         "usage_count": 1,
         "remaining_count": 9
