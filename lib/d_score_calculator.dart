@@ -153,11 +153,80 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   // 2. グループ要求ボーナス
   final fulfilledGroupsSet = countedSkills.map((skill) => skill.group).toSet();
   final numFulfilledGroups = fulfilledGroupsSet.length;
-  final groupBonus = numFulfilledGroups * (rules["bonus_per_group"] as double);
+  
+  // グループごとの最高難度技を特定
+  final Map<int, Skill> highestSkillPerGroup = {};
+  for (final skill in countedSkills) {
+    if (!highestSkillPerGroup.containsKey(skill.group) ||
+        skill.value > highestSkillPerGroup[skill.group]!.value) {
+      highestSkillPerGroup[skill.group] = skill;
+    }
+  }
+  
+  // グループボーナス計算（FIG公式ルール）
+  double groupBonus = 0.0;
+  for (final entry in highestSkillPerGroup.entries) {
+    final group = entry.key;
+    final highestSkill = entry.value;
+    
+    if (group == 1) {
+      // グループ1: 無条件で0.5点
+      groupBonus += 0.5;
+    } else if (group == 2 || group == 3) {
+      // グループ2,3: D難度以上で0.5点、C難度以下で0.3点
+      groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
+    } else if (group == 4) {
+      if (apparatus == "FX") {
+        // 床運動: グループ4も通常ルール（D以上0.5、C以下0.3）※終末技概念なし
+        groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
+      } else {
+        // その他種目: グループ4は終末技、技の難度値をそのまま加算
+        groupBonus += highestSkill.value;
+      }
+    } else if (group == 5) {
+      // グループ5: D難度以上で0.5点、C難度以下で0.3点
+      groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
+    }
+  }
 
   // 3. 連続技ボーナス
   double connectionBonus = 0.0;
-  if (apparatus == "HB") {
+  
+  // 床運動の連続技ボーナス
+  if (apparatus == "FX") {
+    for (final connectionGroup in routine) {
+      if (connectionGroup.length > 1) {
+        for (int i = 0; i < connectionGroup.length - 1; i++) {
+          final skill1 = connectionGroup[i];
+          final skill2 = connectionGroup[i + 1];
+          
+          // グループ2,3,4の技のみ（グループ1は除外）
+          if ((skill1.group == 2 || skill1.group == 3 || skill1.group == 4) &&
+              (skill2.group == 2 || skill2.group == 3 || skill2.group == 4)) {
+            
+            // グループ4同士の連続は除外
+            if (skill1.group == 4 && skill2.group == 4) {
+              continue;
+            }
+            
+            final v1 = skill1.value;
+            final v2 = skill2.value;
+            
+            // D+D以上 = 0.2点
+            if (v1 >= 0.4 && v2 >= 0.4) {
+              connectionBonus += 0.2;
+            }
+            // D+B/C または B/C+D = 0.1点
+            else if ((v1 >= 0.4 && v2 >= 0.2) || (v1 >= 0.2 && v2 >= 0.4)) {
+              connectionBonus += 0.1;
+            }
+          }
+        }
+      }
+    }
+  }
+  // 鉄棒の連続技ボーナス
+  else if (apparatus == "HB") {
     for (final connectionGroup in routine) {
       if (connectionGroup.length > 1) {
         for (int i = 0; i < connectionGroup.length - 1; i++) {
@@ -201,6 +270,9 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
     }
   }
 
+  // 連続技ボーナスの上限制限（FIGルール：最大0.4点）
+  connectionBonus = connectionBonus > 0.4 ? 0.4 : connectionBonus;
+
   // 4. 最終Dスコア
   final totalDScore = difficultyValue + groupBonus + connectionBonus;
 
@@ -222,7 +294,11 @@ List<Skill> _selectOptimalSkillCombination(List<Skill> allSkills, int countLimit
     return allSkills;
   }
 
-  final bonusPerGroup = rules["bonus_per_group"] as double;
+  // 器具の種類を特定（関数の外から渡すのが理想だが、ここでは推定）
+  String apparatus = "FX"; // デフォルト
+  if (allSkills.isNotEmpty) {
+    apparatus = allSkills.first.apparatus;
+  }
   
   // 各グループごとに技をソートして整理
   final Map<int, List<Skill>> skillsByGroup = {};
@@ -277,7 +353,10 @@ List<Skill> _selectOptimalSkillCombination(List<Skill> allSkills, int countLimit
     
     // スコアを計算
     final difficultyValue = combination.fold<double>(0.0, (sum, skill) => sum + skill.value);
-    final groupBonus = usedGroups.length * bonusPerGroup;
+    
+    // FIG公式ルールに基づくグループボーナス計算
+    double groupBonus = _calculateFIGGroupBonus(combination, apparatus);
+    
     final totalScore = difficultyValue + groupBonus;
     
     if (totalScore > bestScore) {
@@ -294,4 +373,44 @@ List<Skill> _selectOptimalSkillCombination(List<Skill> allSkills, int countLimit
   }
   
   return bestCombination;
+}
+
+/// FIG公式ルールに基づくグループボーナス計算関数
+double _calculateFIGGroupBonus(List<Skill> skills, String apparatus) {
+  // グループごとの最高難度技を特定
+  final Map<int, Skill> highestSkillPerGroup = {};
+  for (final skill in skills) {
+    if (!highestSkillPerGroup.containsKey(skill.group) ||
+        skill.value > highestSkillPerGroup[skill.group]!.value) {
+      highestSkillPerGroup[skill.group] = skill;
+    }
+  }
+  
+  // グループボーナス計算（FIG公式ルール）
+  double groupBonus = 0.0;
+  for (final entry in highestSkillPerGroup.entries) {
+    final group = entry.key;
+    final highestSkill = entry.value;
+    
+    if (group == 1) {
+      // グループ1: 無条件で0.5点
+      groupBonus += 0.5;
+    } else if (group == 2 || group == 3) {
+      // グループ2,3: D難度以上で0.5点、C難度以下で0.3点
+      groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
+    } else if (group == 4) {
+      if (apparatus == "FX") {
+        // 床運動: グループ4も通常ルール（D以上0.5、C以下0.3）※終末技概念なし
+        groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
+      } else {
+        // その他種目: グループ4は終末技、技の難度値をそのまま加算
+        groupBonus += highestSkill.value;
+      }
+    } else if (group == 5) {
+      // グループ5: D難度以上で0.5点、C難度以下で0.3点
+      groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
+    }
+  }
+  
+  return groupBonus;
 } 

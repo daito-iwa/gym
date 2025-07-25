@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'dart:io' show Platform;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
@@ -68,7 +66,7 @@ class SocialAuthResult {
 }
 
 // ソーシャル認証プロバイダー
-enum SocialProvider { google, apple }
+enum SocialProvider { google }
 
 // ソーシャル認証マネージャー
 class SocialAuthManager {
@@ -147,53 +145,6 @@ class SocialAuthManager {
     }
   }
 
-  // Apple Sign-In
-  Future<SocialAuthResult> signInWithApple() async {
-    try {
-      // Apple Sign-In が利用可能かチェック
-      if (!Platform.isIOS && !Platform.isMacOS) {
-        return SocialAuthResult(
-          success: false,
-          errorMessage: 'Apple Sign-InはiOS/macOSでのみ利用可能です',
-        );
-      }
-      
-      // 本番版：実際のApple Sign-In
-      print('Apple Sign-In: 認証開始');
-      
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
-      
-      // サーバーで認証
-      final result = await _authenticateWithServer(
-        provider: 'apple',
-        idToken: credential.identityToken,
-        email: credential.email,
-        fullName: _buildAppleFullName(
-          credential.givenName,
-          credential.familyName,
-        ),
-        userIdentifier: credential.userIdentifier,
-      );
-      
-      if (result.success) {
-        await _saveAuthResult(result);
-      }
-      
-      return result;
-      
-    } catch (e) {
-      print('Apple sign-in error: $e');
-      return SocialAuthResult(
-        success: false,
-        errorMessage: 'Apple Sign-Inに失敗しました: ${e.toString()}',
-      );
-    }
-  }
 
   // サーバーでの認証処理（オフライン版）
   Future<SocialAuthResult> _authenticateWithServer({
@@ -318,14 +269,7 @@ class SocialAuthManager {
 
   // 利用可能な認証プロバイダーを取得
   List<SocialProvider> getAvailableProviders() {
-    List<SocialProvider> providers = [SocialProvider.google];
-    
-    // Apple Sign-In は iOS/macOS のみ
-    if (Platform.isIOS || Platform.isMacOS) {
-      providers.add(SocialProvider.apple);
-    }
-    
-    return providers;
+    return [SocialProvider.google];
   }
 
   // プロバイダー名を取得
@@ -333,8 +277,6 @@ class SocialAuthManager {
     switch (provider) {
       case SocialProvider.google:
         return 'Google';
-      case SocialProvider.apple:
-        return 'Apple';
     }
   }
 
@@ -343,8 +285,6 @@ class SocialAuthManager {
     switch (provider) {
       case SocialProvider.google:
         return '🌐'; // 実際の実装では適切なアイコンを使用
-      case SocialProvider.apple:
-        return '🍎';
     }
   }
 
@@ -355,10 +295,6 @@ class SocialAuthManager {
     return List.generate(32, (_) => charset[random.nextInt(charset.length)]).join();
   }
 
-  String? _buildAppleFullName(String? givenName, String? familyName) {
-    if (givenName == null && familyName == null) return null;
-    return [givenName, familyName].where((name) => name != null).join(' ').trim();
-  }
 
   String _getServerUrl() {
     // 開発環境では localhost、本番環境では実際のサーバーURL
@@ -411,10 +347,6 @@ class SocialSignInButton extends StatelessWidget {
         backgroundColor = Colors.white;
         textColor = Colors.black87;
         break;
-      case SocialProvider.apple:
-        backgroundColor = Colors.black;
-        textColor = Colors.white;
-        break;
     }
 
     return SizedBox(
@@ -430,9 +362,7 @@ class SocialSignInButton extends StatelessWidget {
           foregroundColor: textColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: provider == SocialProvider.google 
-                ? BorderSide(color: Colors.grey[300]!) 
-                : BorderSide.none,
+            side: BorderSide(color: Colors.grey[300]!),
           ),
           elevation: 2,
         ),
@@ -507,10 +437,6 @@ class _SocialAuthOptionsState extends State<SocialAuthOptions> {
         case SocialProvider.google:
           print('Google認証を実行中...');
           result = await _authManager.signInWithGoogle();
-          break;
-        case SocialProvider.apple:
-          print('Apple認証を実行中...');
-          result = await _authManager.signInWithApple();
           break;
       }
 

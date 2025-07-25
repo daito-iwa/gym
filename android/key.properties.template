@@ -1,0 +1,4 @@
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEYSTORE_PASSWORD
+keyAlias=gymnastics-ai
+storeFile=/Users/iwasakihiroto/gymnastics-ai-release.keystore

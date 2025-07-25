@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 /// AdMob設定クラス
 /// 本番用広告IDと開発用テストIDを管理
@@ -10,11 +11,11 @@ class AdMobConfig {
   
   // 本番用広告ID（実際のAdMob IDに更新）
   static const String productionBannerAdUnitIdAndroid = 'ca-app-pub-8022160047771829/1779286767'; // 本番ID
-  static const String productionBannerAdUnitIdIOS = 'ca-app-pub-8022160047771829/8564186964'; // 本番ID  
-  static const String productionInterstitialAdUnitIdAndroid = 'ca-app-pub-8022160047771829/3862524626'; // 本番ID
-  static const String productionInterstitialAdUnitIdIOS = 'ca-app-pub-8022160047771829/4624941955'; // 本番ID
-  static const String productionRewardedAdUnitIdAndroid = 'ca-app-pub-8022160047771829/9466205091'; // 本番ID
-  static const String productionRewardedAdUnitIdIOS = 'ca-app-pub-8022160047771829/7654467960'; // 本番ID
+  static const String productionBannerAdUnitIdIOS = 'ca-app-pub-8022160047771829/2462098451'; // 本番ID  
+  static const String productionInterstitialAdUnitIdAndroid = 'ca-app-pub-8022160047771829/9466205091'; // 本番ID
+  static const String productionInterstitialAdUnitIdIOS = 'ca-app-pub-8022160047771829/3447376059'; // 本番ID
+  static const String productionRewardedAdUnitIdAndroid = 'ca-app-pub-8022160047771829/3862524626'; // 本番ID
+  static const String productionRewardedAdUnitIdIOS = 'ca-app-pub-8022160047771829/8320428782'; // 本番ID
   
   // 環境に応じた広告IDを取得
   static String get bannerAdUnitId {
@@ -46,7 +47,7 @@ class AdMobConfig {
   
   // デバッグモード判定（本番リリース用）
   static bool get _isDebugMode {
-    // 本番環境では実際の広告を表示
-    return false; // 本番ID設定完了のためfalseに変更
+    // kDebugModeを使用してFlutterのデバッグモードを判定
+    return kDebugMode;
   }
 }

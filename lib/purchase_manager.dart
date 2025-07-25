@@ -20,7 +20,7 @@ enum SubscriptionState {
 
 class PurchaseManager {
   // サブスクリプション商品ID
-  static const String _premiumProductId_ios = 'com.daito.gym.premium_monthly_subscription';
+  static const String _premiumProductId_ios = 'com.daito.gymnasticsai.premium_monthly_subscription';
   static const String _premiumProductId_android = 'premium_monthly_subscription';
   
   static String get premiumProductId => Platform.isIOS 
@@ -96,10 +96,14 @@ class PurchaseManager {
       
       if (response.notFoundIDs.isNotEmpty) {
         print('Products not found: ${response.notFoundIDs}');
+        print('Requested product ID: $premiumProductId');
       }
       
       _products = response.productDetails;
       print('Loaded ${_products.length} products');
+      for (var product in _products) {
+        print('Product ID: ${product.id}, Title: ${product.title}, Price: ${product.price}');
+      }
       
     } catch (e) {
       print('Error loading products: $e');
@@ -120,6 +124,8 @@ class PurchaseManager {
       
       if (productDetails == null) {
         print('Product details not found for: $premiumProductId');
+        print('Available products: ${_products.map((p) => p.id).join(", ")}');
+        onPurchaseError?.call('商品情報が見つかりません。App Store Connectでの設定を確認してください。');
         return false;
       }
       
@@ -136,7 +142,8 @@ class PurchaseManager {
       
     } catch (e) {
       _purchasePending = false;
-      onPurchaseError?.call('Purchase failed: $e');
+      print('Purchase error: $e');
+      onPurchaseError?.call('購入エラー: $e');
       return false;
     }
   }
@@ -279,9 +286,21 @@ class PurchaseManager {
   
   void _handlePurchaseError(PurchaseDetails purchaseDetails) {
     _purchasePending = false;
-    final String error = purchaseDetails.error?.message ?? 'Unknown error';
-    onPurchaseError?.call(error);
-    print('Purchase error: $error');
+    final error = purchaseDetails.error;
+    
+    // より詳細なエラーログ
+    print('Purchase error details:');
+    print('  Product ID: ${purchaseDetails.productID}');
+    print('  Error code: ${error?.code}');
+    print('  Error message: ${error?.message}');
+    print('  Error details: ${error?.details}');
+    
+    String userMessage = '購入に失敗しました';
+    if (error?.message != null) {
+      userMessage = 'エラー: ${error!.message}';
+    }
+    
+    onPurchaseError?.call(userMessage);
   }
   
   void _handleCanceledPurchase(PurchaseDetails purchaseDetails) {

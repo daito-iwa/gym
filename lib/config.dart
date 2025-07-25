@@ -4,6 +4,7 @@ class Config {
   // 後方互換性のため
   static String get baseUrl => AppConfig.baseUrl;
   static String get apiBaseUrl => AppConfig.apiBaseUrl;
+  static String get apiUrl => AppConfig.apiBaseUrl;
 }
 
 enum Environment { development, staging, production }
@@ -59,4 +60,8 @@ class AppConfig {
   static Duration get apiTimeout => isDevelopment 
     ? const Duration(seconds: 60) 
     : const Duration(seconds: 30);
+  
+  // AIチャット機能制御フラグ
+  // リリース後に有効化する場合はtrueに変更
+  static const bool enableAIChat = false;
 }
