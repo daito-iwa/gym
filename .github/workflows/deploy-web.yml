@@ -42,10 +42,6 @@ jobs:
       - name: Build web app
         run: flutter build web --release --base-href "/gym/"
         
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
-        
       - name: Upload build artifacts
         uses: actions/upload-pages-artifact@v3
         with:
