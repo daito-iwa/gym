@@ -1110,7 +1110,7 @@ class AdManager {
 }
 
 class _HomePageState extends State<HomePage> {
-  AppMode _currentMode = AppMode.dScore;
+  AppMode _currentMode = AppMode.chat; // AIチャットを初期画面に設定
   final TextEditingController _textController = TextEditingController();
   
   // ユーザーサブスクリプション管理
@@ -4817,10 +4817,10 @@ $expertAnswer
           backgroundColor: Colors.black,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.grey,
-          currentIndex: _currentMode == AppMode.dScore ? 0 : 
-                       (_currentMode == AppMode.allApparatus ? 1 : 
-                       (_currentMode == AppMode.analytics ? 2 : 
-                       (_currentMode == AppMode.chat ? 3 : 4))),
+          currentIndex: _currentMode == AppMode.chat ? 0 : 
+                       (_currentMode == AppMode.dScore ? 1 : 
+                       (_currentMode == AppMode.allApparatus ? 2 : 
+                       (_currentMode == AppMode.analytics ? 3 : 4))),
           type: BottomNavigationBarType.fixed,
           onTap: (index) {
             HapticFeedback.lightImpact(); // タップ時にハプティックフィードバック
@@ -4829,17 +4829,17 @@ $expertAnswer
             String featureName;
             
             if (index == 0) {
-              targetMode = AppMode.dScore;
-              featureName = 'D-Score計算';
-            } else if (index == 1) {
-              targetMode = AppMode.allApparatus;
-              featureName = '全種目分析';
-            } else if (index == 2) {
-              targetMode = AppMode.analytics;
-              featureName = 'アナリティクス';
-            } else if (index == 3) {
               targetMode = AppMode.chat;
               featureName = 'AIチャット';
+            } else if (index == 1) {
+              targetMode = AppMode.dScore;
+              featureName = 'D-Score計算';
+            } else if (index == 2) {
+              targetMode = AppMode.allApparatus;
+              featureName = '全種目分析';
+            } else if (index == 3) {
+              targetMode = AppMode.analytics;
+              featureName = 'アナリティクス';
             } else {
               targetMode = AppMode.admin;
               featureName = _getText('adminPanel');
@@ -4849,90 +4849,7 @@ $expertAnswer
             _safeSwitchToMode(targetMode, featureName: featureName);
           },
           items: [
-            BottomNavigationBarItem(
-              icon: Stack(
-                children: [
-                  Icon(Icons.calculate),
-                  if (_userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.star,
-                        size: 12,
-                        color: Colors.amber,
-                      ),
-                    )
-                  else
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.offline_bolt,
-                        size: 10,
-                        color: Colors.green,
-                      ),
-                    ),
-                ],
-              ),
-              label: _userSubscription.isFree ? 'D-Score ⭐' : 'D-Score(オフライン対応)',
-            ),
-            BottomNavigationBarItem(
-              icon: Stack(
-                children: [
-                  Icon(Icons.sports_gymnastics),
-                  if (_userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.star,
-                        size: 12,
-                        color: Colors.amber,
-                      ),
-                    )
-                  else
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.offline_bolt,
-                        size: 10,
-                        color: Colors.green,
-                      ),
-                    ),
-                ],
-              ),
-              label: _userSubscription.isFree ? '全種目 ⭐' : '全種目(オフライン対応)',
-            ),
-            BottomNavigationBarItem(
-              icon: Stack(
-                children: [
-                  Icon(Icons.analytics),
-                  if (_userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.star,
-                        size: 12,
-                        color: Colors.amber,
-                      ),
-                    )
-                  else
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.cloud,
-                        size: 10,
-                        color: Colors.blue,
-                      ),
-                    ),
-                ],
-              ),
-              label: _userSubscription.isFree ? '分析 ⭐' : '分析(要ネット)',
-            ),
+            // AIチャットを最初に移動
             BottomNavigationBarItem(
               icon: Stack(
                 children: [
@@ -4960,6 +4877,90 @@ $expertAnswer
                 ],
               ),
               label: AppConfig.enableAIChat ? 'AIチャット' : 'AIチャット🚧',
+            ),
+            BottomNavigationBarItem(
+              icon: Stack(
+                children: [
+                  Icon(Icons.calculate),
+                  if (!PlatformConfig.isWeb && _userSubscription.isFree)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Icon(
+                        Icons.star,
+                        size: 12,
+                        color: Colors.amber,
+                      ),
+                    )
+                  else if (!PlatformConfig.isWeb && !_userSubscription.isFree)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Icon(
+                        Icons.offline_bolt,
+                        size: 10,
+                        color: Colors.green,
+                      ),
+                    ),
+                ],
+              ),
+              label: PlatformConfig.isWeb ? 'D-Score' : (_userSubscription.isFree ? 'D-Score ⭐' : 'D-Score(オフライン対応)'),
+            ),
+            BottomNavigationBarItem(
+              icon: Stack(
+                children: [
+                  Icon(Icons.sports_gymnastics),
+                  if (!PlatformConfig.isWeb && _userSubscription.isFree)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Icon(
+                        Icons.star,
+                        size: 12,
+                        color: Colors.amber,
+                      ),
+                    )
+                  else if (!PlatformConfig.isWeb && !_userSubscription.isFree)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Icon(
+                        Icons.offline_bolt,
+                        size: 10,
+                        color: Colors.green,
+                      ),
+                    ),
+                ],
+              ),
+              label: PlatformConfig.isWeb ? '全種目' : (_userSubscription.isFree ? '全種目 ⭐' : '全種目(オフライン対応)'),
+            ),
+            BottomNavigationBarItem(
+              icon: Stack(
+                children: [
+                  Icon(Icons.analytics),
+                  if (!PlatformConfig.isWeb && _userSubscription.isFree)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Icon(
+                        Icons.star,
+                        size: 12,
+                        color: Colors.amber,
+                      ),
+                    )
+                  else if (!PlatformConfig.isWeb && !_userSubscription.isFree)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Icon(
+                        Icons.cloud,
+                        size: 10,
+                        color: Colors.blue,
+                      ),
+                    ),
+                ],
+              ),
+              label: PlatformConfig.isWeb ? '分析' : (_userSubscription.isFree ? '分析 ⭐' : '分析(要ネット)'),
             ),
             if (_isAdmin) 
               BottomNavigationBarItem(
