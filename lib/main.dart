@@ -2602,14 +2602,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       print('アプリ初期化開始（認証不要モード）');
       
       // Critical startup path - show UI as quickly as possible
-      // Only essential synchronous operations before showing UI
-      await _generateDeviceAuthToken();
-      await _checkDeviceSubscription();
-      
-      // Show UI immediately
+      // Show UI immediately without waiting for heavy operations
       setState(() {
         _isAuthLoading = false;
       });
+      
+      // Move essential operations to background for faster startup
+      _initializeCriticalDataInBackground();
       
       // Background initialization - non-blocking
       _initializeAppInBackground();
@@ -2939,6 +2938,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _isLoadingSubscription = false;
       });
       _showMessage('購入エラー: $error');
+    };
+    
+    // 復元コールバックを追加
+    _purchaseManager!.onPurchaseRestore = (String message) {
+      setState(() {
+        _isLoadingSubscription = false;
+      });
+      _showMessage(message);
     };
     
     // サブスクリプション状態変更コールバックを追加
@@ -5072,7 +5079,7 @@ $expertAnswer
                         ),
                       ],
                     ),
-                    if (_userSubscription.isFree) ...[
+                    if (_userSubscription.isFree && !kIsWeb) ...[
                       SizedBox(height: 12),
                       Text(
                         'プレミアムでもっと多くの機能を！',
@@ -5087,6 +5094,12 @@ $expertAnswer
                         ),
                         onPressed: _showSubscriptionPage,
                         child: Text(_getText('premiumUpgrade')),
+                      ),
+                    ] else if (_userSubscription.isFree && kIsWeb) ...[
+                      SizedBox(height: 12),
+                      Text(
+                        'Web版では全機能を広告付きで無料提供',
+                        style: TextStyle(color: Colors.green.shade300, fontSize: 14),
                       ),
                     ] else ...[
                       SizedBox(height: 8),
