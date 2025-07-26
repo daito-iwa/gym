@@ -2633,6 +2633,89 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
   
+  // 重要データの高速バックグラウンド初期化
+  void _initializeCriticalDataInBackground() async {
+    try {
+      // デバイス認証トークンを高速で生成/取得
+      await _generateDeviceAuthTokenFast();
+      
+      // サブスクリプション状態を高速チェック
+      await _checkDeviceSubscriptionFast();
+      
+      print('重要データ初期化完了');
+    } catch (e) {
+      print('重要データ初期化エラー: $e');
+      // エラーでも継続
+    }
+  }
+  
+  // 高速デバイス認証トークン生成（UI表示を優先）
+  Future<void> _generateDeviceAuthTokenFast() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // 既存のトークンを優先チェック（最も高速）
+      String? storedToken = prefs.getString('device_auth_token');
+      if (storedToken != null && storedToken.isNotEmpty) {
+        _token = storedToken;
+        return; // 早期リターンで高速化
+      }
+      
+      // デバイスIDを高速取得・生成
+      String? deviceId = prefs.getString('device_id');
+      if (deviceId == null || deviceId.isEmpty) {
+        deviceId = const Uuid().v4();
+        // バックグラウンドで保存（ノンブロッキング）
+        prefs.setString('device_id', deviceId).catchError((e) {
+          print('デバイスID保存エラー: $e');
+        });
+        print('📱 新しいデバイスIDを生成: $deviceId');
+      }
+      
+      // 簡易トークン生成（高速化）
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final simpleToken = '${deviceId}_$timestamp';
+      _token = simpleToken;
+      
+      // バックグラウンドで保存（ノンブロッキング）
+      prefs.setString('device_auth_token', simpleToken).catchError((e) {
+        print('トークン保存エラー: $e');
+      });
+      
+    } catch (e) {
+      print('❌ デバイス認証トークン高速生成エラー: $e');
+      // フォールバック: 一時的なトークンを生成
+      _token = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    }
+  }
+  
+  // 高速サブスクリプション状態チェック
+  Future<void> _checkDeviceSubscriptionFast() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // 基本的な状態のみを高速チェック
+      final tierString = prefs.getString('user_subscription_tier');
+      final isActive = prefs.getBool('user_subscription_active') ?? false;
+      
+      if (tierString != null && isActive) {
+        final tier = tierString == 'premium' ? UserTier.premium : UserTier.free;
+        _userSubscription = UserSubscription(
+          tier: tier,
+          isActive: isActive,
+          subscriptionEnd: DateTime.now().add(Duration(days: 30)), // 仮の期限
+        );
+      } else {
+        _userSubscription = UserSubscription(tier: UserTier.free);
+      }
+      
+    } catch (e) {
+      print('❌ サブスクリプション状態高速チェックエラー: $e');
+      // フォールバック: 無料版として扱う
+      _userSubscription = UserSubscription(tier: UserTier.free);
+    }
+  }
+  
   // Background initialization that doesn't block UI
   void _initializeAppInBackground() async {
     try {
