@@ -50,7 +50,17 @@ Web版では以下の機能に制限があります：
   
   /// プラットフォーム別の最大チャット回数
   static int get maxDailyChatCount {
-    return isWeb ? 20 : 10; // Web版は広告収入のため、少し多めに設定
+    return isWeb ? 100 : 10; // Web版は広告収入のため、大幅に緩い制限
+  }
+  
+  /// プラットフォーム別の最大月間チャット回数
+  static int get maxMonthlyChatCount {
+    return isWeb ? 1000 : 50; // Web版は広告収入のため、大幅に緩い制限
+  }
+  
+  /// チャット機能が無制限かどうか
+  static bool get isUnlimitedChatEnabled {
+    return isWeb; // Web版では実質無制限（広告視聴で補完）
   }
   
   /// プラットフォーム別のD-Score計算制限

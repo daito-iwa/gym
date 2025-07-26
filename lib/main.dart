@@ -781,8 +781,9 @@ class ChatUsageTracker {
   static const String _lastResetDateKey = 'last_reset_date';
   static const String _monthlyResetDateKey = 'monthly_reset_date';
   
-  static const int dailyFreeLimit = 10;
-  static const int monthlyFreeLimit = 50;
+  // プラットフォーム別の制限を使用
+  static int get dailyFreeLimit => PlatformConfig.maxDailyChatCount;
+  static int get monthlyFreeLimit => PlatformConfig.maxMonthlyChatCount;
   
   static Future<void> _resetUsageIfNeeded() async {
     final prefs = await SharedPreferences.getInstance();
@@ -868,6 +869,11 @@ class ChatUsageTracker {
   }
   
   static Future<bool> canSendMessage(UserSubscription subscription) async {
+    // Web版では実質無制限
+    if (PlatformConfig.isUnlimitedChatEnabled) {
+      return true;
+    }
+    
     if (subscription.canAccessUnlimitedChat()) {
       return true;
     }
@@ -886,6 +892,12 @@ class ChatUsageTracker {
   }
   
   static Future<String> getUsageStatus(UserSubscription subscription) async {
+    // Web版では広告サポート版として表示
+    if (PlatformConfig.isUnlimitedChatEnabled) {
+      final bonusCredits = await getBonusCredits();
+      return 'Web版: 広告サポート (ボーナス: ${bonusCredits}回)';
+    }
+    
     if (subscription.canAccessUnlimitedChat()) {
       return 'プレミアム: 無制限';
     }
@@ -4170,6 +4182,11 @@ $expertAnswer
 
   // チャット制限到達時のダイアログ
   void _showChatLimitReachedDialog() {
+    // Web版では制限に達することがないため、このダイアログは表示しない
+    if (PlatformConfig.isUnlimitedChatEnabled) {
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -6726,8 +6743,8 @@ $expertAnswer
           children: [
             // AIチャット機能の説明バー
             _buildChatInfoBar(),
-            // 無料ユーザーにはバナー広告を表示
-            if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
+            // Web版では広告を表示、モバイル版では無料ユーザーのみ表示
+            if (PlatformConfig.isWeb || (_userSubscription.shouldShowAds() && _isAdManagerInitialized))
               _buildBannerAd(),
             Expanded(
               child: ListView.builder(

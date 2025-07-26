@@ -62,6 +62,6 @@ class AppConfig {
     : const Duration(seconds: 30);
   
   // AIチャット機能制御フラグ
-  // リリース後に有効化する場合はtrueに変更
-  static const bool enableAIChat = false;
+  // Web版ではAIチャット機能を有効化
+  static const bool enableAIChat = true;
 }
