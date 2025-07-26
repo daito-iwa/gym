@@ -2702,7 +2702,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         final tier = tierString == 'premium' ? UserTier.premium : UserTier.free;
         _userSubscription = UserSubscription(
           tier: tier,
-          isActive: isActive,
           subscriptionEnd: DateTime.now().add(Duration(days: 30)), // 仮の期限
         );
       } else {
