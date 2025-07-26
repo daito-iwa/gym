@@ -1141,17 +1141,18 @@ class AdManager {
   bool get isRewardedAdReady => _isRewardedAdReady;
 }
 
-class _HomePageState extends State<HomePage> {
-  AppMode _currentMode = AppMode.chat; // AIチャットを初期画面に設定
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  AppMode _currentMode = kIsWeb ? AppMode.dScore : AppMode.chat; // Web版はD-Score、モバイル版はAIチャットを初期画面に設定
   final TextEditingController _textController = TextEditingController();
   
   // ユーザーサブスクリプション管理
   UserSubscription _userSubscription = UserSubscription(tier: UserTier.free);
   bool _isLoadingSubscription = false;
   bool _isAdmin = false;
+  Timer? _subscriptionCheckTimer; // 定期的なサブスクリプション状態チェック用
   
   // 課金システム管理
-  late PurchaseManager _purchaseManager;
+  PurchaseManager? _purchaseManager;
   bool _isPurchaseManagerInitialized = false;
   
   // 広告システム管理
@@ -1383,7 +1384,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
               SizedBox(height: 16),
-              if (_purchaseManager.purchasePending)
+              if (!kIsWeb && _purchaseManager?.purchasePending == true)
                 CircularProgressIndicator()
               else
                 Column(
@@ -1454,11 +1455,17 @@ class _HomePageState extends State<HomePage> {
   // プレミアム購入処理
   Future<void> _purchasePremium() async {
     try {
+      // Web版では購入機能を無効化
+      if (kIsWeb) {
+        _showMessage('Web版では購入機能をご利用いただけません。モバイルアプリ版をお試しください。');
+        return;
+      }
+      
       setState(() {
         _isLoadingSubscription = true;
       });
       
-      final bool success = await _purchaseManager.purchasePremium();
+      final bool success = await _purchaseManager!.purchasePremium();
       
       if (success) {
         _showMessage('購入処理を開始しました');
@@ -1535,11 +1542,17 @@ class _HomePageState extends State<HomePage> {
   // 購入履歴復元
   Future<void> _restorePurchases() async {
     try {
+      // Web版では購入復元機能を無効化
+      if (kIsWeb) {
+        _showMessage('Web版では購入復元機能をご利用いただけません。');
+        return;
+      }
+      
       setState(() {
         _isLoadingSubscription = true;
       });
       
-      await _purchaseManager.restorePurchases();
+      await _purchaseManager!.restorePurchases();
       _showMessage('購入履歴を復元しました');
     } catch (e) {
       _showMessage('復元エラー: $e');
@@ -2570,11 +2583,17 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    // アプリライフサイクル監視を開始
+    WidgetsBinding.instance.addObserver(this);
+    
     // デバッグ時はプレミアム状態をクリア
     if (kDebugMode) {
       _clearDeviceSubscription();
     }
     _initializeApp(); // アプリの初期化を開始
+    
+    // 定期的なサブスクリプション状態チェックを開始
+    _startPeriodicSubscriptionCheck();
   }
 
   // アプリの初期化を非同期で実行（認証不要版）
@@ -2900,22 +2919,84 @@ class _HomePageState extends State<HomePage> {
   
   // 課金システム初期化
   Future<void> _initializePurchaseManager() async {
+    // Web版では課金システムを無効化
+    if (kIsWeb) {
+      print('PurchaseManager skipped for web platform');
+      return;
+    }
+    
     _purchaseManager = PurchaseManager();
     
     // コールバック関数を設定
-    _purchaseManager.onPurchaseSuccess = () {
+    _purchaseManager!.onPurchaseSuccess = () {
       _showPurchaseSuccessDialog();
       _refreshDeviceSubscriptionInfo();
     };
     
+    // エラーコールバックを追加
+    _purchaseManager!.onPurchaseError = (String error) {
+      setState(() {
+        _isLoadingSubscription = false;
+      });
+      _showMessage('購入エラー: $error');
+    };
+    
+    // サブスクリプション状態変更コールバックを追加
+    _purchaseManager!.onSubscriptionStateChanged = (SubscriptionState oldState, SubscriptionState newState) {
+      print('Subscription state changed: $oldState -> $newState');
+      _refreshDeviceSubscriptionInfo();
+    };
+    
+    // サブスクリプション期限切れコールバックを追加
+    _purchaseManager!.onSubscriptionExpired = () {
+      _showMessage('サブスクリプションが期限切れになりました');
+      _refreshDeviceSubscriptionInfo();
+    };
+    
     try {
-      await _purchaseManager.initialize();
+      await _purchaseManager!.initialize();
       setState(() {
         _isPurchaseManagerInitialized = true;
       });
       print('PurchaseManager initialized successfully');
     } catch (e) {
       print('Failed to initialize PurchaseManager: $e');
+      _showMessage('課金システムの初期化に失敗しました。アプリを再起動してください。');
+    }
+  }
+  
+  // 定期的なサブスクリプション状態チェックを開始
+  void _startPeriodicSubscriptionCheck() {
+    // Web版では課金システムを使用しないためスキップ
+    if (kIsWeb) return;
+    
+    // 10分ごとにサブスクリプション状態をチェック
+    _subscriptionCheckTimer = Timer.periodic(Duration(minutes: 10), (timer) {
+      if (_isPurchaseManagerInitialized && _purchaseManager != null) {
+        _purchaseManager!.checkSubscriptionStatus();
+      }
+    });
+  }
+  
+  // アプリライフサイクル状態変更時の処理
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // アプリがフォアグラウンドに戻った時、サブスクリプション状態をチェック
+        print('App resumed - checking subscription status');
+        if (!kIsWeb && _isPurchaseManagerInitialized && _purchaseManager != null) {
+          _purchaseManager!.checkSubscriptionStatus();
+        }
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        // アプリがバックグラウンドに移行時は特に何もしない
+        break;
     }
   }
   
@@ -9305,9 +9386,17 @@ ${issues.isNotEmpty ?
 
   @override
   void dispose() {
+    // アプリライフサイクル監視を停止
+    WidgetsBinding.instance.removeObserver(this);
+    
+    // 定期チェックタイマーを停止
+    _subscriptionCheckTimer?.cancel();
+    
+    // コントローラーをクリーンアップ
     _textController.dispose();
     _analyticsController.dispose();
     _skillSearchController.dispose();
+    
     super.dispose();
   }
 }
