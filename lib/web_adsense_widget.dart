@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:html' as html;
+import 'dart:ui_web' as ui_web;
 import 'web_config.dart';
 
 /// Google AdSense広告を表示するためのウィジェット
@@ -58,20 +60,66 @@ class _AdSenseWidgetState extends State<AdSenseWidget> {
   
   void _registerViewFactory() {
     if (kIsWeb) {
-      // Web版では実際のAdSense実装が必要
-      // 現在はプレースホルダーとして実装
+      // ビューファクトリーを登録（一度だけ）
+      // ignore: undefined_prefixed_name
+      ui_web.platformViewRegistry.registerViewFactory(
+        _viewId,
+        (int viewId) => _createAdSenseElement(),
+      );
     }
+  }
+  
+  html.IFrameElement _createAdSenseElement() {
+    final iframe = html.IFrameElement()
+      ..style.border = 'none'
+      ..style.width = '100%'
+      ..style.height = '100%';
+
+    // AdSense広告コードを生成
+    final adCode = '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; }
+    .adsbygoogle { display: block; }
+  </style>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${WebConfig.adSensePublisherId}"
+          crossorigin="anonymous"></script>
+</head>
+<body>
+  <ins class="adsbygoogle"
+       style="display:${widget.format == AdFormat.responsive ? 'block' : 'inline-block'};width:${widget.width == double.infinity ? '100%' : '${widget.width}px'};height:${widget.height}px"
+       data-ad-client="${WebConfig.adSensePublisherId}"
+       data-ad-slot="${widget.adUnitId}"
+       ${widget.format == AdFormat.responsive ? 'data-ad-format="auto" data-full-width-responsive="true"' : ''}>
+  </ins>
+  <script>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</body>
+</html>
+    ''';
+
+    // iframeのsrcDocに直接HTMLを設定
+    iframe.srcdoc = adCode;
+    
+    return iframe;
   }
   
   @override
   Widget build(BuildContext context) {
-    // Web版では実際のAdSense広告、非Web版ではプレースホルダー
+    // Web版では実際のAdSense広告
     if (kIsWeb) {
-      return AdSensePlaceholder(
-        width: widget.width == double.infinity ? 300 : widget.width,
+      return SizedBox(
+        width: widget.width == double.infinity ? null : widget.width,
         height: widget.height,
+        child: HtmlElementView(viewType: _viewId),
       );
     } else {
+      // 非Web版ではプレースホルダー
       return AdSensePlaceholder(
         width: widget.width == double.infinity ? 300 : widget.width,
         height: widget.height,

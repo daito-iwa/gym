@@ -24,6 +24,7 @@ import 'platform_config.dart'; // プラットフォーム設定
 import 'ad_widget.dart'; // ユニバーサル広告ウィジェット
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
 import 'web_config.dart'; // Web版設定
+import 'web_ad_manager.dart'; // Web版広告管理
 
 // カスタム例外クラス
 class NetworkException implements Exception {
@@ -1557,6 +1558,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _handleTabTap(int index) {
     HapticFeedback.lightImpact();
     
+    // Web版でのタブ切り替え広告チェック
+    if (PlatformConfig.isWeb && _userSubscription.shouldShowAds()) {
+      if (WebAdManager().shouldShowTabSwitchAd()) {
+        _showWebInterstitialAd('tab_switch');
+      }
+    }
+    
     final tabItems = PlatformUIConfig.getTabItems(isUserFree: _userSubscription.isFree);
     
     AppMode targetMode;
@@ -2221,6 +2229,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _clearDeviceSubscription();
     }
     _initializeApp(); // アプリの初期化を開始
+    
+    // Web版広告管理の初期化
+    if (PlatformConfig.isWeb) {
+      WebAdManager().loadFromStorage();
+    }
     
     // 定期的なサブスクリプション状態チェックを開始
     _startPeriodicSubscriptionCheck();
@@ -4756,6 +4769,19 @@ $expertAnswer
                           ? _buildChatInterface()
                           : _buildAdminInterface(),
             ),
+            // Web版フッターバナー広告
+            if (PlatformConfig.isWeb && _userSubscription.shouldShowAds())
+              Container(
+                height: 90,
+                width: double.infinity,
+                color: Colors.grey[900],
+                child: Center(
+                  child: UniversalAdWidget(
+                    adType: AdType.banner,
+                    adUnitId: WebConfig.adUnits.footerBanner,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -6251,36 +6277,245 @@ $expertAnswer
     );
   }
 
+  // チャットコンテンツの共通UI
+  Widget _buildChatContent() {
+    return SafeArea(
+      child: Column(
+        children: [
+          // AIチャット機能の説明バー
+          _buildChatInfoBar(),
+          // 無料ユーザーのみ広告を表示
+          if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
+            _buildBannerAd(),
+          Expanded(
+            child: ListView.builder(
+              reverse: true,
+              padding: const EdgeInsets.all(8.0),
+              itemCount: _messages.length,
+              itemBuilder: (_, int index) => _messages[index],
+            ),
+          ),
+          if (_isLoading) const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              border: Border(top: BorderSide(color: Colors.grey[700]!)),
+            ),
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    onSubmitted: (_) => _handleSendPressed(),
+                    decoration: const InputDecoration.collapsed(
+                      hintText: 'メッセージを入力...',
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _handleSendPressed,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // チャット用のUI - 準備中画面
   Widget _buildChatInterface() {
     if (AppConfig.enableAIChat) {
-      // AIチャット機能が有効な場合は通常のチャット画面
-      return SafeArea(
-        child: Column(
+      // デスクトップWeb版の場合はサイドバー広告付きレイアウト
+      final isDesktopWeb = PlatformConfig.isWeb && MediaQuery.of(context).size.width > 1024;
+      
+      if (isDesktopWeb && _userSubscription.shouldShowAds()) {
+        return Row(
           children: [
-            // AIチャット機能の説明バー
-            _buildChatInfoBar(),
-            // 無料ユーザーのみ広告を表示
-            if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
-              _buildBannerAd(),
+            // メインチャットエリア
             Expanded(
-              child: ListView.builder(
-                reverse: true,
-                padding: const EdgeInsets.all(8.0),
-                itemCount: _messages.length,
-                itemBuilder: (_, int index) => _messages[index],
-              ),
+              child: _buildChatContent(),
             ),
-            if (_isLoading) const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
+            // 右サイドバー広告
             Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                border: Border(top: BorderSide(color: Colors.grey[700]!)),
-              ),
+              width: 320,
               padding: const EdgeInsets.all(8.0),
+              color: Colors.grey[900],
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
+                  const Text(
+                    '広告',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // サイドバー広告（300x250）
+                  UniversalAdWidget(
+                    adType: AdType.banner,
+                    adUnitId: WebConfig.adUnits.sidebarRectangle,
+                  ),
+                  const SizedBox(height: 16),
+                  // 追加の広告スペース
+                  UniversalAdWidget(
+                    adType: AdType.banner,
+                    adUnitId: WebConfig.adUnits.sidebarRectangle,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      } else {
+        // モバイルまたは広告なしの場合は通常レイアウト
+        return _buildChatContent();
+      }
+    }
+    
+    // 準備中画面の場合
+    return _buildComingSoonInterface();
+  }
+
+  // 準備中画面のUI
+  Widget _buildComingSoonInterface() {
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 工事アイコン
+              Container(
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.construction,
+                  size: 80,
+                  color: Colors.orange,
+                ),
+              ),
+              const SizedBox(height: 32),
+              
+              // タイトル
+              Text(
+                _currentLang == '日本語' ? 'AIチャット機能 準備中' : 'AI Chat Feature Coming Soon',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              
+              // 説明文
+              Text(
+                _currentLang == '日本語' 
+                  ? '現在、AIチャット機能を開発中です。\n体操のルールや技について質問できる\n高度なAIアシスタント機能を準備しています。\n\n他の機能（D-Score計算、全種目分析、\nアナリティクス）は通常通りご利用いただけます。'
+                  : 'AI Chat feature is currently under development.\nWe are preparing an advanced AI assistant\nthat can answer questions about gymnastics\nrules and techniques.\n\nOther features (D-Score Calculator,\nAll Apparatus Analysis, Analytics)\nare available as usual.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[300],
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              
+              // 予定表示
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.schedule,
+                      color: Colors.blue,
+                      size: 24,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _currentLang == '日本語' ? 'リリース予定: 近日公開' : 'Release Schedule: Coming Soon',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 以下は既存のチャット機能コード（無効化中）
+  Widget _buildDisabledChatInterface() {
+    return SafeArea(
+      child: Column(
+        children: [
+          // AIチャット機能の説明バー
+          _buildChatInfoBar(),
+          // 無料ユーザーにはバナー広告を表示
+          if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
+            _buildBannerAd(),
+          Expanded(
+            child: ListView.builder(
+              reverse: true,
+              padding: const EdgeInsets.all(8.0),
+              itemCount: _messages.length,
+              itemBuilder: (_, int index) => _messages[index],
+            ),
+          ),
+          if (_isLoading) const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: CircularProgressIndicator(),
+          ),
+          // 使用量インジケーター（無料ユーザーのみ）
+          if (!_userSubscription.canAccessUnlimitedChat())
+            FutureBuilder<String>(
+              future: ChatUsageTracker.getUsageStatus(_userSubscription),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Text(
+                      snapshot.data!,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              border: Border(top: BorderSide(color: Colors.grey[700]!)),
+            ),
+            padding: const EdgeInsets.all(8.0),
               child: Row(
                 children: [
                   Expanded(
@@ -6445,6 +6680,111 @@ $expertAnswer
     );
   }
   
+  // Web版インタースティシャル広告表示
+  void _showWebInterstitialAd(String adType) {
+    if (!PlatformConfig.isWeb) return;
+    
+    // 広告表示を記録
+    WebAdManager().recordAdShown(adType);
+    
+    // ダイアログで全画面広告を模擬
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            color: Colors.black.withOpacity(0.8),
+            child: Stack(
+              children: [
+                Center(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    constraints: const BoxConstraints(
+                      maxWidth: 728,
+                      maxHeight: 600,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        // 広告ヘッダー
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '広告',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              // 5秒後に閉じるボタンを表示
+                              StatefulBuilder(
+                                builder: (context, setState) {
+                                  int countdown = 5;
+                                  Timer.periodic(const Duration(seconds: 1), (timer) {
+                                    if (countdown > 0) {
+                                      setState(() {
+                                        countdown--;
+                                      });
+                                    } else {
+                                      timer.cancel();
+                                    }
+                                  });
+                                  
+                                  return countdown > 0
+                                      ? Text(
+                                          '閉じる ($countdown)',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
+                                        )
+                                      : TextButton(
+                                          onPressed: () => Navigator.of(context).pop(),
+                                          child: const Text('閉じる'),
+                                        );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 広告コンテンツ
+                        Expanded(
+                          child: UniversalAdWidget(
+                            adType: AdType.interstitial,
+                            adUnitId: WebConfig.adUnits.responsive,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // バナー広告ウィジェット
   Widget _buildBannerAd() {
     if (PlatformConfig.isWeb) {
@@ -7139,6 +7479,15 @@ $expertAnswer
                 backgroundColor: Colors.green,
               ),
             );
+            
+            // Web版での保存完了時広告
+            if (PlatformConfig.isWeb && _userSubscription.shouldShowAds()) {
+              if (WebAdManager().shouldShowSaveCompletedAd()) {
+                Future.delayed(const Duration(milliseconds: 2000), () {
+                  _showWebInterstitialAd('save_completed');
+                });
+              }
+            }
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

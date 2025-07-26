@@ -2,28 +2,28 @@
 /// Google AdSenseやWeb特有の設定を管理
 class WebConfig {
   /// Google AdSense Publisher ID
-  /// 実際のIDに置き換えてください
-  static const String adSensePublisherId = 'ca-pub-XXXXXXXXXXXXXXXX';
+  /// 本番用のPublisher ID
+  static const String adSensePublisherId = 'ca-pub-8022160047771829';
   
-  /// AdSense広告ユニットID
+  /// AdSense広告ユニットID（実際のIDに置き換えてください）
   static const AdSenseUnits adUnits = AdSenseUnits(
     /// ヘッダーバナー広告（728x90）
-    headerBanner: 'YOUR_HEADER_BANNER_ID',
+    headerBanner: '1234567890',
     
     /// フッターバナー広告（728x90）
-    footerBanner: 'YOUR_FOOTER_BANNER_ID',
+    footerBanner: '1234567891',
     
     /// サイドバー広告（300x250）
-    sidebarRectangle: 'YOUR_SIDEBAR_RECTANGLE_ID',
+    sidebarRectangle: '1234567892',
     
     /// インフィード広告
-    inFeed: 'YOUR_IN_FEED_ID',
+    inFeed: '1234567893',
     
     /// 記事内広告
-    inArticle: 'YOUR_IN_ARTICLE_ID',
+    inArticle: '1234567894',
     
     /// レスポンシブ広告
-    responsive: 'YOUR_RESPONSIVE_ID',
+    responsive: '1234567895',
   );
   
   /// Web版の特別な機能フラグ
