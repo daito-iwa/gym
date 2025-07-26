@@ -24,6 +24,7 @@ import 'gymnastics_expert_database.dart'; // 専門知識データベース
 import 'purchase_manager.dart'; // 正しいPurchaseManager
 import 'admob_config.dart'; // AdMob設定
 import 'platform_config.dart'; // プラットフォーム設定
+import 'platform_ui_config.dart'; // プラットフォーム別UI設定  
 import 'web_config.dart'; // Web版設定
 import 'ad_widget.dart'; // ユニバーサル広告ウィジェット
 
@@ -625,6 +626,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Gymnastics AI Chat',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.black,
         appBarTheme: const AppBarTheme(
@@ -648,7 +650,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-enum AppMode { dScore, allApparatus, analytics, admin, chat }
+// AppMode enumはplatform_ui_config.dartで定義
 
 // ユーザーティアシステム
 enum UserTier { free, premium }
@@ -955,7 +957,7 @@ class AdManager {
   }
   
   // バナー広告読み込み
-  void _loadBannerAd() {
+  void _loadBannerAd({int retryCount = 0}) {
     _bannerAd = BannerAd(
       adUnitId: _getBannerAdId(),
       size: AdSize.banner,
@@ -969,15 +971,32 @@ class AdManager {
           print('Banner ad failed to load: $error');
           ad.dispose();
           _isBannerAdReady = false;
+          
+          // Retry logic with exponential backoff
+          if (retryCount < 3) {
+            final delaySeconds = (retryCount + 1) * 2;
+            Timer(Duration(seconds: delaySeconds), () {
+              _loadBannerAd(retryCount: retryCount + 1);
+            });
+          }
         },
       ),
     );
     
     _bannerAd?.load();
+    
+    // Add timeout handling
+    Timer(Duration(seconds: 10), () {
+      if (!_isBannerAdReady && _bannerAd != null) {
+        print('Banner ad load timeout');
+        _bannerAd?.dispose();
+        _isBannerAdReady = false;
+      }
+    });
   }
   
   // インタースティシャル広告読み込み
-  void _loadInterstitialAd() {
+  void _loadInterstitialAd({int retryCount = 0}) {
     InterstitialAd.load(
       adUnitId: _getInterstitialAdId(),
       request: const AdRequest(),
@@ -990,13 +1009,29 @@ class AdManager {
         onAdFailedToLoad: (error) {
           print('Interstitial ad failed to load: $error');
           _isInterstitialAdReady = false;
+          
+          // Retry logic with exponential backoff
+          if (retryCount < 3) {
+            final delaySeconds = (retryCount + 1) * 2;
+            Timer(Duration(seconds: delaySeconds), () {
+              _loadInterstitialAd(retryCount: retryCount + 1);
+            });
+          }
         },
       ),
     );
+    
+    // Add timeout handling
+    Timer(Duration(seconds: 15), () {
+      if (!_isInterstitialAdReady) {
+        print('Interstitial ad load timeout');
+        _isInterstitialAdReady = false;
+      }
+    });
   }
   
   // リワード広告読み込み
-  void _loadRewardedAd() {
+  void _loadRewardedAd({int retryCount = 0}) {
     RewardedAd.load(
       adUnitId: _getRewardedAdId(),
       request: const AdRequest(),
@@ -1009,9 +1044,25 @@ class AdManager {
         onAdFailedToLoad: (error) {
           print('Rewarded ad failed to load: $error');
           _isRewardedAdReady = false;
+          
+          // Retry logic with exponential backoff
+          if (retryCount < 3) {
+            final delaySeconds = (retryCount + 1) * 2;
+            Timer(Duration(seconds: delaySeconds), () {
+              _loadRewardedAd(retryCount: retryCount + 1);
+            });
+          }
         },
       ),
     );
+    
+    // Add timeout handling
+    Timer(Duration(seconds: 15), () {
+      if (!_isRewardedAdReady) {
+        print('Rewarded ad load timeout');
+        _isRewardedAdReady = false;
+      }
+    });
   }
   
   // バナー広告ID取得
@@ -1783,6 +1834,23 @@ class _HomePageState extends State<HomePage> {
   };
   
   // 翻訳ヘルパー関数
+  int _getTabIndex(AppMode mode) {
+    switch (mode) {
+      case AppMode.chat:
+        return 0;
+      case AppMode.dScore:
+        return 1;
+      case AppMode.allApparatus:
+        return 2;
+      case AppMode.analytics:
+        return 3;
+      case AppMode.admin:
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
   String _getText(String key) {
     // AI機能は常に英語表示（ダサくなるのを防ぐため）
     if (key == 'ruleBookChat') return 'Gymnastics AI Chat';
@@ -1809,6 +1877,69 @@ class _HomePageState extends State<HomePage> {
       default:
         return _currentLang == '日本語' ? '体操アプリ' : 'Gymnastics App';
     }
+  }
+
+  // プラットフォーム別タブアイテム生成
+  List<BottomNavigationBarItem> _buildTabItems() {
+    final tabItems = PlatformUIConfig.getTabItems(isUserFree: _userSubscription.isFree);
+    final navigationItems = <BottomNavigationBarItem>[];
+    
+    for (final tabInfo in tabItems) {
+      navigationItems.add(
+        BottomNavigationBarItem(
+          icon: Stack(
+            children: [
+              Icon(tabInfo.icon),
+              if (tabInfo.statusIcon != null)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Icon(
+                    tabInfo.statusIcon!.icon,
+                    size: tabInfo.statusIcon!.size,
+                    color: tabInfo.statusIcon!.color,
+                  ),
+                ),
+            ],
+          ),
+          label: tabInfo.label,
+        ),
+      );
+    }
+    
+    // 管理者タブを条件付きで追加
+    if (_isAdmin) {
+      navigationItems.add(
+        BottomNavigationBarItem(
+          icon: Icon(Icons.admin_panel_settings),
+          label: '管理者',
+        ),
+      );
+    }
+    
+    return navigationItems;
+  }
+
+  // プラットフォーム別タブタップハンドラー
+  void _handleTabTap(int index) {
+    HapticFeedback.lightImpact();
+    
+    final tabItems = PlatformUIConfig.getTabItems(isUserFree: _userSubscription.isFree);
+    
+    AppMode targetMode;
+    String featureName;
+    
+    if (index < tabItems.length) {
+      final tabInfo = tabItems[index];
+      targetMode = tabInfo.mode;
+      featureName = tabInfo.featureName;
+    } else {
+      // 管理者タブ（条件付き表示）
+      targetMode = AppMode.admin;
+      featureName = _getText('adminPanel');
+    }
+    
+    _safeSwitchToMode(targetMode, featureName: featureName);
   }
 
   // --- 認証関連の新しい状態 ---
@@ -3351,6 +3482,23 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _launchURL(String urlString) async {
+    try {
+      final Uri url = Uri.parse(urlString);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        _showMessage(_currentLang == '日本語' 
+          ? 'URLを開けませんでした。ブラウザを確認してください。'
+          : 'Could not launch URL. Please check your browser.');
+      }
+    } catch (e) {
+      _showMessage(_currentLang == '日本語' 
+        ? 'URLを開く際にエラーが発生しました: $e'
+        : 'Error launching URL: $e');
+    }
+  }
+
 
   void _connectWithPrevious() {
     if (_selectedSkillIndex != null && _selectedSkillIndex! > 0) {
@@ -4817,157 +4965,10 @@ $expertAnswer
           backgroundColor: Colors.black,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.grey,
-          currentIndex: _currentMode == AppMode.chat ? 0 : 
-                       (_currentMode == AppMode.dScore ? 1 : 
-                       (_currentMode == AppMode.allApparatus ? 2 : 
-                       (_currentMode == AppMode.analytics ? 3 : 4))),
+          currentIndex: PlatformUIConfig.getTabIndex(_currentMode),
           type: BottomNavigationBarType.fixed,
-          onTap: (index) {
-            HapticFeedback.lightImpact(); // タップ時にハプティックフィードバック
-            
-            AppMode targetMode;
-            String featureName;
-            
-            if (index == 0) {
-              targetMode = AppMode.chat;
-              featureName = 'AIチャット';
-            } else if (index == 1) {
-              targetMode = AppMode.dScore;
-              featureName = 'D-Score計算';
-            } else if (index == 2) {
-              targetMode = AppMode.allApparatus;
-              featureName = '全種目分析';
-            } else if (index == 3) {
-              targetMode = AppMode.analytics;
-              featureName = 'アナリティクス';
-            } else {
-              targetMode = AppMode.admin;
-              featureName = _getText('adminPanel');
-            }
-            
-            // プレミアム機能アクセス制御（統一化）
-            _safeSwitchToMode(targetMode, featureName: featureName);
-          },
-          items: [
-            // AIチャットを最初に移動
-            BottomNavigationBarItem(
-              icon: Stack(
-                children: [
-                  Icon(Icons.chat_bubble_outline),
-                  if (!AppConfig.enableAIChat)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.build_circle,
-                        size: 12,
-                        color: Colors.orange,
-                      ),
-                    )
-                  else
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.cloud,
-                        size: 10,
-                        color: Colors.blue,
-                      ),
-                    ),
-                ],
-              ),
-              label: AppConfig.enableAIChat ? 'AIチャット' : 'AIチャット🚧',
-            ),
-            BottomNavigationBarItem(
-              icon: Stack(
-                children: [
-                  Icon(Icons.calculate),
-                  if (!PlatformConfig.isWeb && _userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.star,
-                        size: 12,
-                        color: Colors.amber,
-                      ),
-                    )
-                  else if (!PlatformConfig.isWeb && !_userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.offline_bolt,
-                        size: 10,
-                        color: Colors.green,
-                      ),
-                    ),
-                ],
-              ),
-              label: PlatformConfig.isWeb ? 'D-Score' : (_userSubscription.isFree ? 'D-Score ⭐' : 'D-Score(オフライン対応)'),
-            ),
-            BottomNavigationBarItem(
-              icon: Stack(
-                children: [
-                  Icon(Icons.sports_gymnastics),
-                  if (!PlatformConfig.isWeb && _userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.star,
-                        size: 12,
-                        color: Colors.amber,
-                      ),
-                    )
-                  else if (!PlatformConfig.isWeb && !_userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.offline_bolt,
-                        size: 10,
-                        color: Colors.green,
-                      ),
-                    ),
-                ],
-              ),
-              label: PlatformConfig.isWeb ? '全種目' : (_userSubscription.isFree ? '全種目 ⭐' : '全種目(オフライン対応)'),
-            ),
-            BottomNavigationBarItem(
-              icon: Stack(
-                children: [
-                  Icon(Icons.analytics),
-                  if (!PlatformConfig.isWeb && _userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.star,
-                        size: 12,
-                        color: Colors.amber,
-                      ),
-                    )
-                  else if (!PlatformConfig.isWeb && !_userSubscription.isFree)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Icon(
-                        Icons.cloud,
-                        size: 10,
-                        color: Colors.blue,
-                      ),
-                    ),
-                ],
-              ),
-              label: PlatformConfig.isWeb ? '分析' : (_userSubscription.isFree ? '分析 ⭐' : '分析(要ネット)'),
-            ),
-            if (_isAdmin) 
-              BottomNavigationBarItem(
-                icon: Icon(Icons.admin_panel_settings),
-                label: '管理者',
-              ),
-          ],
+          onTap: _handleTabTap,
+          items: _buildTabItems(),
         ),
         drawer: Drawer(
           child: ListView(
@@ -5127,6 +5128,25 @@ $expertAnswer
                   if (value != null) {
                     _safeSwitchToMode(value);
                   }
+                },
+              ),
+              const Divider(),
+              // 利用規約
+              ListTile(
+                leading: const Icon(Icons.description),
+                title: Text(_currentLang == '日本語' ? '利用規約' : 'Terms of Service'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _launchURL('https://www.gymnastics-ai.com/terms');
+                },
+              ),
+              // プライバシーポリシー
+              ListTile(
+                leading: const Icon(Icons.privacy_tip),
+                title: Text(_currentLang == '日本語' ? 'プライバシーポリシー' : 'Privacy Policy'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _launchURL('https://www.gymnastics-ai.com/privacy');
                 },
               ),
               const Divider(),

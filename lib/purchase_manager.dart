@@ -112,8 +112,15 @@ class PurchaseManager {
   
   // 購入処理
   Future<bool> purchasePremium() async {
-    if (!_isAvailable || _purchasePending) {
-      print('Purchase not available or pending');
+    if (!_isAvailable) {
+      print('Purchase not available - service not initialized');
+      onPurchaseError?.call('購入サービスが利用できません。アプリを再起動してください。');
+      return false;
+    }
+    
+    if (_purchasePending) {
+      print('Purchase already pending');
+      onPurchaseError?.call('購入処理が進行中です。しばらくお待ちください。');
       return false;
     }
     
@@ -125,26 +132,62 @@ class PurchaseManager {
       if (productDetails == null) {
         print('Product details not found for: $premiumProductId');
         print('Available products: ${_products.map((p) => p.id).join(", ")}');
-        onPurchaseError?.call('商品情報が見つかりません。App Store Connectでの設定を確認してください。');
-        return false;
+        
+        // 商品情報を再取得を試行
+        await _loadProducts();
+        final retryProductDetails = _products
+            .where((product) => product.id == premiumProductId)
+            .firstOrNull;
+            
+        if (retryProductDetails == null) {
+          onPurchaseError?.call('商品情報が見つかりません。インターネット接続を確認し、しばらく後に再試行してください。');
+          return false;
+        }
+        // 再取得した商品情報を使用
+        return await _executePurchase(retryProductDetails);
       }
       
-      _purchasePending = true;
+      return await _executePurchase(productDetails);
       
+    } catch (e) {
+      _purchasePending = false;
+      print('Purchase error: $e');
+      
+      // より具体的なエラーメッセージ
+      if (e.toString().contains('network')) {
+        onPurchaseError?.call('ネットワークエラーが発生しました。インターネット接続を確認してください。');
+      } else if (e.toString().contains('timeout')) {
+        onPurchaseError?.call('購入処理がタイムアウトしました。しばらく後に再試行してください。');
+      } else {
+        onPurchaseError?.call('購入エラーが発生しました。App Storeの設定を確認し、しばらく後に再試行してください。');
+      }
+      return false;
+    }
+  }
+  
+  Future<bool> _executePurchase(ProductDetails productDetails) async {
+    _purchasePending = true;
+    
+    try {
       final PurchaseParam purchaseParam = PurchaseParam(productDetails: productDetails);
-      bool success = await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+      
+      // タイムアウト処理を追加
+      bool success = await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam)
+          .timeout(Duration(seconds: 30), onTimeout: () {
+        _purchasePending = false;
+        throw TimeoutException('Purchase timeout', Duration(seconds: 30));
+      });
       
       if (!success) {
         _purchasePending = false;
+        onPurchaseError?.call('購入を開始できませんでした。しばらく後に再試行してください。');
       }
       
       return success;
       
     } catch (e) {
       _purchasePending = false;
-      print('Purchase error: $e');
-      onPurchaseError?.call('購入エラー: $e');
-      return false;
+      rethrow;
     }
   }
   
@@ -295,12 +338,36 @@ class PurchaseManager {
     print('  Error message: ${error?.message}');
     print('  Error details: ${error?.details}');
     
-    String userMessage = '購入に失敗しました';
-    if (error?.message != null) {
-      userMessage = 'エラー: ${error!.message}';
-    }
-    
+    String userMessage = _getLocalizedErrorMessage(error);
     onPurchaseError?.call(userMessage);
+  }
+  
+  String _getLocalizedErrorMessage(IAPError? error) {
+    if (error == null) return '購入に失敗しました。しばらく後に再試行してください。';
+    
+    switch (error.code) {
+      case 'network_error':
+        return 'ネットワークエラーが発生しました。インターネット接続を確認してください。';
+      case 'item_unavailable':
+        return 'この商品は現在利用できません。App Storeの設定を確認してください。';
+      case 'item_already_owned':
+        return 'この商品は既に購入済みです。「購入の復元」をお試しください。';
+      case 'user_cancelled':
+        return '購入がキャンセルされました。';
+      case 'payment_invalid':
+        return '支払い情報が無効です。App Storeの設定を確認してください。';
+      case 'payment_not_allowed':
+        return '購入が許可されていません。デバイスの設定を確認してください。';
+      case 'store_kit_error':
+        return 'App Storeでエラーが発生しました。しばらく後に再試行してください。';
+      case 'purchase_error':
+        return '購入処理でエラーが発生しました。App Storeの設定を確認してください。';
+      default:
+        if (error.message != null && error.message!.isNotEmpty) {
+          return '購入エラー: ${error.message}';
+        }
+        return '購入に失敗しました。しばらく後に再試行してください。';
+    }
   }
   
   void _handleCanceledPurchase(PurchaseDetails purchaseDetails) {
