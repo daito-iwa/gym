@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'dart:math' as math;
+// Web対応のための条件付きインポート
+import 'dart:html' as html show window;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -77,57 +79,9 @@ class RoutineAnalysis {
   });
 }
 
-// 共有・エクスポート機能クラス
-class ShareExportService {
-  // 演技構成データのJSONエクスポート
-  static Map<String, dynamic> exportRoutineToJson(
-    String apparatus,
-    List<Skill> routine,
-    List<List<int>> connectionGroups,
-    DScoreResult? dScoreResult,
-  ) {
-    return {
-      'version': '1.0',
-      'timestamp': DateTime.now().toIso8601String(),
-      'apparatus': apparatus,
-      'routine': routine.map((skill) => {
-        'name': skill.name,
-        'value': skill.value,
-        'valueLetter': skill.valueLetter,
-        'group': skill.group,
-        'connectionValue': 0.0, // Skill class doesn't have connectionValue property
-        'id': skill.id,
-      }).toList(),
-      'connectionGroups': connectionGroups,
-      'dScoreResult': dScoreResult != null ? {
-        'totalScore': dScoreResult.totalDScore,
-        'difficultyScore': dScoreResult.difficultyValue,
-        'connectionBonusScore': dScoreResult.connectionBonus,
-        'neutralDeductionScore': 0.0, // Not available in DScoreResult
-        'groupRequirements': {
-          'fulfilled': dScoreResult.fulfilledGroups,
-          'required': dScoreResult.requiredGroups,
-        },
-        'connections': [], // Not available in DScoreResult
-        'details': 'D-Score: ${dScoreResult.totalDScore}',
-      } : null,
-    };
-  }
+// ShareExportService class has been removed
 
-  // 分析結果のテキスト形式エクスポート
-  static String exportAnalysisToText(
-    String apparatus,
-    List<Skill> routine,
-    DScoreResult? dScoreResult,
-    RoutineAnalysis? analysis,
-    String currentLang,
-  ) {
-    final buffer = StringBuffer();
-    final dateFormatter = DateFormat('yyyy年MM月dd日 HH:mm:ss');
-    
-    // 翻訳辞書を直接参照（静的メソッドのため）
-    final isJapanese = currentLang == '日本語';
-    buffer.writeln(isJapanese ? '体操 D-スコア計算結果' : 'Gymnastics D-Score Calculation Results');
+// 演技構成分析クラス
     buffer.writeln('=' * 40);
     buffer.writeln('${isJapanese ? '生成日時:' : 'Generated Time:'} ${dateFormatter.format(DateTime.now())}');
     buffer.writeln('${isJapanese ? '種目:' : 'Apparatus:'} $apparatus');
@@ -7504,122 +7458,6 @@ $expertAnswer
       );
     }
   }
-  
-  // 共有された分析データカードを構築
-  Widget _buildSharedAnalysisCard() {
-    if (_lastSharedAnalysisData == null) return Container();
-    
-    final analysis = _lastSharedAnalysisData!;
-    
-    return Card(
-      elevation: 3,
-      margin: EdgeInsets.only(bottom: 16),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade700, Colors.blue.shade500],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.new_releases, color: Colors.amber, size: 24),
-                  SizedBox(width: 8),
-                  Text(
-                    '最新の計算結果',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Spacer(),
-                  Chip(
-                    label: Text(
-                      apparatus,
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    backgroundColor: Colors.orange.shade600,
-                  ),
-                ],
-              ),
-              SizedBox(height: 12),
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('D-Score:', style: TextStyle(color: Colors.white70)),
-                        Text(
-                          '${(dScoreResult['dScore'] as double).toStringAsFixed(3)}点',
-                          style: TextStyle(
-                            color: Colors.green.shade300,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if ((dScoreResult['connectionBonus'] as double) > 0) ...[
-                      SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('連続ボーナス:', style: TextStyle(color: Colors.white70)),
-                          Text(
-                            '+${(dScoreResult['connectionBonus'] as double).toStringAsFixed(2)}点',
-                            style: TextStyle(
-                              color: Colors.blue.shade300,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('技数:', style: TextStyle(color: Colors.white70)),
-                        Text(
-                          '${routine.length}技',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'この結果が分析タブにも反映されました',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 共有された分析データカードを構築
   Widget _buildSharedAnalysisCard() {
     if (_lastSharedAnalysisData == null) return Container();
     
@@ -7763,7 +7601,16 @@ $expertAnswer
   // 保存された演技構成を読み込み
   Future<void> _loadSavedRoutines() async {
     try {
-      final routinesData = await _storage.read(key: 'saved_routines');
+      String? routinesData;
+      
+      if (kIsWeb) {
+        // Web版ではLocalStorageを使用
+        routinesData = html.window.localStorage['saved_routines'];
+      } else {
+        // モバイル版では従来のflutter_secure_storageを使用
+        routinesData = await _storage.read(key: 'saved_routines');
+      }
+      
       if (routinesData != null) {
         final Map<String, dynamic> decoded = json.decode(routinesData);
         setState(() {
@@ -7895,11 +7742,17 @@ $expertAnswer
             final key = '${_selectedApparatus!}_${DateTime.now().millisecondsSinceEpoch}';
             _savedRoutines[key] = routineData;
             
-            // ローカルストレージに保存
-            await _storage.write(
-              key: 'saved_routines',
-              value: json.encode(_savedRoutines),
-            );
+            // プラットフォーム別ストレージに保存
+            if (kIsWeb) {
+              // Web版ではLocalStorageを使用
+              html.window.localStorage['saved_routines'] = json.encode(_savedRoutines);
+            } else {
+              // モバイル版では従来のflutter_secure_storageを使用
+              await _storage.write(
+                key: 'saved_routines',
+                value: json.encode(_savedRoutines),
+              );
+            }
             
             setState(() {});
             
@@ -7975,10 +7828,19 @@ $expertAnswer
   Future<void> _deleteSavedRoutine(String key) async {
     try {
       _savedRoutines.remove(key);
-      await _storage.write(
-        key: 'saved_routines',
-        value: json.encode(_savedRoutines),
-      );
+      
+      // プラットフォーム別ストレージに保存
+      if (kIsWeb) {
+        // Web版ではLocalStorageを使用
+        html.window.localStorage['saved_routines'] = json.encode(_savedRoutines);
+      } else {
+        // モバイル版では従来のflutter_secure_storageを使用
+        await _storage.write(
+          key: 'saved_routines',
+          value: json.encode(_savedRoutines),
+        );
+      }
+      
       setState(() {});
       
       ScaffoldMessenger.of(context).showSnackBar(

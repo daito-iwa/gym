@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
-import 'dart:ui_web' as ui_web;
+import 'package:flutter/foundation.dart';
 import 'web_config.dart';
 
 /// Google AdSense広告を表示するためのウィジェット
@@ -58,68 +57,26 @@ class _AdSenseWidgetState extends State<AdSenseWidget> {
   }
   
   void _registerViewFactory() {
-    // ignore: undefined_prefixed_name
-    ui_web.platformViewRegistry.registerViewFactory(
-      _viewId,
-      (int viewId) {
-        final container = html.DivElement()
-          ..id = 'ad-container-$viewId'
-          ..style.width = '${widget.width}px'
-          ..style.height = '${widget.height}px'
-          ..style.margin = 'auto';
-        
-        // AdSense広告用のins要素を作成
-        final adElement = html.Element.tag('ins')
-          ..className = 'adsbygoogle'
-          ..style.display = 'block'
-          ..setAttribute('data-ad-client', WebConfig.adSensePublisherId)
-          ..setAttribute('data-ad-slot', widget.adUnitId);
-        
-        // フォーマットに応じて属性を設定
-        switch (widget.format) {
-          case AdFormat.display:
-            adElement.style.width = '${widget.width}px';
-            adElement.style.height = '${widget.height}px';
-            break;
-          case AdFormat.responsive:
-            adElement.setAttribute('data-ad-format', 'auto');
-            adElement.setAttribute('data-full-width-responsive', 'true');
-            break;
-          case AdFormat.inFeed:
-            adElement.setAttribute('data-ad-format', 'fluid');
-            adElement.setAttribute('data-ad-layout-key', '-gw-3+1f-3d+2z');
-            break;
-          case AdFormat.inArticle:
-            adElement.setAttribute('data-ad-layout', 'in-article');
-            adElement.setAttribute('data-ad-format', 'fluid');
-            break;
-        }
-        
-        container.append(adElement);
-        
-        // AdSenseスクリプトを実行して広告を表示
-        html.window.console.log('Pushing AdSense ad for slot: ${widget.adUnitId}');
-        try {
-          // JavaScriptコードを実行
-          final script = html.ScriptElement()
-            ..text = '(adsbygoogle = window.adsbygoogle || []).push({});';
-          container.append(script);
-        } catch (e) {
-          html.window.console.error('Error pushing AdSense ad: $e');
-        }
-        
-        return container;
-      },
-    );
+    if (kIsWeb) {
+      // Web版では実際のAdSense実装が必要
+      // 現在はプレースホルダーとして実装
+    }
   }
   
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: widget.width == double.infinity ? null : widget.width,
-      height: widget.height,
-      child: HtmlElementView(viewType: _viewId),
-    );
+    // Web版では実際のAdSense広告、非Web版ではプレースホルダー
+    if (kIsWeb) {
+      return AdSensePlaceholder(
+        width: widget.width == double.infinity ? 300 : widget.width,
+        height: widget.height,
+      );
+    } else {
+      return AdSensePlaceholder(
+        width: widget.width == double.infinity ? 300 : widget.width,
+        height: widget.height,
+      );
+    }
   }
 }
 

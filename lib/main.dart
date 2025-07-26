@@ -2,23 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'dart:math' as math;
-// Web対応のための条件付きインポート
-import 'dart:html' as html show window;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
-import 'package:flutter/services.dart' show rootBundle, HapticFeedback, Clipboard, ClipboardData;
+import 'package:flutter/services.dart' show rootBundle, HapticFeedback;
 import 'package:csv/csv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// dart:htmlは使用しないで、すべてfile_pickerで代替
 
 import 'config.dart';
 import 'd_score_calculator.dart'; // D-スコア計算とSkillクラスをインポート
@@ -77,377 +72,6 @@ class RoutineAnalysis {
     required this.missingGroups,
     required this.recommendations,
   });
-}
-
-// 共有・エクスポート機能クラス
-class ShareExportService {
-  // 演技構成データのJSONエクスポート
-  static Map<String, dynamic> exportRoutineToJson(
-    String apparatus,
-    List<Skill> routine,
-    List<List<int>> connectionGroups,
-    DScoreResult? dScoreResult,
-  ) {
-    return {
-      'version': '1.0',
-      'timestamp': DateTime.now().toIso8601String(),
-      'apparatus': apparatus,
-      'routine': routine.map((skill) => {
-        'name': skill.name,
-        'value': skill.value,
-        'valueLetter': skill.valueLetter,
-        'group': skill.group,
-        'connectionValue': 0.0, // Skill class doesn't have connectionValue property
-        'id': skill.id,
-      }).toList(),
-      'connectionGroups': connectionGroups,
-      'dScoreResult': dScoreResult != null ? {
-        'totalScore': dScoreResult.totalDScore,
-        'difficultyScore': dScoreResult.difficultyValue,
-        'connectionBonusScore': dScoreResult.connectionBonus,
-        'neutralDeductionScore': 0.0, // Not available in DScoreResult
-        'groupRequirements': {
-          'fulfilled': dScoreResult.fulfilledGroups,
-          'required': dScoreResult.requiredGroups,
-        },
-        'connections': [], // Not available in DScoreResult
-        'details': 'D-Score: ${dScoreResult.totalDScore}',
-      } : null,
-    };
-  }
-
-  // 分析結果のテキスト形式エクスポート
-  static String exportAnalysisToText(
-    String apparatus,
-    List<Skill> routine,
-    DScoreResult? dScoreResult,
-    RoutineAnalysis? analysis,
-    String currentLang,
-  ) {
-    final buffer = StringBuffer();
-    final dateFormatter = DateFormat('yyyy年MM月dd日 HH:mm:ss');
-    
-    // 翻訳辞書を直接参照（静的メソッドのため）
-    final isJapanese = currentLang == '日本語';
-    buffer.writeln(isJapanese ? '体操 D-スコア計算結果' : 'Gymnastics D-Score Calculation Results');
-    buffer.writeln('=' * 40);
-    buffer.writeln('${isJapanese ? '生成日時:' : 'Generated Time:'} ${dateFormatter.format(DateTime.now())}');
-    buffer.writeln('${isJapanese ? '種目:' : 'Apparatus:'} $apparatus');
-    buffer.writeln();
-    
-    // 演技構成
-    buffer.writeln('演技構成:');
-    buffer.writeln('-' * 20);
-    for (int i = 0; i < routine.length; i++) {
-      final skill = routine[i];
-      buffer.writeln('${i + 1}. ${skill.name} (${skill.valueLetter}) - ${skill.value}点');
-    }
-    buffer.writeln();
-    
-    // D-スコア結果
-    if (dScoreResult != null) {
-      buffer.writeln('D-スコア結果:');
-      buffer.writeln('-' * 20);
-      buffer.writeln('合計スコア: ${dScoreResult.totalDScore.toStringAsFixed(1)}点');
-      buffer.writeln('難度点: ${dScoreResult.difficultyValue.toStringAsFixed(1)}点');
-      buffer.writeln('つなぎ加点: ${dScoreResult.connectionBonus.toStringAsFixed(1)}点');
-      buffer.writeln('グループボーナス: ${dScoreResult.groupBonus.toStringAsFixed(1)}点');
-      buffer.writeln();
-      
-      // グループ要件
-      buffer.writeln('グループ要件:');
-      buffer.writeln('  達成グループ: ${dScoreResult.fulfilledGroups}個');
-      buffer.writeln('  必要グループ: ${dScoreResult.requiredGroups}個');
-      buffer.writeln();
-    }
-    
-    // 分析結果
-    if (analysis != null) {
-      buffer.writeln('分析結果:');
-      buffer.writeln('-' * 20);
-      buffer.writeln('技数: ${analysis.totalSkills}');
-      buffer.writeln('平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}');
-      buffer.writeln('完成度スコア: ${analysis.completenessScore.toStringAsFixed(1)}%');
-      buffer.writeln('つなぎ加点比率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%');
-      
-      if (analysis.missingGroups.isNotEmpty) {
-        buffer.writeln('不足グループ: ${analysis.missingGroups.join(', ')}');
-      }
-      buffer.writeln();
-    }
-    
-    return buffer.toString();
-  }
-
-  // HTML印刷用レポート生成
-  static String exportToHtmlReport(
-    String apparatus,
-    List<Skill> routine,
-    DScoreResult? dScoreResult,
-    RoutineAnalysis? analysis,
-  ) {
-    final dateFormatter = DateFormat('yyyy年MM月dd日 HH:mm:ss');
-    
-    return '''
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>体操 D-スコア計算結果 - $apparatus</title>
-    <style>
-        body {
-            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
-            margin: 20px;
-            line-height: 1.6;
-            color: #333;
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            color: #2c3e50;
-            margin: 0;
-        }
-        .info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section h2 {
-            color: #34495e;
-            border-bottom: 1px solid #bdc3c7;
-            padding-bottom: 5px;
-        }
-        .routine-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .routine-table th, .routine-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .routine-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        .score-summary {
-            background: #e8f5e8;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .score-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .score-item.total {
-            font-weight: bold;
-            font-size: 1.2em;
-            border-top: 2px solid #333;
-            padding-top: 10px;
-        }
-        .analysis-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .analysis-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        .analysis-item h3 {
-            margin-top: 0;
-            color: #2c3e50;
-        }
-        @media print {
-            body { margin: 0; }
-            .header { page-break-after: avoid; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>体操 D-スコア計算結果</h1>
-        <p>種目: $apparatus</p>
-        <p>生成日時: ${dateFormatter.format(DateTime.now())}</p>
-    </div>
-
-    <div class="section">
-        <h2>演技構成</h2>
-        <table class="routine-table">
-            <thead>
-                <tr>
-                    <th>順序</th>
-                    <th>技名</th>
-                    <th>難度</th>
-                    <th>点数</th>
-                    <th>グループ</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${routine.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final skill = entry.value;
-                  return '''
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${skill.name}</td>
-                    <td>${skill.valueLetter}</td>
-                    <td>${skill.value}</td>
-                    <td>${skill.group}</td>
-                </tr>
-                  ''';
-                }).join()}
-            </tbody>
-        </table>
-    </div>
-
-    ${dScoreResult != null ? '''
-    <div class="section">
-        <h2>D-スコア結果</h2>
-        <div class="score-summary">
-            <div class="score-item">
-                <span>難度点:</span>
-                <span>${dScoreResult.difficultyValue.toStringAsFixed(1)}点</span>
-            </div>
-            <div class="score-item">
-                <span>つなぎ加点:</span>
-                <span>${dScoreResult.connectionBonus.toStringAsFixed(1)}点</span>
-            </div>
-            <div class="score-item">
-                <span>グループボーナス:</span>
-                <span>${dScoreResult.groupBonus.toStringAsFixed(1)}点</span>
-            </div>
-            <div class="score-item total">
-                <span>合計スコア:</span>
-                <span>${dScoreResult.totalDScore.toStringAsFixed(1)}点</span>
-            </div>
-        </div>
-        
-        <h3>グループ要件</h3>
-        <div class="info">
-            達成グループ: ${dScoreResult.fulfilledGroups}個<br>
-            必要グループ: ${dScoreResult.requiredGroups}個
-        </div>
-    </div>
-    ''' : ''}
-
-    ${analysis != null ? '''
-    <div class="section">
-        <h2>分析結果</h2>
-        <div class="analysis-grid">
-            <div class="analysis-item">
-                <h3>基本統計</h3>
-                <p>技数: ${analysis.totalSkills}</p>
-                <p>平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}</p>
-                <p>完成度スコア: ${analysis.completenessScore.toStringAsFixed(1)}%</p>
-            </div>
-            <div class="analysis-item">
-                <h3>構成分析</h3>
-                <p>つなぎ加点比率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%</p>
-                ${analysis.missingGroups.isNotEmpty ? 
-                  '<p>不足グループ: ${analysis.missingGroups.join(', ')}</p>' : 
-                  '<p>全グループ要件満たされています</p>'}
-            </div>
-        </div>
-    </div>
-    ''' : ''}
-
-    <div class="section">
-        <p style="text-align: center; color: #7f8c8d; margin-top: 40px;">
-            Generated by 体操 D-スコア計算アプリ
-        </p>
-    </div>
-</body>
-</html>
-    ''';
-  }
-
-  // ファイルダウンロード（クロスプラットフォーム対応）
-  static void downloadFile(String content, String fileName, String mimeType) {
-    // クロスプラットフォーム対応 - クリップボードにコピー
-    Clipboard.setData(ClipboardData(text: content));
-  }
-
-  // 共有URL生成
-  static String generateShareUrl(
-    String apparatus,
-    List<Skill> routine,
-    String baseUrl,
-  ) {
-    final routineData = {
-      'apparatus': apparatus,
-      'routine': routine.map((skill) => {
-        'id': skill.id,
-        'name': skill.name,
-        'value': skill.value,
-        'valueLetter': skill.valueLetter,
-        'group': skill.group,
-      }).toList(),
-    };
-    
-    final encodedData = base64Encode(utf8.encode(jsonEncode(routineData)));
-    return '$baseUrl/share?data=$encodedData';
-  }
-
-  // ソーシャルメディア用テキスト生成
-  static String generateSocialText(
-    String apparatus,
-    List<Skill> routine,
-    DScoreResult? dScoreResult,
-  ) {
-    final buffer = StringBuffer();
-    buffer.writeln('体操 $apparatus の演技構成を作成しました！');
-    buffer.writeln();
-    
-    if (dScoreResult != null) {
-      buffer.writeln('D-スコア: ${dScoreResult.totalDScore.toStringAsFixed(1)}点');
-      buffer.writeln('難度点: ${dScoreResult.difficultyValue.toStringAsFixed(1)}点');
-      buffer.writeln('つなぎ加点: ${dScoreResult.connectionBonus.toStringAsFixed(1)}点');
-      buffer.writeln();
-    }
-    
-    buffer.writeln('技数: ${routine.length}');
-    buffer.writeln();
-    buffer.writeln('#体操 #Dスコア #${apparatus}');
-    
-    return buffer.toString();
-  }
-
-  // JSONファイルからの演技構成読み込み
-  static Future<Map<String, dynamic>?> importRoutineFromJson(String jsonString) async {
-    try {
-      final data = jsonDecode(jsonString);
-      
-      // バージョンチェック
-      if (data['version'] != '1.0') {
-        throw Exception('サポートされていないファイル形式です');
-      }
-      
-      // 必須フィールドのチェック
-      if (!data.containsKey('apparatus') || !data.containsKey('routine')) {
-        throw Exception('無効なファイル形式です');
-      }
-      
-      return data;
-    } catch (e) {
-      print('Import error: $e');
-      return null;
-    }
-  }
 }
 
 // 演技構成分析クラス
@@ -4669,196 +4293,8 @@ $expertAnswer
     */
   }
 
-  // 共有・エクスポート機能メソッド
-  
-  // 演技構成をJSONでエクスポート
-  void _exportRoutineAsJson() {
-    if (_selectedApparatus == null || _routine.isEmpty) {
-      _showMessage('エクスポートするデータがありません');
-      return;
-    }
 
-    final jsonData = ShareExportService.exportRoutineToJson(
-      _selectedApparatus!,
-      _routine,
-      _connectionGroups.map((e) => [e]).toList(),
-      _dScoreResult,
-    );
 
-    final jsonString = JsonEncoder.withIndent('  ').convert(jsonData);
-    final fileName = '${_selectedApparatus}_routine_${DateTime.now().millisecondsSinceEpoch}.json';
-    
-    ShareExportService.downloadFile(jsonString, fileName, 'application/json');
-    
-    if (kIsWeb) {
-      _showMessage('演技構成をJSONファイルでダウンロードしました');
-    } else {
-      _showMessage('演技構成をクリップボードにコピーしました');
-    }
-  }
-
-  // 分析結果をテキストでエクスポート
-  void _exportAnalysisAsText() {
-    if (_selectedApparatus == null || _routine.isEmpty) {
-      _showMessage('エクスポートするデータがありません');
-      return;
-    }
-
-    final textData = ShareExportService.exportAnalysisToText(
-      _selectedApparatus!,
-      _routine,
-      _dScoreResult,
-      _currentAnalysis,
-      _currentLang,
-    );
-
-    final fileName = '${_selectedApparatus}_analysis_${DateTime.now().millisecondsSinceEpoch}.txt';
-    
-    ShareExportService.downloadFile(textData, fileName, 'text/plain');
-    
-    if (kIsWeb) {
-      _showMessage('分析結果をテキストファイルでダウンロードしました');
-    } else {
-      _showMessage('分析結果をクリップボードにコピーしました');
-    }
-  }
-
-  // HTML印刷用レポートを生成
-  void _exportHtmlReport() {
-    if (_selectedApparatus == null || _routine.isEmpty) {
-      _showMessage('エクスポートするデータがありません');
-      return;
-    }
-
-    final htmlData = ShareExportService.exportToHtmlReport(
-      _selectedApparatus!,
-      _routine,
-      _dScoreResult,
-      _currentAnalysis,
-    );
-
-    final fileName = '${_selectedApparatus}_report_${DateTime.now().millisecondsSinceEpoch}.html';
-    
-    ShareExportService.downloadFile(htmlData, fileName, 'text/html');
-    
-    if (kIsWeb) {
-      _showMessage('HTML印刷用レポートをダウンロードしました');
-    } else {
-      _showMessage('HTML印刷用レポートをクリップボードにコピーしました');
-    }
-  }
-
-  // 共有URLを生成
-  void _generateShareUrl() {
-    if (_selectedApparatus == null || _routine.isEmpty) {
-      _showMessage('共有するデータがありません');
-      return;
-    }
-
-    final baseUrl = 'https://app.example.com';
-    final shareUrl = ShareExportService.generateShareUrl(
-      _selectedApparatus!,
-      _routine,
-      baseUrl,
-    );
-
-    // クリップボードにコピー
-    Clipboard.setData(ClipboardData(text: shareUrl));
-    _showMessage('共有URLをクリップボードにコピーしました');
-  }
-
-  // ソーシャルメディア用テキストを生成
-  void _generateSocialText() {
-    if (_selectedApparatus == null || _routine.isEmpty) {
-      _showMessage('共有するデータがありません');
-      return;
-    }
-
-    final socialText = ShareExportService.generateSocialText(
-      _selectedApparatus!,
-      _routine,
-      _dScoreResult,
-    );
-
-    // クリップボードにコピー
-    Clipboard.setData(ClipboardData(text: socialText));
-    _showMessage('ソーシャルメディア用テキストをクリップボードにコピーしました');
-  }
-
-  // JSONファイルからインポート
-  void _importRoutineFromJson() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-
-      if (result != null) {
-        final file = result.files.single;
-        final jsonString = String.fromCharCodes(file.bytes!);
-        final data = await ShareExportService.importRoutineFromJson(jsonString);
-        
-        if (data != null) {
-          await _processImportedData(data);
-          _showMessage('演技構成をインポートしました');
-        } else {
-          _showMessage('ファイルの読み込みに失敗しました');
-        }
-      }
-    } catch (e) {
-      _showMessage('インポートエラー: ${e.toString()}');
-    }
-  }
-
-  // インポートしたデータを処理
-  Future<void> _processImportedData(Map<String, dynamic> data) async {
-    try {
-      final apparatus = data['apparatus'] as String;
-      final routineData = data['routine'] as List<dynamic>;
-      
-      // 技データを再構築
-      final importedRoutine = <Skill>[];
-      for (final skillData in routineData) {
-        final skill = Skill(
-          id: skillData['id'] ?? '',
-          name: skillData['name'] ?? '',
-          value: (skillData['value'] as num).toDouble(),
-          valueLetter: skillData['valueLetter'] ?? '',
-          group: skillData['group'] ?? 0,
-          description: skillData['description'] ?? '',
-          apparatus: apparatus,
-        );
-        importedRoutine.add(skill);
-      }
-
-      // 状態を更新
-      setState(() {
-        _selectedApparatus = apparatus;
-        _routine = importedRoutine;
-        _connectionGroups = (data['connectionGroups'] as List<dynamic>?)
-            ?.map((e) => (e as List<dynamic>).first as int)
-            .toList() ?? [];
-      });
-
-      // プレミアムチェック付きでD-Scoreモードに切り替え
-      if (!_safeSwitchToMode(AppMode.dScore)) {
-        // プレミアムアクセスがない場合、データは読み込み済みだがモードは変更されない
-        print('⚠️ D-Score機能はプレミアム専用です。インポートしたデータは保存されました。');
-        return;
-      }
-
-      // 技リストを読み込み
-      await _loadSkills(apparatus);
-      
-      // D-スコアを再計算
-      if (_routine.isNotEmpty) {
-        await _calculateDScoreFromRoutine();
-      }
-      
-    } catch (e) {
-      throw Exception('データの処理に失敗しました: $e');
-    }
-  }
 
   // 連続技グループを適切に構築
   List<List<Skill>> _buildConnectedSkillGroups(List<Skill> skills, List<int> connectionGroups) {
@@ -5077,25 +4513,12 @@ $expertAnswer
               icon: const Icon(Icons.more_vert),
               onSelected: (String value) {
                 switch (value) {
-                  case 'import':
-                    _importRoutineFromJson();
-                    break;
                   case 'feedback':
                     _showFeedbackDialog();
                     break;
                 }
               },
               itemBuilder: (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'import',
-                  child: Row(
-                    children: [
-                      Icon(Icons.file_upload, size: 20),
-                      SizedBox(width: 8),
-                      Text(_currentLang == '日本語' ? 'インポート' : 'Import'),
-                    ],
-                  ),
-                ),
                 PopupMenuItem<String>(
                   value: 'feedback',
                   child: Row(
@@ -6640,68 +6063,6 @@ $expertAnswer
                       ),
                     ),
                     
-                    // 共有・エクスポートボタン
-                    const SizedBox(height: 16),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.withOpacity(0.2)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '共有・エクスポート',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[700],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                _buildShareButton(
-                                  Icons.share,
-                                  '共有URL',
-                                  _generateShareUrl,
-                                  Colors.blue,
-                                ),
-                                _buildShareButton(
-                                  Icons.download,
-                                  'JSON',
-                                  _exportRoutineAsJson,
-                                  Colors.green,
-                                ),
-                                _buildShareButton(
-                                  Icons.text_snippet,
-                                  'テキスト',
-                                  _exportAnalysisAsText,
-                                  Colors.orange,
-                                ),
-                                _buildShareButton(
-                                  Icons.print,
-                                  'HTML',
-                                  _exportHtmlReport,
-                                  Colors.purple,
-                                ),
-                                _buildShareButton(
-                                  Icons.social_distance,
-                                  'SNS',
-                                  _generateSocialText,
-                                  Colors.teal,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -6712,40 +6073,6 @@ $expertAnswer
     );
   }
   
-  // 共有・エクスポートボタンのウィジェット
-  Widget _buildShareButton(IconData icon, String label, VoidCallback onPressed, MaterialColor color) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withOpacity(0.3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: color[700]),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: color[700],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildScoreRow(String label, double value, MaterialColor color) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -7653,7 +6980,9 @@ $expertAnswer
       
       if (kIsWeb) {
         // Web版ではLocalStorageを使用
-        routinesData = html.window.localStorage['saved_routines'];
+        // ignore: avoid_web_libraries_in_flutter
+        // ignore: undefined_prefixed_name
+        routinesData = (await SharedPreferences.getInstance()).getString('saved_routines');
       } else {
         // モバイル版では従来のflutter_secure_storageを使用
         routinesData = await _storage.read(key: 'saved_routines');
@@ -7792,8 +7121,8 @@ $expertAnswer
             
             // プラットフォーム別ストレージに保存
             if (kIsWeb) {
-              // Web版ではLocalStorageを使用
-              html.window.localStorage['saved_routines'] = json.encode(_savedRoutines);
+              // Web版ではSharedPreferencesを使用
+              (await SharedPreferences.getInstance()).setString('saved_routines', json.encode(_savedRoutines));
             } else {
               // モバイル版では従来のflutter_secure_storageを使用
               await _storage.write(
@@ -7879,8 +7208,8 @@ $expertAnswer
       
       // プラットフォーム別ストレージに保存
       if (kIsWeb) {
-        // Web版ではLocalStorageを使用
-        html.window.localStorage['saved_routines'] = json.encode(_savedRoutines);
+        // Web版ではSharedPreferencesを使用
+        (await SharedPreferences.getInstance()).setString('saved_routines', json.encode(_savedRoutines));
       } else {
         // モバイル版では従来のflutter_secure_storageを使用
         await _storage.write(
