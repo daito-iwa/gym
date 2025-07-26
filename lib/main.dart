@@ -1998,6 +1998,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   List<int> _connectionGroups = []; // 連続技グループIDのリスト
   int _nextConnectionGroupId = 1; // 次の連続グループID
   DScoreResult? _dScoreResult; // 計算結果を保持
+  
+  // タブ間データ共有用
+  Map<String, dynamic>? _lastSharedCalculationData; // 最後に計算したデータを全種目タブ用に保存
+  RoutineAnalysis? _lastSharedAnalysisData; // 最後に生成した分析データを分析タブ用に保存
   Skill? _selectedSkill; // ドロップダウンで選択された技
   int? _selectedSkillIndex; // 選択された技のインデックス
   bool _isEditingSkill = false; // 技編集モードかどうか
@@ -5798,6 +5802,9 @@ $expertAnswer
                                   setState(() {
                                     _dScoreResult = _calculationCache[cacheKey]!;
                                   });
+                                  
+                                  // キャッシュからの取得でも全種目と分析タブにデータを共有
+                                  _shareCalculationDataToOtherTabs();
                                   return;
                                 }
                                 
@@ -5814,6 +5821,9 @@ $expertAnswer
                                 setState(() {
                                   _dScoreResult = result;
                                 });
+                                
+                                // 計算完了後に全種目と分析タブにデータを自動共有
+                                _shareCalculationDataToOtherTabs();
                               }
                             : null,
                           icon: const Icon(Icons.calculate),
@@ -7361,6 +7371,385 @@ $expertAnswer
     ).join('|');
     return '${apparatus}_$routineKey';
   }
+
+  // D-Score計算完了後に全種目と分析タブにデータを自動共有
+  void _shareCalculationDataToOtherTabs() {
+    if (_selectedApparatus == null || _routine.isEmpty || _dScoreResult == null) {
+      return;
+    }
+
+    try {
+      // 全種目タブ用のデータ構造を作成
+      final apparatusData = {
+        'apparatus': _selectedApparatus!,
+        'routine': _routine.map((skill) => {
+          'name': skill.name,
+          'value': skill.value,
+          'valueLetter': skill.valueLetter,
+          'group': skill.group,
+          'id': skill.id,
+        }).toList(),
+        'dScoreResult': {
+          'dScore': _dScoreResult!.totalDScore,
+          'difficultyValue': _dScoreResult!.difficultyValue,
+          'groupBonus': _dScoreResult!.groupBonus,
+          'connectionBonus': _dScoreResult!.connectionBonus,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        'connectionGroups': _connectionGroups,
+      };
+
+      // 分析データを生成（既存の分析ロジックを使用）
+      final analysisData = _generateRoutineAnalysis();
+
+      // データを共有状態として保存
+      _lastSharedCalculationData = apparatusData;
+      _lastSharedAnalysisData = analysisData;
+
+      print('計算データを全種目・分析タブに共有しました: ${_selectedApparatus}');
+      
+    } catch (e) {
+      print('データ共有でエラーが発生しました: $e');
+    }
+  }
+
+  // 現在の演技構成から分析データを生成
+  RoutineAnalysis _generateRoutineAnalysis() {
+    if (_selectedApparatus == null || _routine.isEmpty) {
+      // デフォルトの空分析データを返す
+      return RoutineAnalysis(
+        apparatus: _selectedApparatus ?? 'Unknown',
+        timestamp: DateTime.now(),
+        difficultyDistribution: {},
+        groupDistribution: {},
+        connectionBonusRatio: 0.0,
+        totalSkills: 0,
+        averageDifficulty: 0.0,
+        completenessScore: 0.0,
+        missingGroups: [],
+        recommendations: {},
+      );
+    }
+
+    try {
+      // 基本統計の計算
+      final stats = RoutineAnalyzer.analyzeRoutineStatistics(_routine);
+      final groupDistribution = RoutineAnalyzer.calculateGroupDistribution(_routine);
+      
+      // 要求充足率の計算
+      final List<String> missingGroups = [];
+      final totalRequiredGroups = 5; // 体操では通常5グループ
+      final completenessScore = groupDistribution.length / totalRequiredGroups;
+      
+      // 不足グループの特定
+      for (int i = 1; i <= totalRequiredGroups; i++) {
+        if (!groupDistribution.containsKey(i) || groupDistribution[i] == 0) {
+          missingGroups.add('グループ$i');
+        }
+      }
+      
+      // 改善案の生成
+      final List<String> suggestions = [];
+      if (missingGroups.isNotEmpty) {
+        suggestions.add('不足グループを補完してください: ${missingGroups.join('、')}');
+      }
+      if (stats['averageDifficulty'] < 0.3) {
+        suggestions.add('より高難度の技を追加することを検討してください');
+      }
+      
+      final recommendations = {
+        'suggestions': suggestions,
+        'priority': suggestions.isNotEmpty ? 'high' : 'low',
+      };
+      
+      return RoutineAnalysis(
+        apparatus: _selectedApparatus!,
+        timestamp: DateTime.now(),
+        difficultyDistribution: stats['difficultyDistribution'] as Map<String, int>? ?? {},
+        groupDistribution: groupDistribution.map((key, value) => MapEntry(key, value)),
+        connectionBonusRatio: (_dScoreResult?.connectionBonus ?? 0.0) / 0.4, // 0.4が最大連続ボーナス
+        totalSkills: _routine.length,
+        averageDifficulty: stats['averageDifficulty'] as double? ?? 0.0,
+        completenessScore: completenessScore,
+        missingGroups: missingGroups,
+        recommendations: recommendations,
+      );
+      
+    } catch (e) {
+      print('分析データ生成でエラーが発生しました: $e');
+      // エラー時も基本的な分析データを返す
+      return RoutineAnalysis(
+        apparatus: _selectedApparatus!,
+        timestamp: DateTime.now(),
+        difficultyDistribution: {},
+        groupDistribution: {},
+        connectionBonusRatio: 0.0,
+        totalSkills: _routine.length,
+        averageDifficulty: 0.0,
+        completenessScore: 0.0,
+        missingGroups: [],
+        recommendations: {'suggestions': [], 'priority': 'low'},
+      );
+    }
+  }
+
+  // 最新の計算結果カードを構築
+  Widget _buildLatestCalculationCard() {
+    if (_lastSharedCalculationData == null) return Container();
+    
+    final data = _lastSharedCalculationData!;
+    final apparatus = data['apparatus'] as String;
+    final dScoreResult = data['dScoreResult'] as Map<String, dynamic>;
+    final routine = data['routine'] as List<dynamic>;
+    
+    return Card(
+      elevation: 3,
+      margin: EdgeInsets.only(bottom: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          gradient: LinearGradient(
+            colors: [Colors.blue.shade700, Colors.blue.shade500],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.new_releases, color: Colors.amber, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    '最新の計算結果',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Spacer(),
+                  Chip(
+                    label: Text(
+                      apparatus,
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: Colors.orange.shade600,
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('D-Score:', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          '${(dScoreResult['dScore'] as double).toStringAsFixed(3)}点',
+                          style: TextStyle(
+                            color: Colors.green.shade300,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if ((dScoreResult['connectionBonus'] as double) > 0) ...[
+                      SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('連続ボーナス:', style: TextStyle(color: Colors.white70)),
+                          Text(
+                            '+${(dScoreResult['connectionBonus'] as double).toStringAsFixed(2)}点',
+                            style: TextStyle(
+                              color: Colors.blue.shade300,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('技数:', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          '${routine.length}技',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'この結果が分析タブにも反映されました',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 共有された分析データカードを構築
+  Widget _buildSharedAnalysisCard() {
+    if (_lastSharedAnalysisData == null) return Container();
+    
+    final analysis = _lastSharedAnalysisData!;
+    
+    return Card(
+      elevation: 3,
+      margin: EdgeInsets.only(bottom: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade700, Colors.purple.shade500],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.analytics, color: Colors.amber, size: 24),
+                  SizedBox(width: 8),
+                  Text(
+                    '自動生成された分析結果',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Spacer(),
+                  Chip(
+                    label: Text(
+                      analysis.apparatus,
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: Colors.orange.shade600,
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('技数:', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          '${analysis.totalSkills}技',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('平均難度:', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          analysis.averageDifficulty.toStringAsFixed(2),
+                          style: TextStyle(
+                            color: Colors.blue.shade300,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('要求充足率:', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          '${(analysis.completenessScore * 100).toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            color: analysis.completenessScore >= 1.0 
+                                ? Colors.green.shade300 
+                                : Colors.orange.shade300,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (analysis.missingGroups.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning, color: Colors.orange, size: 16),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '不足: ${analysis.missingGroups.join('、')}',
+                                style: TextStyle(color: Colors.orange.shade200, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'D-Score計算完了時に自動生成されました',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
   
   // 保存された演技構成を読み込み
   Future<void> _loadSavedRoutines() async {
@@ -7635,6 +8024,9 @@ $expertAnswer
           
           const SizedBox(height: 16),
           
+          // 最新の計算結果カード（D-Score計算から共有されたデータ）
+          if (_lastSharedCalculationData != null) _buildLatestCalculationCard(),
+          
           // 合計得点カード
           Card(
             elevation: 2,
@@ -7840,6 +8232,9 @@ $expertAnswer
           ),
           
           const SizedBox(height: 16),
+          
+          // 最新の分析データカード（D-Score計算から自動生成）
+          if (_lastSharedAnalysisData != null) _buildSharedAnalysisCard(),
           
           // 分析対象選択
           Card(
