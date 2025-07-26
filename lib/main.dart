@@ -24,9 +24,9 @@ import 'gymnastics_expert_database.dart'; // 専門知識データベース
 import 'purchase_manager.dart'; // 正しいPurchaseManager
 import 'admob_config.dart'; // AdMob設定
 import 'platform_config.dart'; // プラットフォーム設定
-import 'platform_ui_config.dart'; // プラットフォーム別UI設定  
-import 'web_config.dart'; // Web版設定
 import 'ad_widget.dart'; // ユニバーサル広告ウィジェット
+import 'platform_ui_config.dart'; // プラットフォーム別UI設定
+import 'web_config.dart'; // Web版設定
 
 // カスタム例外クラス
 class NetworkException implements Exception {
@@ -670,23 +670,15 @@ class UserSubscription {
                   subscriptionEnd != null && 
                   subscriptionEnd.isAfter(DateTime.now());
 
-  // Web版用のファクトリコンストラクタ
-  factory UserSubscription.forWeb() {
-    return UserSubscription(
-      tier: UserTier.free, // Web版は常に無料
-      subscriptionStart: DateTime.now(),
-      subscriptionEnd: null,
-    );
-  }
 
   bool get isPremium => tier == UserTier.premium && isActive;
   bool get isFree => tier == UserTier.free || !isActive;
 
-  // 機能アクセス権限チェック（Web版では一部機能を追加で許可）
-  bool canAccessDScore() => true; // 制限付きでも無料ユーザーにアクセス許可
-  bool canAccessAllApparatus() => isPremium || PlatformConfig.isWeb; // Web版では全種目許可
-  bool canAccessAnalytics() => isPremium || PlatformConfig.isWeb; // Web版では分析許可
-  bool canAccessUnlimitedChat() => isPremium; // チャットはプラットフォーム別制限で管理
+  // 機能アクセス権限チェック（Web版拡張 + モバイル版フリーミアム）
+  bool canAccessDScore() => true; // 全プラットフォーム対応
+  bool canAccessAllApparatus() => PlatformConfig.isWeb || isPremium; // Web無料 or モバイルプレミアム
+  bool canAccessAnalytics() => PlatformConfig.isWeb || isPremium; // Web無料 or モバイルプレミアム
+  bool canAccessUnlimitedChat() => !PlatformConfig.isWeb && isPremium; // モバイル限定プレミアム
   bool shouldShowAds() => isFree;
 }
 
@@ -871,11 +863,6 @@ class ChatUsageTracker {
   }
   
   static Future<bool> canSendMessage(UserSubscription subscription) async {
-    // Web版では実質無制限
-    if (PlatformConfig.isUnlimitedChatEnabled) {
-      return true;
-    }
-    
     if (subscription.canAccessUnlimitedChat()) {
       return true;
     }
@@ -894,12 +881,6 @@ class ChatUsageTracker {
   }
   
   static Future<String> getUsageStatus(UserSubscription subscription) async {
-    // Web版では広告サポート版として表示
-    if (PlatformConfig.isUnlimitedChatEnabled) {
-      final bonusCredits = await getBonusCredits();
-      return 'Web版: 広告サポート (ボーナス: ${bonusCredits}回)';
-    }
-    
     if (subscription.canAccessUnlimitedChat()) {
       return 'プレミアム: 無制限';
     }
@@ -1165,9 +1146,7 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _textController = TextEditingController();
   
   // ユーザーサブスクリプション管理
-  UserSubscription _userSubscription = PlatformConfig.isWeb 
-    ? UserSubscription.forWeb() 
-    : UserSubscription(tier: UserTier.free);
+  UserSubscription _userSubscription = UserSubscription(tier: UserTier.free);
   bool _isLoadingSubscription = false;
   bool _isAdmin = false;
   
@@ -1202,7 +1181,7 @@ class _HomePageState extends State<HomePage> {
       case AppMode.admin:
         return _isAdmin;
       case AppMode.chat:
-        return true; // チャット機能は無料
+        return PlatformConfig.isWeb ? false : true; // Web版では制限、モバイル版では無料
     }
   }
 
@@ -1244,46 +1223,61 @@ class _HomePageState extends State<HomePage> {
   // アップグレード促進ダイアログ
   void _showUpgradeDialog(String featureName) {
     if (PlatformConfig.isWeb) {
-      // Web版では機能が既に利用可能であることを通知
+      // Web版ではAIチャット機能のモバイルアプリ誘導
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: Colors.grey[900],
             title: Text(
-              'Web版では無料で利用可能',
-              style: TextStyle(color: Colors.green[300]),
+              '📱 モバイルアプリ限定機能',
+              style: TextStyle(color: Colors.blue[300]),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.web,
-                  color: Colors.green,
+                  Icons.smartphone,
+                  color: Colors.blue,
                   size: 48,
                 ),
                 SizedBox(height: 16),
                 Text(
-                  '$featureName はWeb版では広告付きで無料でご利用いただけます！',
+                  'AIチャット機能はモバイルアプリでのみご利用いただけます。',
                   style: TextStyle(color: Colors.grey[300]),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 16),
                 Text(
-                  PlatformConfig.webLimitationMessage,
+                  'モバイルアプリでは以下の追加機能をご利用いただけます：',
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 8),
+                Column(
+                  children: [
+                    Text('🤖 高度なAIチャット機能', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                    Text('📱 オフライン利用', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                    Text('🔔 プッシュ通知', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                    Text('⚡ 高速レスポンス', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                  ],
                 ),
               ],
             ),
             actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('閉じる', style: TextStyle(color: Colors.grey[400])),
+              ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
+                  backgroundColor: Colors.blue[600],
                   foregroundColor: Colors.white,
                 ),
-                child: Text('OK'),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _launchAppStore();
+                },
+                child: Text('📱 アプリをダウンロード'),
               ),
             ],
           );
@@ -2056,15 +2050,7 @@ class _HomePageState extends State<HomePage> {
   
   /// D-Score計算用リワード広告を表示
   void _showDScoreRewardedAd() async {
-    bool success = false;
-    
-    if (PlatformConfig.isWeb) {
-      // Web版では即座にボーナスを付与（広告は常に表示されているため）
-      success = true;
-    } else {
-      // モバイル版では実際にリワード広告を表示
-      success = await _adManager.showRewardedAd();
-    }
+    bool success = await _adManager.showRewardedAd();
     
     if (success) {
       await DScoreUsageTracker.grantCalculationBonus();
@@ -2914,19 +2900,9 @@ class _HomePageState extends State<HomePage> {
   
   // 課金システム初期化
   Future<void> _initializePurchaseManager() async {
-    // Web版では課金システムを無効化
-    if (PlatformConfig.isWeb) {
-      setState(() {
-        _isPurchaseManagerInitialized = false; // Web版では常にfalse
-      });
-      print('Web platform detected - skipping PurchaseManager initialization');
-      return;
-    }
-    
-    // モバイル版のみ課金システムを初期化
     _purchaseManager = PurchaseManager();
     
-    // コールバック関数を設定（デバイスベースの課金システム用）
+    // コールバック関数を設定
     _purchaseManager.onPurchaseSuccess = () {
       _showPurchaseSuccessDialog();
       _refreshDeviceSubscriptionInfo();
@@ -2946,16 +2922,6 @@ class _HomePageState extends State<HomePage> {
   // 広告システム初期化
   Future<void> _initializeAdManager() async {
     if (_userSubscription.shouldShowAds()) {
-      // Web版ではAdMobを初期化しない
-      if (PlatformConfig.isWeb) {
-        setState(() {
-          _isAdManagerInitialized = true; // Web版では常にtrue
-        });
-        print('Web platform detected - skipping AdMob initialization');
-        return;
-      }
-      
-      // モバイル版のみAdMobを初期化
       _adManager = AdManager();
       try {
         await _adManager.initialize();
@@ -3496,6 +3462,33 @@ class _HomePageState extends State<HomePage> {
       _showMessage(_currentLang == '日本語' 
         ? 'URLを開く際にエラーが発生しました: $e'
         : 'Error launching URL: $e');
+    }
+  }
+
+  Future<void> _launchAppStore() async {
+    // App Store（iOS）とGoogle Play Store（Android））のリンク
+    const iosAppUrl = 'https://apps.apple.com/app/id1234567890'; // 実際のApp Store URLに変更
+    const androidAppUrl = 'https://play.google.com/store/apps/details?id=com.example.app'; // 実際のGoogle Play URLに変更
+    
+    try {
+      // iOS用App Store URLを優先して試行
+      final Uri iosUrl = Uri.parse(iosAppUrl);
+      if (await canLaunchUrl(iosUrl)) {
+        await launchUrl(iosUrl, mode: LaunchMode.externalApplication);
+        return;
+      }
+      
+      // Android用Google Play URLを試行
+      final Uri androidUrl = Uri.parse(androidAppUrl);
+      if (await canLaunchUrl(androidUrl)) {
+        await launchUrl(androidUrl, mode: LaunchMode.externalApplication);
+        return;
+      }
+      
+      // 両方とも開けない場合
+      _showMessage('アプリストアを開けませんでした。直接App StoreまたはGoogle Play Storeで「Gymnastics AI」を検索してください。');
+    } catch (e) {
+      _showMessage('アプリストアを開く際にエラーが発生しました: $e');
     }
   }
 
@@ -4330,11 +4323,6 @@ $expertAnswer
 
   // チャット制限到達時のダイアログ
   void _showChatLimitReachedDialog() {
-    // Web版では制限に達することがないため、このダイアログは表示しない
-    if (PlatformConfig.isUnlimitedChatEnabled) {
-      return;
-    }
-    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -4392,19 +4380,13 @@ $expertAnswer
       
       bool success = false;
       
-      if (PlatformConfig.isWeb) {
-        // Web版では即座にボーナスを付与（広告は常に表示されているため）
-        success = true;
+      if (_adManager.isRewardedAdReady) {
+        success = await _adManager.showRewardedAd();
       } else {
-        // モバイル版では実際にリワード広告を表示
-        if (_adManager.isRewardedAdReady) {
-          success = await _adManager.showRewardedAd();
-        } else {
-          // リワード広告が読み込まれていない場合
-          _showMessage('広告の準備中です。しばらく待ってから再度お試しください。');
-          _adManager.loadRewardedAd();
-          return;
-        }
+        // リワード広告が読み込まれていない場合
+        _showMessage('広告の準備中です。しばらく待ってから再度お試しください。');
+        _adManager.loadRewardedAd();
+        return;
       }
       
       if (success) {
@@ -4776,28 +4758,18 @@ $expertAnswer
       return;
     }
     
-    if (PlatformConfig.isWeb) {
-      // Web版では即座にプレミアム誘導メッセージを表示（広告は常に表示されているため）
-      Future.delayed(const Duration(seconds: 1), () {
+    if (_adManager.isInterstitialAdReady) {
+      _adManager.showInterstitialAd();
+      
+      // 広告表示後にプレミアム誘導メッセージを表示
+      Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           _showPremiumUpgradePrompt();
         }
       });
     } else {
-      // モバイル版：インタースティシャル広告を表示
-      if (_adManager.isInterstitialAdReady) {
-        _adManager.showInterstitialAd();
-        
-        // 広告表示後にプレミアム誘導メッセージを表示
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            _showPremiumUpgradePrompt();
-          }
-        });
-      } else {
-        // 広告が利用できない場合は直接プレミアム誘導
-        _showPremiumUpgradePrompt();
-      }
+      // 広告が利用できない場合は直接プレミアム誘導
+      _showPremiumUpgradePrompt();
     }
   }
   
@@ -4805,7 +4777,8 @@ $expertAnswer
   void _showPremiumUpgradePrompt() {
     if (!mounted || !_userSubscription.isFree) return;
     
-    if (PlatformConfig.isWeb) {
+    // モバイル版のプレミアム誘導に統一
+    if (false) { // Web版条件を無効化
       // Web版では広告付きで全機能が利用可能であることを案内
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -6764,8 +6737,8 @@ $expertAnswer
           children: [
             // AIチャット機能の説明バー
             _buildChatInfoBar(),
-            // Web版では広告を表示、モバイル版では無料ユーザーのみ表示
-            if (PlatformConfig.isWeb || (_userSubscription.shouldShowAds() && _isAdManagerInitialized))
+            // 無料ユーザーのみ広告を表示
+            if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
               _buildBannerAd(),
             Expanded(
               child: ListView.builder(

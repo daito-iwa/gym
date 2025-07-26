@@ -8,7 +8,7 @@ class PlatformUIConfig {
   /// 初期画面の設定
   static AppMode get defaultStartMode {
     if (PlatformConfig.isWeb) {
-      return AppMode.chat; // Web版はAIチャットから開始
+      return AppMode.dScore; // Web版はD-Scoreから開始
     } else {
       return AppMode.dScore; // モバイル版は従来通りD-Scoreから開始
     }
@@ -17,8 +17,8 @@ class PlatformUIConfig {
   /// タブの順序設定
   static List<AppMode> get tabOrder {
     if (PlatformConfig.isWeb) {
-      // Web版：AIチャットを最優先
-      return [AppMode.chat, AppMode.dScore, AppMode.allApparatus, AppMode.analytics];
+      // Web版：AIチャットなし（D-Score、全種目、分析のみ）
+      return [AppMode.dScore, AppMode.allApparatus, AppMode.analytics];
     } else {
       // モバイル版：従来の順序
       return [AppMode.dScore, AppMode.allApparatus, AppMode.analytics, AppMode.chat];
