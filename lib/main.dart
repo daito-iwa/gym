@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'dart:math' as math;
+// Web対応のための条件付きインポート
+import 'dart:html' as html show window;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7647,7 +7649,16 @@ $expertAnswer
   // 保存された演技構成を読み込み
   Future<void> _loadSavedRoutines() async {
     try {
-      final routinesData = await _storage.read(key: 'saved_routines');
+      String? routinesData;
+      
+      if (kIsWeb) {
+        // Web版ではLocalStorageを使用
+        routinesData = html.window.localStorage['saved_routines'];
+      } else {
+        // モバイル版では従来のflutter_secure_storageを使用
+        routinesData = await _storage.read(key: 'saved_routines');
+      }
+      
       if (routinesData != null) {
         final Map<String, dynamic> decoded = json.decode(routinesData);
         setState(() {
@@ -7779,11 +7790,17 @@ $expertAnswer
             final key = '${_selectedApparatus!}_${DateTime.now().millisecondsSinceEpoch}';
             _savedRoutines[key] = routineData;
             
-            // ローカルストレージに保存
-            await _storage.write(
-              key: 'saved_routines',
-              value: json.encode(_savedRoutines),
-            );
+            // プラットフォーム別ストレージに保存
+            if (kIsWeb) {
+              // Web版ではLocalStorageを使用
+              html.window.localStorage['saved_routines'] = json.encode(_savedRoutines);
+            } else {
+              // モバイル版では従来のflutter_secure_storageを使用
+              await _storage.write(
+                key: 'saved_routines',
+                value: json.encode(_savedRoutines),
+              );
+            }
             
             setState(() {});
             
@@ -7859,10 +7876,19 @@ $expertAnswer
   Future<void> _deleteSavedRoutine(String key) async {
     try {
       _savedRoutines.remove(key);
-      await _storage.write(
-        key: 'saved_routines',
-        value: json.encode(_savedRoutines),
-      );
+      
+      // プラットフォーム別ストレージに保存
+      if (kIsWeb) {
+        // Web版ではLocalStorageを使用
+        html.window.localStorage['saved_routines'] = json.encode(_savedRoutines);
+      } else {
+        // モバイル版では従来のflutter_secure_storageを使用
+        await _storage.write(
+          key: 'saved_routines',
+          value: json.encode(_savedRoutines),
+        );
+      }
+      
       setState(() {});
       
       ScaffoldMessenger.of(context).showSnackBar(
