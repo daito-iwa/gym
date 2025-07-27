@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Web版の広告表示を管理するクラス
 class WebAdManager {
@@ -31,14 +31,15 @@ class WebAdManager {
   }
   
   /// 広告表示を記録
-  void recordAdShown(String adType) {
+  void recordAdShown(String adType) async {
     _lastAdShown[adType] = DateTime.now();
     _adShowCount[adType] = (_adShowCount[adType] ?? 0) + 1;
     
-    // LocalStorageに保存
+    // SharedPreferencesに保存
     if (kIsWeb) {
-      html.window.localStorage['ad_last_shown_$adType'] = DateTime.now().toIso8601String();
-      html.window.localStorage['ad_count_$adType'] = _adShowCount[adType].toString();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ad_last_shown_$adType', DateTime.now().toIso8601String());
+      await prefs.setInt('ad_count_$adType', _adShowCount[adType] ?? 0);
     }
   }
   
@@ -82,7 +83,7 @@ class WebAdManager {
   }
   
   /// セッション開始時に履歴を読み込み
-  void loadFromStorage() {
+  Future<void> loadFromStorage() async {
     if (!kIsWeb) return;
     
     // タブ切り替え回数をリセット（セッションごと）
@@ -92,11 +93,13 @@ class WebAdManager {
     _adShowCount.clear();
     _lastAdShown.clear();
     
-    final storage = html.window.localStorage;
-    storage.keys.where((key) => key.startsWith('ad_')).forEach((key) {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys().where((key) => key.startsWith('ad_'));
+    
+    for (final key in keys) {
       if (key.startsWith('ad_last_shown_')) {
         final adType = key.replaceFirst('ad_last_shown_', '');
-        final dateStr = storage[key];
+        final dateStr = prefs.getString(key);
         if (dateStr != null) {
           try {
             _lastAdShown[adType] = DateTime.parse(dateStr);
@@ -106,12 +109,12 @@ class WebAdManager {
         }
       } else if (key.startsWith('ad_count_')) {
         final adType = key.replaceFirst('ad_count_', '');
-        final countStr = storage[key];
-        if (countStr != null) {
-          _adShowCount[adType] = int.tryParse(countStr) ?? 0;
+        final count = prefs.getInt(key);
+        if (count != null) {
+          _adShowCount[adType] = count;
         }
       }
-    });
+    }
   }
   
   /// 広告統計情報を取得

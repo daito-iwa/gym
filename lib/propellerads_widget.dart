@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
-import 'dart:ui_web' as ui_web;
 
 /// PropellerAds広告を表示するためのウィジェット
 class PropellerAdsWidget extends StatefulWidget {
@@ -33,144 +31,37 @@ class _PropellerAdsWidgetState extends State<PropellerAdsWidget> {
   }
   
   void _registerViewFactory() {
-    if (kIsWeb) {
-      ui_web.platformViewRegistry.registerViewFactory(
-        _viewId,
-        (int viewId) => _createPropellerElement(),
-      );
-    }
-  }
-  
-  html.DivElement _createPropellerElement() {
-    final div = html.DivElement();
-    
-    switch (widget.adType) {
-      case PropellerAdType.banner:
-        _createBannerAd(div);
-        break;
-      case PropellerAdType.popunder:
-        _createPopunderAd(div);
-        break;
-      case PropellerAdType.push:
-        _createPushAd(div);
-        break;
-      case PropellerAdType.inPage:
-        _createInPageAd(div);
-        break;
-      case PropellerAdType.interstitial:
-        _createInterstitialAd(div);
-        break;
-    }
-    
-    return div;
-  }
-  
-  void _createBannerAd(html.DivElement div) {
-    div.style.width = '${widget.width ?? 300}px';
-    div.style.height = '${widget.height ?? 250}px';
-    div.style.textAlign = 'center';
-    
-    final script = html.ScriptElement();
-    script.type = 'text/javascript';
-    script.text = '''
-      (function(){
-        var d = document,
-        s = d.createElement('script'),
-        l = d.scripts[d.scripts.length - 1];
-        s.settings = '${widget.zoneId}';
-        s.src = "//cdn.propellerads.com/ads?settings=" + s.settings + "&t=" + Math.random();
-        s.async = true;
-        l.parentNode.insertBefore(s, l);
-      })();
-    ''';
-    
-    div.append(script);
-  }
-  
-  void _createPopunderAd(html.DivElement div) {
-    final script = html.ScriptElement();
-    script.type = 'text/javascript';
-    script.text = '''
-      (function(d,z,s){
-        s.src='//'+d+'/ads/'+z+'/propu.js';
-        try{(document.body||document.documentElement).appendChild(s)}catch(e){}
-      })('cdn.propellerads.com', '${widget.zoneId}', document.createElement('script'));
-    ''';
-    
-    div.append(script);
-  }
-  
-  void _createPushAd(html.DivElement div) {
-    final script = html.ScriptElement();
-    script.type = 'text/javascript';
-    script.text = '''
-      (function(d,z,s){
-        s.src='//'+d+'/ads/'+z+'/push.js';
-        try{(document.body||document.documentElement).appendChild(s)}catch(e){}
-      })('cdn.propellerads.com', '${widget.zoneId}', document.createElement('script'));
-    ''';
-    
-    div.append(script);
-  }
-  
-  void _createInPageAd(html.DivElement div) {
-    div.style.width = '100%';
-    div.style.height = '${widget.height ?? 250}px';
-    
-    final script = html.ScriptElement();
-    script.type = 'text/javascript';
-    script.text = '''
-      (function(d,z,s){
-        s.src='//'+d+'/ads/'+z+'/inpage.js';
-        try{(document.body||document.documentElement).appendChild(s)}catch(e){}
-      })('cdn.propellerads.com', '${widget.zoneId}', document.createElement('script'));
-    ''';
-    
-    div.append(script);
-  }
-  
-  void _createInterstitialAd(html.DivElement div) {
-    div.style.position = 'fixed';
-    div.style.top = '0';
-    div.style.left = '0';
-    div.style.width = '100%';
-    div.style.height = '100%';
-    div.style.zIndex = '9999';
-    div.style.backgroundColor = 'rgba(0,0,0,0.8)';
-    
-    final script = html.ScriptElement();
-    script.type = 'text/javascript';
-    script.text = '''
-      (function(d,z,s){
-        s.src='//'+d+'/ads/'+z+'/interstitial.js';
-        try{(document.body||document.documentElement).appendChild(s)}catch(e){}
-      })('cdn.propellerads.com', '${widget.zoneId}', document.createElement('script'));
-    ''';
-    
-    div.append(script);
+    // Web専用機能のため、モバイルでは何もしない
   }
   
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
-      return SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: HtmlElementView(viewType: _viewId),
-      );
-    } else {
-      return Container(
-        width: widget.width ?? 300,
-        height: widget.height ?? 250,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          border: Border.all(color: Colors.grey[300]!),
+    // Web・モバイル共通のプレースホルダー表示
+    return Container(
+      width: widget.width ?? 300,
+      height: widget.height ?? 250,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.ads_click, size: 32, color: Colors.grey[400]),
+            const SizedBox(height: 8),
+            Text(
+              'PropellerAds\n${widget.adType.name}',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-        child: const Center(
-          child: Text('Web Only Ad'),
-        ),
-      );
-    }
+      ),
+    );
   }
 }
 

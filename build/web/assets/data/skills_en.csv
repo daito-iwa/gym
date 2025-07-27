@@ -1,9 +1,0 @@
-apparatus,name,group,value_letter
-FX,"Sample Floor Skill A","Group I","A"
-FX,"Sample Floor Skill B","Group II","B"
-PH,"Sample Pommel Skill C","Group I","C"
-PH,"Sample Pommel Skill D","Group III","D"
-SR,"Sample Ring Skill E","Group II","E"
-SR,"Sample Ring Skill F","Group IV","F"
-PB,"Sample Parallel Bars Skill G","Group III","G"
-HB,"Sample Horizontal Bar Skill H","Group V","A" 
