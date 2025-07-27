@@ -6062,6 +6062,7 @@ $expertAnswer
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               fontSize: isMobile ? 16 : 18,
+                              color: Colors.black,
                             ),
                           ),
                           SizedBox(height: isMobile ? 12 : 16),
