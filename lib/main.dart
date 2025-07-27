@@ -6162,6 +6162,7 @@ $expertAnswer
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: isMobile ? 14 : 16,
+                            color: Colors.black,
                           ),
                         ),
                       ),
@@ -6187,7 +6188,7 @@ $expertAnswer
                         animatedValue.toStringAsFixed(3),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: color[700],
+                          color: Colors.black,
                           fontSize: isMobile ? 14 : 16,
                         ),
                       ),
