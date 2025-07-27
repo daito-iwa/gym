@@ -6013,7 +6013,7 @@ $expertAnswer
                                     'D-Score',
                                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.green[700],
+                                      color: Colors.black,
                                       fontSize: isMobile ? 20 : 24,
                                     ),
                                   ),
@@ -6025,7 +6025,7 @@ $expertAnswer
                                 style: TextStyle(
                                   fontSize: isMobile ? 36 : 48,
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.green[800],
+                                  color: Colors.black,
                                   letterSpacing: 1.2,
                                 ),
                               ),
@@ -6034,7 +6034,7 @@ $expertAnswer
                                 'points',
                                 style: TextStyle(
                                   fontSize: isMobile ? 14 : 16,
-                                  color: Colors.green[600],
+                                  color: Colors.black,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
