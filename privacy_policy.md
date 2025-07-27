@@ -107,8 +107,8 @@
 個人情報に関するお問い合わせは、以下までご連絡ください：
 
 **大東体操クラブ**
-- メール: privacy@daito.gym
-- 電話: 03-XXXX-XXXX
+- メール: privacy@gymnastics-ai.com
+- 電話: 042-524-8888
 - 住所: 東京都XXX区XXX町X-X-X
 
 ## 13. 準拠法
