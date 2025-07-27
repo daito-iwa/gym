@@ -3,6 +3,7 @@ import 'platform_config.dart';
 
 // Conditional imports for web vs mobile
 import 'web_adsense_widget.dart' if (dart.library.io) 'mobile_ad_widget.dart';
+import 'propellerads_widget.dart';
 
 /// プラットフォーム別の広告ウィジェット
 /// Web版ではAdSense、モバイル版ではAdMobを表示
@@ -35,18 +36,21 @@ class UniversalAdWidget extends StatelessWidget {
   Widget _buildWebAd() {
     switch (adType) {
       case AdType.banner:
-        return AdSenseWidget.banner(
-          adUnitId: adUnitId ?? 'default-banner-id',
+        return PropellerAdsWidget(
+          zoneId: adUnitId ?? PropellerAdsConfig.bannerZoneId,
+          adType: PropellerAdType.banner,
+          width: 728,
+          height: 90,
         );
       case AdType.interstitial:
-        // Web版では代わりにレスポンシブ広告を表示
-        return AdSenseWidget.responsive(
-          adUnitId: adUnitId ?? 'default-responsive-id',
+        return PropellerAdsWidget(
+          zoneId: adUnitId ?? PropellerAdsConfig.interstitialZoneId,
+          adType: PropellerAdType.interstitial,
         );
       case AdType.rewarded:
-        // Web版では報酬広告の代わりに大きめのディスプレイ広告を表示
-        return AdSenseWidget(
-          adUnitId: adUnitId ?? 'default-display-id',
+        return PropellerAdsWidget(
+          zoneId: adUnitId ?? PropellerAdsConfig.inPageZoneId,
+          adType: PropellerAdType.inPage,
           width: 336,
           height: 280,
         );

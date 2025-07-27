@@ -25,6 +25,7 @@ import 'ad_widget.dart'; // ユニバーサル広告ウィジェット
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
 import 'web_config.dart'; // Web版設定
 import 'web_ad_manager.dart'; // Web版広告管理
+import 'propellerads_widget.dart'; // PropellerAds広告
 
 // カスタム例外クラス
 class NetworkException implements Exception {
@@ -4776,9 +4777,11 @@ $expertAnswer
                 width: double.infinity,
                 color: Colors.grey[900],
                 child: Center(
-                  child: UniversalAdWidget(
-                    adType: AdType.banner,
-                    adUnitId: WebConfig.adUnits.footerBanner,
+                  child: PropellerAdsWidget(
+                    zoneId: PropellerAdsConfig.bannerZoneId,
+                    adType: PropellerAdType.banner,
+                    width: 728,
+                    height: 90,
                   ),
                 ),
               ),
@@ -6516,164 +6519,28 @@ $expertAnswer
               border: Border(top: BorderSide(color: Colors.grey[700]!)),
             ),
             padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      decoration: InputDecoration(
-                        hintText: _getText('enterMessage'),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: InputDecoration(
+                      hintText: _getText('enterMessage'),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      onSubmitted: (text) => () {}, // 無効化
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
+                    onSubmitted: (text) => () {}, // 無効化
                   ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () {}, // 無効化
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () {}, // 無効化
+                  icon: const Icon(Icons.send),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    } else {
-      // 準備中画面
-      return _buildComingSoonInterface();
-    }
-  }
-
-  // 準備中画面のUI
-  Widget _buildComingSoonInterface() {
-    return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // 工事アイコン
-              Container(
-                padding: const EdgeInsets.all(20.0),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.construction,
-                  size: 80,
-                  color: Colors.orange,
-                ),
-              ),
-              const SizedBox(height: 32),
-              
-              // タイトル
-              Text(
-                _currentLang == '日本語' ? 'AIチャット機能 準備中' : 'AI Chat Feature Coming Soon',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              
-              // 説明文
-              Text(
-                _currentLang == '日本語' 
-                  ? '現在、AIチャット機能を開発中です。\n体操のルールや技について質問できる\n高度なAIアシスタント機能を準備しています。\n\n他の機能（D-Score計算、全種目分析、\nアナリティクス）は通常通りご利用いただけます。'
-                  : 'AI Chat feature is currently under development.\nWe are preparing an advanced AI assistant\nthat can answer questions about gymnastics\nrules and techniques.\n\nOther features (D-Score Calculator,\nAll Apparatus Analysis, Analytics)\nare available as usual.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[300],
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              
-              // 予定表示
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.schedule,
-                      color: Colors.blue,
-                      size: 24,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _currentLang == '日本語' ? 'リリース予定: 近日公開' : 'Release Schedule: Coming Soon',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.blue,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    // 以下は既存のチャット機能コード（無効化中）
-    return SafeArea(
-      child: Column(
-        children: [
-          // AIチャット機能の説明バー
-          _buildChatInfoBar(),
-          // 無料ユーザーにはバナー広告を表示
-          if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
-            _buildBannerAd(),
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              padding: const EdgeInsets.all(8.0),
-              itemCount: _messages.length,
-              itemBuilder: (_, int index) => _messages[index],
-            ),
-          ),
-          if (_isLoading) const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: CircularProgressIndicator(),
-          ),
-          // 使用量インジケーター（無料ユーザーのみ）
-          if (!_userSubscription.canAccessUnlimitedChat())
-            FutureBuilder<String>(
-              future: ChatUsageTracker.getUsageStatus(_userSubscription),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Text(
-                      snapshot.data!,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          Container(
-            child: _buildTextComposer(),
           ),
         ],
       ),
