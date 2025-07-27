@@ -10573,7 +10573,34 @@ class GymnasticsKnowledgeBase {
   
   // 種目情報を取得
   static Map<String, dynamic>? getApparatusInfo(String apparatus) {
-    return apparatusInfo[apparatus.toLowerCase()];
+    // 種目コードを内部キーにマッピング
+    final String internalKey;
+    switch (apparatus.toLowerCase()) {
+      case 'fx':
+        internalKey = 'floor';
+        break;
+      case 'ph':
+        internalKey = 'pommel';
+        break;
+      case 'sr':
+        internalKey = 'rings';
+        break;
+      case 'vt':
+        internalKey = 'vault';
+        break;
+      case 'pb':
+        internalKey = 'parallel';
+        break;
+      case 'hb':
+        internalKey = 'horizontal';
+        break;
+      default:
+        // 既に内部キー形式の場合はそのまま使用
+        internalKey = apparatus.toLowerCase();
+        break;
+    }
+    
+    return apparatusInfo[internalKey];
   }
 
   // 演技分析に基づく改善案を生成
@@ -10601,14 +10628,17 @@ class GymnasticsKnowledgeBase {
     }
     
     // 種目別の具体的アドバイス
-    switch (apparatus.toLowerCase()) {
+    final String apparatusKey = apparatus.toLowerCase();
+    switch (apparatusKey) {
       case 'vault':
+      case 'vt':
         suggestions += '【跳馬のアドバイス】\n';
         suggestions += '• 1技のみの実施のため、最高難度の技を選択することが重要\n';
         suggestions += '• グループボーナスはないため、個々の技の難度値が決定的\n';
         suggestions += '• 着地の安定性も含めて技を選択しましょう\n';
         break;
       case 'floor':
+      case 'fx':
         suggestions += '【床運動のアドバイス】\n';
         suggestions += '• 4グループすべてから技を実施してボーナス0.5点を確実に獲得\n';
         suggestions += '• 90秒の時間制限内での構成を考慮\n';
