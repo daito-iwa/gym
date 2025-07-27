@@ -770,7 +770,7 @@ class AdManager {
 }
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
-  AppMode _currentMode = kIsWeb ? AppMode.dScore : AppMode.chat; // Web版はD-Score、モバイル版はAIチャットを初期画面に設定
+  AppMode _currentMode = AppMode.dScore; // 全プラットフォームでD-Score計算を初期画面に設定
   final TextEditingController _textController = TextEditingController();
   
   // ユーザーサブスクリプション管理

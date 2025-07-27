@@ -62,6 +62,13 @@ class AppConfig {
     : const Duration(seconds: 30);
   
   // AIチャット機能制御フラグ
-  // Web版ではAIチャット機能を有効化
-  static const bool enableAIChat = true;
+  // Web版: 削除済み（タブ自体を非表示）
+  // モバイル版: 開発中状態（準備中画面を表示）
+  static bool get enableAIChat {
+    if (kIsWeb) {
+      return false; // Web版では削除済み
+    } else {
+      return false; // モバイル版では開発中（準備中画面表示）
+    }
+  }
 }
