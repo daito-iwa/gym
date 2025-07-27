@@ -6015,6 +6015,24 @@ $expertAnswer
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
                                       fontSize: isMobile ? 20 : 24,
+                                      shadows: [
+                                        Shadow(
+                                          offset: Offset(-1.0, -1.0),
+                                          color: Colors.white,
+                                        ),
+                                        Shadow(
+                                          offset: Offset(1.0, -1.0),
+                                          color: Colors.white,
+                                        ),
+                                        Shadow(
+                                          offset: Offset(1.0, 1.0),
+                                          color: Colors.white,
+                                        ),
+                                        Shadow(
+                                          offset: Offset(-1.0, 1.0),
+                                          color: Colors.white,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -6027,6 +6045,24 @@ $expertAnswer
                                   fontWeight: FontWeight.w900,
                                   color: Colors.black,
                                   letterSpacing: 1.2,
+                                  shadows: [
+                                    Shadow(
+                                      offset: Offset(-1.5, -1.5),
+                                      color: Colors.white,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.5, -1.5),
+                                      color: Colors.white,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.5, 1.5),
+                                      color: Colors.white,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(-1.5, 1.5),
+                                      color: Colors.white,
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -6036,6 +6072,24 @@ $expertAnswer
                                   fontSize: isMobile ? 14 : 16,
                                   color: Colors.black,
                                   fontWeight: FontWeight.w500,
+                                  shadows: [
+                                    Shadow(
+                                      offset: Offset(-1.0, -1.0),
+                                      color: Colors.white,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.0, -1.0),
+                                      color: Colors.white,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(1.0, 1.0),
+                                      color: Colors.white,
+                                    ),
+                                    Shadow(
+                                      offset: Offset(-1.0, 1.0),
+                                      color: Colors.white,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
