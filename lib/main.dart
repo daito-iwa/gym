@@ -7128,10 +7128,9 @@ $expertAnswer
       
       // モバイル版のみでflutter_secure_storageを使用
       await _storage.write(
-          key: 'saved_routines',
-          value: json.encode(_savedRoutines),
-        );
-      }
+        key: 'saved_routines',
+        value: json.encode(_savedRoutines),
+      );
       
       setState(() {});
       
