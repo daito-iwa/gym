@@ -21,7 +21,7 @@ import 'gymnastics_expert_database.dart'; // 専門知識データベース
 import 'purchase_manager.dart'; // 正しいPurchaseManager
 import 'admob_config.dart'; // AdMob設定
 import 'platform_config.dart'; // プラットフォーム設定
-import 'ad_widget.dart'; // ユニバーサル広告ウィジェット
+// import 'ad_widget.dart'; // 未使用のためコメントアウト // ユニバーサル広告ウィジェット
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
 // Web版は廃止しました（PropellerAds、Web関連import削除済み）
 
@@ -760,37 +760,46 @@ class AdManager {
   
   // バナー広告読み込み
   void _loadBannerAd({int retryCount = 0}) {
+    final adUnitId = _getBannerAdId();
+    print('🔄 バナー広告読み込み開始 (retry: $retryCount): $adUnitId');
+    
     _bannerAd = BannerAd(
-      adUnitId: _getBannerAdId(),
+      adUnitId: adUnitId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          print('Banner ad loaded');
+          print('✅ バナー広告読み込み成功');
           _isBannerAdReady = true;
         },
         onAdFailedToLoad: (ad, error) {
-          print('Banner ad failed to load: $error');
+          print('❌ バナー広告読み込み失敗: $error');
           ad.dispose();
           _isBannerAdReady = false;
           
           // Retry logic with exponential backoff
-          if (retryCount < 3) {
+          if (retryCount < 5) { // リトライ回数を増加
             final delaySeconds = (retryCount + 1) * 2;
+            print('⏳ ${delaySeconds}秒後にリトライします...');
             Timer(Duration(seconds: delaySeconds), () {
               _loadBannerAd(retryCount: retryCount + 1);
             });
+          } else {
+            print('❌ バナー広告読み込み最終失敗 - リトライ上限に達しました');
           }
         },
+        onAdOpened: (ad) => print('📱 バナー広告が開かれました'),
+        onAdClosed: (ad) => print('🔒 バナー広告が閉じられました'),
+        onAdImpression: (ad) => print('👀 バナー広告インプレッション'),
       ),
     );
     
     _bannerAd?.load();
     
-    // Add timeout handling
-    Timer(Duration(seconds: 10), () {
+    // タイムアウト時間を延長
+    Timer(Duration(seconds: 30), () {
       if (!_isBannerAdReady && _bannerAd != null) {
-        print('Banner ad load timeout');
+        print('⏰ バナー広告読み込みタイムアウト (30秒)');
         _bannerAd?.dispose();
         _isBannerAdReady = false;
       }
@@ -936,13 +945,17 @@ class AdManager {
   
   // バナー広告ウィジェット作成
   Widget? createBannerAdWidget() {
+    print('🔍 createBannerAdWidget呼び出し: _isBannerAdReady=$_isBannerAdReady, _bannerAd!=null=${_bannerAd != null}');
+    
     if (_isBannerAdReady && _bannerAd != null) {
+      print('✅ バナー広告ウィジェット作成成功');
       return Container(
         height: _bannerAd!.size.height.toDouble(),
         width: _bannerAd!.size.width.toDouble(),
         child: AdWidget(ad: _bannerAd!),
       );
     }
+    print('❌ バナー広告ウィジェット作成失敗 - 広告準備未完了');
     return null;
   }
   
@@ -955,6 +968,22 @@ class AdManager {
   
   // 公開メソッド
   void loadRewardedAd() => _loadRewardedAd();
+  
+  // デバッグ機能
+  void diagnoseBannerAdStatus() {
+    print('=== Banner Ad診断 ===');
+    print('_isBannerAdReady: $_isBannerAdReady');
+    print('_bannerAd != null: ${_bannerAd != null}');
+    print('AdMobConfig.bannerAdUnitId: ${AdMobConfig.bannerAdUnitId}');
+    print('kDebugMode: ${kDebugMode}');
+    
+    if (_bannerAd != null) {
+      print('Banner ad size: ${_bannerAd!.size}');
+    } else {
+      print('Banner ad is null - attempting reload...');
+      _loadBannerAd();
+    }
+  }
   
   // ゲッター
   bool get isBannerAdReady => _isBannerAdReady;
@@ -1043,120 +1072,58 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   // アップグレード促進ダイアログ
   void _showUpgradeDialog(String featureName) {
-    // モバイルアプリ版のみでプレミアム機能を提供
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: Colors.grey[900],
-            title: Text(
-              '📱 モバイルアプリ限定機能',
-              style: TextStyle(color: Colors.blue[300]),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.smartphone,
-                  color: Colors.blue,
-                  size: 48,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'AIチャット機能はモバイルアプリでのみご利用いただけます。',
-                  style: TextStyle(color: Colors.grey[300]),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'モバイルアプリでは以下の追加機能をご利用いただけます：',
-                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                ),
-                SizedBox(height: 8),
-                Column(
-                  children: [
-                    Text('🤖 高度なAIチャット機能', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
-                    Text('📱 オフライン利用', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
-                    Text('🔔 プッシュ通知', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
-                    Text('⚡ 高速レスポンス', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
-                  ],
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text('閉じる', style: TextStyle(color: Colors.grey[400])),
+    // モバイルアプリ版でプレミアムアップグレードダイアログを表示
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Text(
+            _getText('premiumFeatures'),
+            style: TextStyle(color: Colors.blue[300]),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.star,
+                color: Colors.amber,
+                size: 48,
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[600],
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _launchAppStore();
-                },
-                child: Text('📱 アプリをダウンロード'),
+              SizedBox(height: 16),
+              Text(
+                '$featureName ${_getText('premiumFeatureDescription')}',
+                style: TextStyle(color: Colors.grey[300]),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 8),
+              Text(
+                _getText('premiumMessage'),
+                style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                textAlign: TextAlign.center,
               ),
             ],
-          );
-        },
-      );
-    } else {
-      // モバイル版では従来のアップグレードダイアログ
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: Colors.grey[900],
-            title: Text(
-              _getText('premiumFeatures'),
-              style: TextStyle(color: Colors.blue[300]),
+          ),
+          actions: [
+            TextButton(
+              child: Text(_getText('cancel'), style: TextStyle(color: Colors.grey[400])),
+              onPressed: () => Navigator.of(context).pop(),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.star,
-                  color: Colors.amber,
-                  size: 48,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  '$featureName ${_getText('premiumFeatureDescription')}',
-                  style: TextStyle(color: Colors.grey[300]),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  _getText('premiumMessage'),
-                  style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[600],
+                foregroundColor: Colors.white,
+              ),
+              child: Text(_getText('upgrade')),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showSubscriptionPage();
+              },
             ),
-            actions: [
-              TextButton(
-                child: Text(_getText('cancel'), style: TextStyle(color: Colors.grey[400])),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[600],
-                  foregroundColor: Colors.white,
-                ),
-                child: Text(_getText('upgrade')),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _showSubscriptionPage();
-                },
-              ),
-            ],
-          );
-        },
-      );
-    }
+          ],
+        );
+      },
+    );
   }
 
   // サブスクリプション購入画面
@@ -1275,6 +1242,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _purchasePremium() async {
     try {
       // モバイルアプリ版のみで購入機能を提供
+      
+      // PurchaseManagerの初期化確認
+      if (_purchaseManager == null || !_isPurchaseManagerInitialized) {
+        _showMessage('購入システムが初期化されていません。しばらくお待ちください。');
+        
+        // 初期化を再試行
+        await _initializePurchaseManager();
+        
+        if (_purchaseManager == null || !_isPurchaseManagerInitialized) {
+          _showMessage('購入システムの初期化に失敗しました。アプリを再起動してください。');
+          return;
+        }
+      }
       
       setState(() {
         _isLoadingSubscription = true;
@@ -2401,6 +2381,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // デバッグ時はプレミアム状態をクリア
     if (kDebugMode) {
       _clearDeviceSubscription();
+      // デバッグ情報の定期出力（初期化完了確認のため）
+      Timer.periodic(Duration(seconds: 5), (timer) {
+        _debugAppState();
+        // 初期化完了後は出力頻度を減らす
+        if (_isBackgroundInitComplete && timer.tick > 6) {
+          timer.cancel();
+          Timer.periodic(Duration(seconds: 30), (newTimer) {
+            _debugAppState();
+          });
+        }
+      });
     }
     _initializeApp(); // アプリの初期化を開始
     
@@ -2415,32 +2406,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     try {
       print('アプリ初期化開始（認証不要モード）');
       
-      // Critical startup path - show UI as quickly as possible
-      // Show UI immediately without waiting for heavy operations
+      // 即座にUIを表示
       setState(() {
         _isAuthLoading = false;
       });
       
-      // Move essential operations to background for faster startup
-      _initializeCriticalDataInBackground();
+      print('初期UI表示完了');
       
-      // Background initialization - non-blocking
+      // バックグラウンド初期化を開始
+      _initializeCriticalDataInBackground();
       _initializeAppInBackground();
       
-      // Failsafe: Force complete after 10 seconds
-      Timer(const Duration(seconds: 10), () {
-        if (mounted && !_isBackgroundInitComplete) {
-          print('バックグラウンド初期化タイムアウト - 強制完了');
-          setState(() {
-            _isBackgroundInitComplete = true;
-          });
-        }
-      });
-      
-      print('初期UI表示完了 - バックグラウンド初期化継続中');
     } catch (e) {
       print('アプリ初期化エラー: $e');
-      // Still show UI even if there's an error
       setState(() {
         _isAuthLoading = false;
       });
@@ -2564,10 +2542,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         print('技データ初期化エラー: $e');
       }
       
-      // Wait for all background tasks
-      await Future.wait(futures, eagerError: false);
+      // Wait for all background tasks with timeout
+      await Future.wait(futures, eagerError: false)
+          .timeout(Duration(seconds: 15), onTimeout: () {
+        print('⚠️ バックグラウンド初期化タイムアウト（15秒）');
+        return [];
+      });
       
-      print('バックグラウンド初期化完了');
+      print('✅ バックグラウンド初期化完了');
     } catch (e) {
       print('バックグラウンド初期化で予期しないエラー: $e');
     } finally {
@@ -2853,14 +2835,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     };
     
     try {
-      await _purchaseManager!.initialize();
-      setState(() {
-        _isPurchaseManagerInitialized = true;
-      });
-      print('PurchaseManager initialized successfully');
+      final initialized = await _purchaseManager!.initialize();
+      if (initialized) {
+        setState(() {
+          _isPurchaseManagerInitialized = true;
+        });
+        print('🟢 PurchaseManager initialized successfully');
+      } else {
+        print('🔴 PurchaseManager initialization returned false');
+        _showMessage('課金システムの初期化に失敗しました。');
+      }
     } catch (e) {
-      print('Failed to initialize PurchaseManager: $e');
-      _showMessage('課金システムの初期化に失敗しました。アプリを再起動してください。');
+      print('🔴 Failed to initialize PurchaseManager: $e');
+      _showMessage('課金システムの初期化エラー: $e');
+      setState(() {
+        _isPurchaseManagerInitialized = false;
+      });
     }
   }
   
@@ -2901,6 +2891,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   
   // 広告システム初期化
   Future<void> _initializeAdManager() async {
+    print('🔍 AdManager初期化開始: shouldShowAds=${_userSubscription.shouldShowAds()}');
+    
     if (_userSubscription.shouldShowAds()) {
       _adManager = AdManager();
       try {
@@ -2908,10 +2900,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         setState(() {
           _isAdManagerInitialized = true;
         });
-        print('AdManager initialized successfully');
+        print('✅ AdManager初期化成功');
+        
+        // 広告読み込み状況を定期的にチェック（デバッグ用）
+        Timer.periodic(Duration(seconds: 2), (timer) {
+          if (_adManager.isBannerAdReady) {
+            print('✅ バナー広告読み込み完了');
+            timer.cancel();
+          } else {
+            print('⏳ バナー広告読み込み中...');
+            if (timer.tick > 10) { // 20秒後にタイムアウト
+              print('❌ バナー広告読み込みタイムアウト');
+              timer.cancel();
+            }
+          }
+        });
+        
       } catch (e) {
-        print('Failed to initialize AdManager: $e');
+        print('❌ AdManager初期化失敗: $e');
       }
+    } else {
+      print('ℹ️ プレミアムユーザーのため広告無効');
     }
   }
   
@@ -6222,9 +6231,6 @@ $expertAnswer
   void _showWebInterstitialAd(String adType) {
     return; // Web版広告機能は廃止
     
-    // 広告表示を記録
-    WebAdManager().recordAdShown(adType);
-    
     // ダイアログで全画面広告を模擬
     showDialog(
       context: context,
@@ -6306,10 +6312,7 @@ $expertAnswer
                         ),
                         // 広告コンテンツ
                         Expanded(
-                          child: UniversalAdWidget(
-                            adType: AdType.interstitial,
-                            adUnitId: WebConfig.adUnits.responsive,
-                          ),
+                          child: Container(), // Web版広告は廃止
                         ),
                       ],
                     ),
@@ -6325,37 +6328,53 @@ $expertAnswer
 
   // バナー広告ウィジェット
   Widget _buildBannerAd() {
+    print('🔍 _buildBannerAd呼び出し - _adManager存在: ${_adManager != null}');
+    
     // Web版広告機能は廃止 - モバイル版のみでAdMob使用
-    if (false) { // 無効化されたWeb版コード
-      // Web版：AdSenseバナー広告を表示
-      return Container(
-        margin: const EdgeInsets.symmetric(vertical: 8.0),
-        child: UniversalAdWidget(
-          adType: AdType.banner,
-          adUnitId: WebConfig.adUnits.headerBanner,
-        ),
-      );
-    } else {
+    {
       // モバイル版：既存のAdMob実装
       final adWidget = _adManager.createBannerAdWidget();
       
       if (adWidget != null) {
+        print('✅ バナー広告ウィジェット表示成功');
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           child: adWidget,
         );
       } else {
+        print('⏳ バナー広告読み込み中またはエラー - createBannerAdWidget returned null');
+        if (_adManager != null) {
+          print('_adManager.isBannerAdReady: ${_adManager.isBannerAdReady}');
+        }
         return Container(
           height: 50,
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           decoration: BoxDecoration(
-            color: Colors.grey[800],
+            color: Colors.grey[100],
+            border: Border.all(color: Colors.grey[300]!, width: 1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Center(
-            child: Text(
-              '広告読み込み中...',
-              style: TextStyle(color: Colors.grey),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[500]!),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  '広告読み込み中...',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -8669,6 +8688,27 @@ $expertAnswer
         ],
       ),
     );
+  }
+
+  // デバッグ用アプリ状態確認
+  void _debugAppState() {
+    print('=== アプリ状態デバッグ ===');
+    print('_isBackgroundInitComplete: $_isBackgroundInitComplete');
+    print('_isAdManagerInitialized: $_isAdManagerInitialized');
+    print('_userSubscription.shouldShowAds(): ${_userSubscription.shouldShowAds()}');
+    print('_userSubscription.tier: ${_userSubscription.tier}');
+    print('_userSubscription.isActive: ${_userSubscription.isActive}');
+    print('_userSubscription.isFree: ${_userSubscription.isFree}');
+    print('kDebugMode: ${kDebugMode}');
+    print('広告表示条件: ${_userSubscription.shouldShowAds() && _isAdManagerInitialized}');
+    
+    if (_adManager != null) {
+      print('_adManager存在: true');
+      _adManager.diagnoseBannerAdStatus();
+    } else {
+      print('_adManager存在: false');
+    }
+    print('========================');
   }
 
   @override
