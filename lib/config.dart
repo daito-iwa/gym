@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+// モバイルアプリ版のみの設定ファイル
 
 class Config {
   // 後方互換性のため
@@ -22,19 +22,7 @@ class AppConfig {
     Environment.production: 'https://gym-96488789666.asia-northeast1.run.app',
   };
   
-  // Web環境用の開発サーバーURL
-  static const Map<Environment, String> _webUrls = {
-    Environment.development: 'http://127.0.0.1:8891',
-    Environment.staging: 'https://staging-api.your-domain.com',
-    Environment.production: 'https://gym-96488789666.asia-northeast1.run.app',
-  };
-  
-  // ネイティブ環境用の開発サーバーURL  
-  static const Map<Environment, String> _nativeUrls = {
-    Environment.development: 'http://127.0.0.1:8891',
-    Environment.staging: 'https://staging-api.your-domain.com',
-    Environment.production: 'https://gym-96488789666.asia-northeast1.run.app',
-  };
+  // モバイルアプリ版のみのサーバーURL
 
   // 現在の環境
   static Environment get environment => _environment;
@@ -42,13 +30,9 @@ class AppConfig {
   static bool get isStaging => _environment == Environment.staging;
   static bool get isProduction => _environment == Environment.production;
 
-  // プラットフォーム別のベースURL
+  // モバイルアプリ版のベースURL
   static String get baseUrl {
-    if (kIsWeb) {
-      return _webUrls[_environment] ?? _urls[_environment]!;
-    } else {
-      return _nativeUrls[_environment] ?? _urls[_environment]!;
-    }
+    return _urls[_environment]!;
   }
 
   // APIベースURL（メインのエンドポイント）
@@ -62,13 +46,8 @@ class AppConfig {
     : const Duration(seconds: 30);
   
   // AIチャット機能制御フラグ
-  // Web版: 削除済み（タブ自体を非表示）
-  // モバイル版: 開発中状態（準備中画面を表示）
+  // モバイルアプリ版のみ: 開発中状態（準備中画面を表示）
   static bool get enableAIChat {
-    if (kIsWeb) {
-      return false; // Web版では削除済み
-    } else {
-      return false; // モバイル版では開発中（準備中画面表示）
-    }
+    return false; // モバイル版では開発中（準備中画面表示）
   }
 }

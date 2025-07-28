@@ -1,16 +1,12 @@
-import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform;
 
-/// プラットフォーム別の設定を管理するクラス
+/// モバイルアプリ版のみの設定を管理するクラス
 class PlatformConfig {
-  /// 現在のプラットフォームがWebかどうか
-  static bool get isWeb => kIsWeb;
-  
   /// 現在のプラットフォームがiOSかどうか
-  static bool get isIOS => !kIsWeb && Platform.isIOS;
+  static bool get isIOS => Platform.isIOS;
   
   /// 現在のプラットフォームがAndroidかどうか
-  static bool get isAndroid => !kIsWeb && Platform.isAndroid;
+  static bool get isAndroid => Platform.isAndroid;
   
   /// 現在のプラットフォームがモバイル（iOS/Android）かどうか
   static bool get isMobile => isIOS || isAndroid;
@@ -24,42 +20,25 @@ class PlatformConfig {
   /// AdMob広告が利用可能かどうか（モバイルのみ）
   static bool get isAdMobEnabled => isMobile;
   
-  /// Google AdSense広告が利用可能かどうか（Webのみ）
-  static bool get isAdSenseEnabled => isWeb;
-  
-  /// Web版のベースURL（GitHub Pages用）
-  static String get webBaseUrl => 'https://daito-iwa.github.io/gym/';
-  
   /// プラットフォーム名を取得
   static String get platformName {
-    if (isWeb) return 'Web';
     if (isIOS) return 'iOS';
     if (isAndroid) return 'Android';
     return 'Unknown';
   }
   
-  /// Web版での機能制限メッセージ
-  static String get webLimitationMessage {
-    return '''
-Web版では以下の機能に制限があります：
-• プレミアムサブスクリプションは利用できません
-• すべての機能は広告付きで無料でご利用いただけます
-• モバイルアプリ版では広告なしのプレミアム版が利用可能です
-''';
-  }
-  
-  /// プラットフォーム別の最大チャット回数
+  /// 最大1日のチャット回数
   static int get maxDailyChatCount {
-    return 10; // モバイル版に統一
+    return 10; // モバイル版のみ
   }
   
-  /// プラットフォーム別の最大月間チャット回数
+  /// 最大1ヶ月のチャット回数
   static int get maxMonthlyChatCount {
-    return 50; // モバイル版に統一
+    return 50; // モバイル版のみ
   }
   
-  /// プラットフォーム別のD-Score計算制限
+  /// 1日のD-Score計算制限
   static int get maxDailyDScoreCalculations {
-    return 3; // モバイル版に統一
+    return 1; // 課金誘導のため制限強化
   }
 }

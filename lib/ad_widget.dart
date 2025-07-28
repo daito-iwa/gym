@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'platform_config.dart';
 
-// Conditional imports for web vs mobile
-import 'web_adsense_widget.dart' if (dart.library.io) 'mobile_ad_widget.dart';
+// Mobile only
+import 'mobile_ad_widget.dart';
 import 'propellerads_widget.dart';
 
 /// プラットフォーム別の広告ウィジェット
@@ -19,47 +19,17 @@ class UniversalAdWidget extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    if (!PlatformConfig.isWeb && !PlatformConfig.isMobile) {
-      // デスクトップ版では広告を表示しない
+    if (!PlatformConfig.isMobile) {
+      // 非モバイル版では広告を表示しない
       return SizedBox.shrink();
     }
     
-    if (PlatformConfig.isWeb) {
-      // Web版：AdSenseを表示
-      return _buildWebAd();
-    } else {
-      // モバイル版：AdMobを表示（既存の実装を使用）
-      return _buildMobileAd();
-    }
-  }
-  
-  Widget _buildWebAd() {
-    switch (adType) {
-      case AdType.banner:
-        return PropellerAdsWidget(
-          zoneId: adUnitId ?? PropellerAdsConfig.bannerZoneId,
-          adType: PropellerAdType.banner,
-          width: 728,
-          height: 90,
-        );
-      case AdType.interstitial:
-        return PropellerAdsWidget(
-          zoneId: adUnitId ?? PropellerAdsConfig.interstitialZoneId,
-          adType: PropellerAdType.interstitial,
-        );
-      case AdType.rewarded:
-        return PropellerAdsWidget(
-          zoneId: adUnitId ?? PropellerAdsConfig.inPageZoneId,
-          adType: PropellerAdType.inPage,
-          width: 336,
-          height: 280,
-        );
-    }
+    // モバイル版：AdMobを表示
+    return _buildMobileAd();
   }
   
   Widget _buildMobileAd() {
-    // モバイル版の広告実装（既存のAdMob実装を呼び出す）
-    // この部分は既存のAdMob実装に合わせて調整が必要
+    // モバイル版の広告実装（AdMob）
     return Container(
       child: Center(
         child: Text('Mobile Ad Placeholder'),

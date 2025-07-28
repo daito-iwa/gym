@@ -23,8 +23,7 @@ import 'admob_config.dart'; // AdMob設定
 import 'platform_config.dart'; // プラットフォーム設定
 import 'ad_widget.dart'; // ユニバーサル広告ウィジェット
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
-import 'web_config.dart'; // Web版設定
-import 'web_ad_manager.dart'; // Web版広告管理
+// Web版は廃止しました
 import 'propellerads_widget.dart'; // PropellerAds広告
 
 // カスタム例外クラス
@@ -139,54 +138,249 @@ class RoutineAnalyzer {
     final averageDifficulty = stats['averageDifficulty'] as double;
     final totalSkills = stats['totalSkills'] as int;
     
-    // 難度改善提案
+    // 難度改善提案（詳細版）
     if (averageDifficulty < 0.3) {
-      suggestions.add('平均難度が低めです。C難度以上の技を増やすことを検討してください');
+      suggestions.add('【難度改善】平均難度が${(averageDifficulty * 10).toStringAsFixed(1)}点と低めです。現在の構成では高得点が望めません。\n' +
+        '具体的な改善策：\n' +
+        '• C難度（0.3点）以上の技を3-4個追加しましょう\n' +
+        '• 各グループから最低1つはC難度以上を選択してください\n' +
+        '• 難度の高い技は徐々に習得し、安全に練習してください');
     } else if (averageDifficulty < 0.4) {
-      suggestions.add('より高難度の技を追加することで得点アップが期待できます');
+      suggestions.add('【難度向上の余地あり】平均難度${(averageDifficulty * 10).toStringAsFixed(1)}点は中級レベルです。\n' +
+        '改善のポイント：\n' +
+        '• D難度（0.4点）の技を1-2個追加すると効果的です\n' +
+        '• 連続技で難度を上げることも検討してください\n' +
+        '• 現在の技の発展系を練習することから始めましょう');
+    } else if (averageDifficulty >= 0.5) {
+      suggestions.add('【優秀な難度構成】平均難度${(averageDifficulty * 10).toStringAsFixed(1)}点は高水準です。\n' +
+        '注意点：\n' +
+        '• 実施の確実性を重視してください\n' +
+        '• 高難度技の成功率を上げる練習に集中しましょう\n' +
+        '• 必要に応じて難度を下げて安定性を確保することも重要です');
     }
     
-    // 技数最適化
+    // 技数最適化（詳細版）
     if (totalSkills < 8) {
-      suggestions.add('技数を増やして構成を充実させましょう（推奨：8-10技）');
+      suggestions.add('【技数不足】現在${totalSkills}技しかありません。\n' +
+        '改善方法：\n' +
+        '• 推奨技数は8-10技です（${8 - totalSkills}技以上追加が必要）\n' +
+        '• 各グループから均等に技を選択してください\n' +
+        '• 簡単な技から始めて、徐々に難度を上げていきましょう\n' +
+        '• 連続技を活用して効率的に技数を増やすことも可能です');
     } else if (totalSkills > 12) {
-      suggestions.add('技数を調整してリスクを下げることを検討してください');
+      suggestions.add('【技数過多によるリスク】${totalSkills}技は多すぎます。\n' +
+        'リスクと対策：\n' +
+        '• 体力消耗により後半の実施が乱れる可能性があります\n' +
+        '• 各技の精度が低下し、減点が増える恐れがあります\n' +
+        '• 重要度の低い技を${totalSkills - 10}個程度削減しましょう\n' +
+        '• 高得点が期待できる技に絞って練習時間を確保してください');
+    } else {
+      suggestions.add('【適切な技数】${totalSkills}技は理想的な構成です。\n' +
+        '今後の方針：\n' +
+        '• 各技の実施精度を高めることに集中しましょう\n' +
+        '• 技の順序を工夫して体力配分を最適化してください');
     }
     
-    // グループバランス改善
+    // グループバランス改善（詳細版）
     final requiredGroups = _getRequiredGroupsForApparatus(apparatus);
     final missingGroups = requiredGroups.difference(groupDistribution.keys.toSet());
     if (missingGroups.isNotEmpty) {
-      suggestions.add('グループ${missingGroups.join(', ')}の技を追加してください');
+      final groupNames = {
+        1: '非アクロバット系要素',
+        2: '前方系アクロバット要素',
+        3: '後方系アクロバット要素',
+        4: '終末技',
+        5: '力技・バランス系要素'
+      };
+      
+      String missingGroupDetails = missingGroups.map((g) => 
+        'グループ$g（${groupNames[g] ?? "特殊要素"}）').join('、');
+      
+      suggestions.add('【必須グループ不足】以下のグループが不足しています：\n' +
+        '$missingGroupDetails\n' +
+        '影響と対策：\n' +
+        '• 各グループから最低1技は必須です（競技規則要件）\n' +
+        '• 不足グループ1つにつき大幅な減点があります\n' +
+        '• 早急に各グループの基本技から練習を始めてください\n' +
+        '• コーチと相談して、習得しやすい技から選択しましょう');
+    } else {
+      // グループバランスの詳細分析
+      final List<String> balanceIssues = [];
+      groupDistribution.forEach((group, count) {
+        if (count > 4) {
+          balanceIssues.add('グループ$groupに偏りすぎています（${count}技）');
+        }
+      });
+      
+      if (balanceIssues.isNotEmpty) {
+        suggestions.add('【グループバランス要改善】\n' +
+          balanceIssues.join('\n') + '\n' +
+          '改善案：\n' +
+          '• 各グループ2-3技程度が理想的なバランスです\n' +
+          '• 偏りのあるグループから技を削減し、他グループに振り分けましょう');
+      }
     }
     
-    // 難度バランス改善
+    // 難度バランス改善（詳細版）
     final hasOnlyEasySkills = difficultyDistribution.keys.every((key) => 
       ['A', 'B'].contains(key));
     if (hasOnlyEasySkills && totalSkills > 0) {
-      suggestions.add('C難度以上の技を追加してDスコアを向上させましょう');
+      suggestions.add('【難度構成が低すぎます】A・B難度のみの構成です。\n' +
+        '問題点：\n' +
+        '• Dスコアが極端に低く、競技力が不足します\n' +
+        '• 上級大会では通用しないレベルです\n' +
+        '改善策：\n' +
+        '• まずC難度（0.3点）の技を2-3個追加しましょう\n' +
+        '• 次に、徐々にD難度（0.4点）の技に挑戦してください\n' +
+        '• 各グループから高難度技を選ぶことでバランスよく強化できます');
+    } else {
+      // 難度分布の詳細分析
+      int highDifficultyCount = 0;
+      difficultyDistribution.forEach((diff, count) {
+        if (['D', 'E', 'F', 'G', 'H', 'I'].contains(diff)) {
+          highDifficultyCount += count;
+        }
+      });
+      
+      if (highDifficultyCount > totalSkills * 0.7) {
+        suggestions.add('【高難度偏重のリスク】高難度技が${highDifficultyCount}個（${(highDifficultyCount * 100 / totalSkills).toStringAsFixed(0)}%）を占めています。\n' +
+          'リスク：\n' +
+          '• 失敗リスクが高く、大きな減点につながる可能性があります\n' +
+          '• 体力的負担が大きく、完遌が困難です\n' +
+          '対策：\n' +
+          '• 成功率の高い技を優先して構成しましょう\n' +
+          '• 必要に応じてB・C難度の確実な技を加えてください');
+      }
     }
     
-    // 特定の種目に対する提案
+    // 特定の種目に対する詳細提案
     switch (apparatus) {
       case 'FX':
         if (!groupDistribution.containsKey(4)) {
-          suggestions.add('フロアでは終末技（グループ4）が重要です');
+          suggestions.add('【フロア種目固有の要件】終末技（グループ4）がありません。\n' +
+            '必須要件：\n' +
+            '• フロアでは必ず終末技で終わる必要があります\n' +
+            '• ダブルサルト、伸身2回宙返りなどが一般的です\n' +
+            '• 難度と着地の安定性を両立させる技を選びましょう');
+        }
+        // フロア特有の追加アドバイス
+        if ((groupDistribution[2] ?? 0) < 2) {
+          suggestions.add('【フロア構成のバランス】前方系アクロバット（グループ2）が少ないです。\n' +
+            '• 前方宙返り、前方伸身宙返りなどを追加しましょう\n' +
+            '• コンビネーションで連続ボーナスも狙えます');
         }
         break;
+        
       case 'HB':
         if (!groupDistribution.containsKey(5)) {
-          suggestions.add('鉄棒では終末技（グループ5）が必須です');
+          suggestions.add('【鉄棒種目固有の要件】終末技（グループ5）がありません。\n' +
+            '必須要件：\n' +
+            '• 鉄棒では必ず終末技で降りる必要があります\n' +
+            '• 伸身ムーンサルト、ダブルツォイストなどが高評価\n' +
+            '• D難度以上の終末技を目指しましょう');
+        }
+        // 鉄棒特有の追加アドバイス
+        if ((groupDistribution[1] ?? 0) < 2) {
+          suggestions.add('【鉄棒の手放し技不足】手放し技（グループ1の一部）が少ないです。\n' +
+            '• トカチェフ、コールマンなどの手放し技を追加\n' +
+            '• 鉄棒では手放し技が高評価されます');
         }
         break;
+        
       case 'VT':
         if (totalSkills < 2) {
-          suggestions.add('跳馬では第1跳躍と第2跳躍の両方が必要です');
+          suggestions.add('【跳馬種目の特殊性】跳馬では2本の跳躍が必要です。\n' +
+            '要件：\n' +
+            '• 第1跳躍と第2跳躍は異なる技である必要があります\n' +
+            '• 2本の平均点が最終得点となります\n' +
+            '• 両方の跳躍で高い精度を保つことが重要です\n' +
+            '推奨：\n' +
+            '• まずは確実に実施できる跳躍を2つ選びましょう\n' +
+            '• 慣れてきたら難度を上げていきましょう');
+        }
+        break;
+        
+      case 'PH':
+        // あん馬特有のアドバイス
+        if ((groupDistribution[3] ?? 0) < 2) {
+          suggestions.add('【あん馬の旋回技不足】旋回系技（グループ3）が少ないです。\n' +
+            '• シュピンデル、マジャールなどの旋回技は必須\n' +
+            '• あん馬では旋回技の連続が重要です');
+        }
+        break;
+        
+      case 'SR':
+        // 吊り輪特有のアドバイス
+        if ((groupDistribution[4] ?? 0) < 1) {
+          suggestions.add('【吊り輪の力技不足】力技（グループ4の一部）が少ないです。\n' +
+            '• 十字懸垂、脱力、倒立などの力技は重要\n' +
+            '• 2秒以上の静止が必要です');
+        }
+        break;
+        
+      case 'PB':
+        // 平行棒特有のアドバイス
+        if ((groupDistribution[2] ?? 0) < 2) {
+          suggestions.add('【平行棒の支持振動技不足】支持振動技が少ないです。\n' +
+            '• ヒーリー、ディアミドフなどを追加\n' +
+            '• 振動から力技への移行をスムーズに');
         }
         break;
     }
     
-    return suggestions;
+    // 総合的な評価とアドバイスの追加
+    if (suggestions.isEmpty && totalSkills > 0) {
+      // 基本的な構成は整っている場合の発展的アドバイス
+      suggestions.add('【基本構成は良好】現在の構成は基本要件を満たしています。\n' +
+        '次のステップ：\n' +
+        '• 各技の実施精度を向上させましょう\n' +
+        '• 連続技でボーナス点を狙いましょう\n' +
+        '• より高難度の技への挑戦を検討してください');
+    }
+    
+    // カテゴリー別の整理とプライオリティ付け
+    final categorizedSuggestions = _categorizeSuggestions(suggestions);
+    
+    return categorizedSuggestions;
+  }
+  
+  // 提案をカテゴリー別に整理
+  static List<String> _categorizeSuggestions(List<String> suggestions) {
+    final List<String> critical = [];
+    final List<String> important = [];
+    final List<String> recommended = [];
+    
+    for (final suggestion in suggestions) {
+      if (suggestion.contains('【緊急') || suggestion.contains('必須') || suggestion.contains('不足】')) {
+        critical.add(suggestion);
+      } else if (suggestion.contains('【') && (suggestion.contains('改善】') || suggestion.contains('不足】'))) {
+        important.add(suggestion);
+      } else {
+        recommended.add(suggestion);
+      }
+    }
+    
+    // 優先度順に並べ替え
+    final sortedSuggestions = <String>[];
+    
+    if (critical.isNotEmpty) {
+      sortedSuggestions.add('=== 緊急対応が必要な項目 ===');
+      sortedSuggestions.addAll(critical);
+      sortedSuggestions.add('');
+    }
+    
+    if (important.isNotEmpty) {
+      sortedSuggestions.add('=== 重要な改善項目 ===');
+      sortedSuggestions.addAll(important);
+      sortedSuggestions.add('');
+    }
+    
+    if (recommended.isNotEmpty) {
+      sortedSuggestions.add('=== 推奨される改善項目 ===');
+      sortedSuggestions.addAll(recommended);
+    }
+    
+    return sortedSuggestions.isEmpty ? suggestions : sortedSuggestions;
   }
   
   // 種目に必要なグループを取得
@@ -314,7 +508,7 @@ class UserSubscription {
 class DScoreUsageTracker {
   // プラットフォーム別の制限を使用
   static int get dailyFreeLimit => PlatformConfig.maxDailyDScoreCalculations;
-  static int get dailyBonusLimit => dailyFreeLimit + 2; // ボーナス含めて+2回
+  static int get dailyBonusLimit => dailyFreeLimit + 1; // ボーナス含めて+1回
   
   static const String _dailyUsageKey = 'dscore_daily_usage';
   static const String _bonusCreditsKey = 'dscore_bonus_credits';
@@ -376,7 +570,7 @@ class DScoreUsageTracker {
   static Future<void> grantCalculationBonus() async {
     final prefs = await SharedPreferences.getInstance();
     final currentBonus = await getBonusCredits();
-    await prefs.setInt(_bonusCreditsKey, currentBonus + 2); // +2回ボーナス
+    await prefs.setInt(_bonusCreditsKey, currentBonus + 1); // +1回ボーナス
   }
   
   static Future<bool> isNearDailyLimit() async {
@@ -771,7 +965,6 @@ class AdManager {
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   AppMode _currentMode = AppMode.dScore; // 全プラットフォームでD-Score計算を初期画面に設定
-  final TextEditingController _textController = TextEditingController();
   
   // ユーザーサブスクリプション管理
   UserSubscription _userSubscription = UserSubscription(tier: UserTier.free);
@@ -1012,7 +1205,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ],
               ),
               SizedBox(height: 16),
-              if (!kIsWeb && _purchaseManager?.purchasePending == true)
+              if (_purchaseManager?.purchasePending == true)
                 CircularProgressIndicator()
               else
                 Column(
@@ -1083,11 +1276,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // プレミアム購入処理
   Future<void> _purchasePremium() async {
     try {
-      // Web版では購入機能を無効化
-      if (kIsWeb) {
-        _showMessage('Web版では購入機能をご利用いただけません。モバイルアプリ版をお試しください。');
-        return;
-      }
+      // モバイルアプリ版のみで購入機能を提供
       
       setState(() {
         _isLoadingSubscription = true;
@@ -1170,11 +1359,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // 購入履歴復元
   Future<void> _restorePurchases() async {
     try {
-      // Web版では購入復元機能を無効化
-      if (kIsWeb) {
-        _showMessage('Web版では購入復元機能をご利用いただけません。');
-        return;
-      }
+      // モバイルアプリ版のみで購入復元機能を提供
       
       setState(() {
         _isLoadingSubscription = true;
@@ -1191,11 +1376,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  final List<ChatMessage> _messages = []; // 型定義のため保持（使用しない）
-  final List<AnalyticsMessage> _analyticsMessages = [];
   String _session_id = Uuid().v4(); // 型定義のため保持（使用しない）
   bool _isLoading = false; // 型定義のため保持（使用しない）
-  bool _isAnalyticsLoading = false;
   String _currentLang = '日本語';
   
   // 翻訳辞書
@@ -1614,8 +1796,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // --- 分析機能 ---
   RoutineAnalysis? _currentAnalysis;
   bool _isAnalyzing = false;
-  final TextEditingController _analyticsController = TextEditingController();
-  final ScrollController _analyticsScrollController = ScrollController();
 
   // Dスコア計算用
   String? _selectedApparatus;
@@ -1706,7 +1886,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     
     if (success) {
       await DScoreUsageTracker.grantCalculationBonus();
-      _showSuccessSnackBar('🎉 D-Score計算回数が+2回追加されました！');
+      _showSuccessSnackBar('🎉 D-Score計算回数が+1回追加されました！');
       
       // UI更新のため画面をリフレッシュ
       if (mounted) {
@@ -2644,11 +2824,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   
   // 課金システム初期化
   Future<void> _initializePurchaseManager() async {
-    // Web版では課金システムを無効化
-    if (kIsWeb) {
-      print('PurchaseManager skipped for web platform');
-      return;
-    }
+    // モバイルアプリ版のみで課金システムを初期化
     
     _purchaseManager = PurchaseManager();
     
@@ -2701,7 +2877,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // 定期的なサブスクリプション状態チェックを開始
   void _startPeriodicSubscriptionCheck() {
     // Web版では課金システムを使用しないためスキップ
-    if (kIsWeb) return;
+    // モバイルアプリ版のみでサブスクリプションチェックを実行
     
     // 10分ごとにサブスクリプション状態をチェック
     _subscriptionCheckTimer = Timer.periodic(Duration(minutes: 10), (timer) {
@@ -2720,7 +2896,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         // アプリがフォアグラウンドに戻った時、サブスクリプション状態をチェック
         print('App resumed - checking subscription status');
-        if (!kIsWeb && _isPurchaseManagerInitialized && _purchaseManager != null) {
+        if (_isPurchaseManagerInitialized && _purchaseManager != null) {
           _purchaseManager!.checkSubscriptionStatus();
         }
         break;
@@ -2781,7 +2957,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           setState(() {
             _isAuthenticated = true;
           });
-          _resetChat();
         } else {
           await _clearStoredToken();
           setState(() {
@@ -3141,7 +3316,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           setState(() {
             _isAuthenticated = true;
           });
-          _resetChat();
           _showSuccessSnackBar('ログインに成功しました');
         } else {
           // サインアップ成功後、自動でログインさせる
@@ -3831,455 +4005,7 @@ $expertAnswer
     return skills;
   }
 
-  // メッセージを送信し、APIから応答を受け取る - 無効化済み
-  void _handleSendPressed() async {
-    return; // チャット機能無効化のため何もしない
-    final userInput = _textController.text;
-    if (userInput.trim().isEmpty) return;
 
-    // 使用制限チェック
-    final canSend = await ChatUsageTracker.canSendMessage(_userSubscription);
-    if (!canSend) {
-      _showChatLimitReachedDialog();
-      return;
-    }
-
-    HapticFeedback.lightImpact(); // 送信時のフィードバック
-
-    // ユーザーメッセージを追加
-    setState(() {
-      _messages.insert(0, ChatMessage(text: userInput, isUser: true));
-      _isLoading = true;
-    });
-    _textController.clear();
-
-    try {
-      // デバッグ用：サーバー優先モード
-      print('Sending message to server: $userInput');
-      
-      // 専門知識データベースをチェック（100%対応）
-      final expertAnswer = GymnasticsExpertDatabase.getExpertAnswer(userInput);
-      
-      // 専門知識データベースに完全な回答がある場合
-      if (false && !expertAnswer.contains('より正確な回答のために詳細を教えてください')) { // 一時的に無効化
-        setState(() {
-          _messages.insert(0, ChatMessage(
-            text: expertAnswer,
-            isUser: false,
-          ));
-          _isLoading = false;
-        });
-        
-        // 使用量を記録（ボーナスクレジットを考慮）
-        await ChatUsageTracker.recordChatUsage(_userSubscription);
-        _checkChatUsageWarning();
-        return;
-      }
-      
-      // 従来の専門知識データベースも確認
-      final knowledgeResponse = GymnasticsKnowledgeBase.getKnowledgeResponse(userInput);
-      
-      if (false && knowledgeResponse != null) { // 一時的に無効化
-        setState(() {
-          _messages.insert(0, ChatMessage(
-            text: knowledgeResponse,
-            isUser: false,
-          ));
-          _isLoading = false;
-        });
-        
-        await ChatUsageTracker.recordChatUsage(_userSubscription);
-        _checkChatUsageWarning();
-        return;
-      }
-
-      // 専門知識データベースに完全な回答がある場合
-      if (!expertAnswer.contains('より正確な回答のために詳細を教えてください')) {
-        setState(() {
-          _messages.insert(0, ChatMessage(
-            text: expertAnswer,
-            isUser: false,
-          ));
-          _isLoading = false;
-        });
-        
-        // 使用量を記録（ボーナスクレジットを考慮）
-        await ChatUsageTracker.recordChatUsage(_userSubscription);
-        _checkChatUsageWarning();
-        return;
-      }
-      
-      // 従来の専門知識データベースも確認
-      if (knowledgeResponse != null) {
-        setState(() {
-          _messages.insert(0, ChatMessage(
-            text: '$knowledgeResponse\n\n🏆 体操専門知識データベースより',
-            isUser: false,
-          ));
-          _isLoading = false;
-        });
-        
-        // 使用量を記録（ボーナスクレジットを考慮）
-        await ChatUsageTracker.recordChatUsage(_userSubscription);
-        _checkChatUsageWarning();
-        return;
-      }
-
-      // 専門知識データベースに回答がない場合、AIサーバーにリクエストを送信
-      print('🚀 チャットAPI リクエスト送信開始');
-      print('📤 エンドポイント: /chat/message');
-      print('📤 メッセージ: ${userInput.substring(0, math.min(50, userInput.length))}${userInput.length > 50 ? "..." : ""}');
-      
-      final response = await _makeDeviceApiRequest(
-        '/chat/message',
-        method: 'POST',
-        body: {
-          'message': userInput,
-        },
-      );
-
-      // レスポンスを確認してデバッグ
-      print('📥 API Response Status: ${response.statusCode}');
-      print('📥 API Response Body: ${utf8.decode(response.bodyBytes)}');
-      
-      // サーバーエラー時は接続エラーメッセージを表示
-      if (response.statusCode != 200) {
-        print('🚨 サーバーエラー: ${response.statusCode}');
-        
-        // HTTP 500エラーの場合は特別な処理
-        if (response.statusCode == 500) {
-          print('⚠️ サーバー内部エラー検出 - メンテナンス中の可能性');
-          
-          // オフライン専門知識データベースを再試行
-          final offlineAnswer = _getOfflineAnswer(userInput);
-          if (offlineAnswer != null) {
-            print('💡 オフライン専門知識で回答を提供');
-            setState(() {
-              _messages.insert(0, ChatMessage(text: offlineAnswer, isUser: false));
-              _isLoading = false;
-            });
-            return;
-          }
-        }
-        
-        String errorType = 'server';
-        if (response.statusCode == 401 || response.statusCode == 403) {
-          errorType = 'auth';
-        } else if (response.statusCode == 500) {
-          errorType = 'maintenance';
-        }
-        
-        final errorMessage = _getServerErrorMessage(
-          userInput,
-          errorDetails: 'HTTP ${response.statusCode}: ${utf8.decode(response.bodyBytes)}',
-          errorType: errorType,
-        );
-        setState(() {
-          _messages.insert(0, ChatMessage(text: errorMessage, isUser: false));
-          _isLoading = false;
-        });
-        
-        // 接続エラーダイアログを表示
-        _showConnectionErrorDialog();
-        return;
-      }
-      
-      try {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        // AIの応答を安全に取得  
-        final aiResponse = data['response'] as String? ?? 
-                          _getServerErrorMessage(userInput, errorType: 'server', errorDetails: 'Empty response from server'); // フォールバック
-        
-        setState(() {
-          _messages.insert(0, ChatMessage(text: aiResponse, isUser: false));
-        });
-      } catch (e) {
-        print('🚨 JSON解析エラー: $e');
-        // JSON解析に失敗した場合はサーバーエラー
-        final errorMessage = _getServerErrorMessage(
-          userInput,
-          errorDetails: 'JSON Parse Error: $e',
-          errorType: 'server',
-        );
-        setState(() {
-          _messages.insert(0, ChatMessage(text: errorMessage, isUser: false));
-          _isLoading = false;
-        });
-        
-        // 接続エラーダイアログを表示
-        _showConnectionErrorDialog();
-      }
-      
-      // 使用量を記録（ボーナスクレジットを考慮）
-      await ChatUsageTracker.recordChatUsage(_userSubscription);
-      _checkChatUsageWarning();
-      
-    } on NetworkException catch (e) {
-      // ネットワークエラー時はサーバー接続エラーを表示
-      print('🚨 ネットワークエラー: $e');
-      String errorType = 'network';
-      if (e.toString().contains('TimeoutException')) {
-        errorType = 'timeout';
-      }
-      final errorMessage = _getServerErrorMessage(
-        userInput,
-        errorDetails: e.toString(),
-        errorType: errorType,
-      );
-      setState(() {
-        _messages.insert(0, ChatMessage(
-          text: errorMessage,
-          isUser: false,
-        ));
-        _isLoading = false;
-      });
-      
-      // 接続エラーダイアログを表示
-      _showConnectionErrorDialog();
-    } on AuthenticationException catch (e) {
-      // 認証エラー時は自動再認証を試行
-      print('🚨 認証エラー: $e');
-      print('🔄 認証トークンを再生成して再試行中...');
-      
-      try {
-        // 認証トークンを再生成
-        await _generateDeviceAuthToken();
-        
-        // 再度APIリクエストを試行
-        final retryResponse = await _makeDeviceApiRequest(
-          '/chat/message',
-          method: 'POST',
-          body: {
-            'message': userInput,
-          },
-        );
-        
-        if (retryResponse.statusCode == 200) {
-          final data = jsonDecode(utf8.decode(retryResponse.bodyBytes));
-          final aiResponse = data['response'] as String? ?? 
-                            _getServerErrorMessage(userInput, errorType: 'server', errorDetails: 'Empty response from server');
-          
-          setState(() {
-            _messages.insert(0, ChatMessage(text: aiResponse, isUser: false));
-            _isLoading = false;
-          });
-          return; // 成功したので終了
-        }
-      } catch (retryError) {
-        print('❌ 再認証試行も失敗: $retryError');
-      }
-      
-      final errorMessage = _getServerErrorMessage(
-        userInput,
-        errorDetails: e.toString(),
-        errorType: 'auth',
-      );
-      setState(() {
-        _messages.insert(0, ChatMessage(
-          text: errorMessage,
-          isUser: false,
-        ));
-        _isLoading = false;
-      });
-      
-      // 接続エラーダイアログを表示
-      _showConnectionErrorDialog();
-    } on DataException catch (e) {
-      print('🚨 データエラー: $e');
-      final errorMessage = _getServerErrorMessage(
-        userInput,
-        errorDetails: e.toString(),
-        errorType: 'server',
-      );
-      setState(() {
-        _messages.insert(0, ChatMessage(
-          text: errorMessage,
-          isUser: false,
-        ));
-        _isLoading = false;
-      });
-      
-      // 接続エラーダイアログを表示
-      _showConnectionErrorDialog();
-    } catch (e) {
-      print('🚨 予期せぬエラー: $e');
-      final errorMessage = _getServerErrorMessage(
-        userInput,
-        errorDetails: e.toString(),
-        errorType: 'unknown',
-      );
-      setState(() {
-        _messages.insert(0, ChatMessage(
-          text: errorMessage,
-          isUser: false,
-        ));
-        _isLoading = false;
-      });
-      
-      // 接続エラーダイアログを表示
-      _showConnectionErrorDialog();
-    }
-  }
-
-  // チャット使用量の警告チェック
-  void _checkChatUsageWarning() async {
-    if (_userSubscription.canAccessUnlimitedChat()) {
-      return;
-    }
-    
-    final isDailyNearLimit = await ChatUsageTracker.isNearDailyLimit(_userSubscription);
-    final isMonthlyNearLimit = await ChatUsageTracker.isNearMonthlyLimit(_userSubscription);
-    
-    if (isDailyNearLimit || isMonthlyNearLimit) {
-      _showChatUsageWarningDialog();
-    }
-  }
-
-  // チャット制限到達時のダイアログ
-  void _showChatLimitReachedDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('チャット制限に達しました'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('無料版では以下の制限があります：'),
-              const SizedBox(height: 10),
-              const Text('• 1日10回までのメッセージ'),
-              const Text('• 1ヶ月50回までのメッセージ'),
-              const SizedBox(height: 15),
-              const Text('プレミアム版では無制限でご利用いただけます。'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('閉じる'),
-            ),
-            // リワード広告ボタン（無料でボーナスを獲得）
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showRewardAdForChatBonus();
-              },
-              icon: Icon(Icons.play_circle_fill, color: Colors.green[400]),
-              label: Text(
-                '広告を見て+5回',
-                style: TextStyle(color: Colors.green[400]),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.green[400]!),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _purchasePremium();
-              },
-              child: const Text('プレミアムにアップグレード'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // リワード広告でチャットボーナスを獲得
-  Future<void> _showRewardAdForChatBonus() async {
-    try {
-      print('リワード広告を表示してチャットボーナスを獲得');
-      
-      bool success = false;
-      
-      if (_adManager.isRewardedAdReady) {
-        success = await _adManager.showRewardedAd();
-      } else {
-        // リワード広告が読み込まれていない場合
-        _showMessage('広告の準備中です。しばらく待ってから再度お試しください。');
-        _adManager.loadRewardedAd();
-        return;
-      }
-      
-      if (success) {
-        // 広告を最後まで見た場合、ボーナスクレジットを付与
-        await _grantChatBonus();
-      } else {
-        _showMessage('広告の視聴が完了しませんでした');
-      }
-    } catch (e) {
-      print('リワード広告エラー: $e');
-      _showMessage('広告の表示中にエラーが発生しました');
-    }
-  }
-
-  // チャットボーナスクレジットを付与
-  Future<void> _grantChatBonus() async {
-    try {
-      final bonusCredits = 5; // 5回分のボーナス
-      
-      // ボーナスクレジットをSharedPreferencesに保存
-      final prefs = await SharedPreferences.getInstance();
-      final currentBonus = prefs.getInt('chat_bonus_credits') ?? 0;
-      await prefs.setInt('chat_bonus_credits', currentBonus + bonusCredits);
-      
-      // 成功メッセージ
-      _showSuccessSnackBar('🎉 チャットボーナス +${bonusCredits}回を獲得しました！');
-      
-      // UIを更新
-      setState(() {});
-      
-      print('チャットボーナス付与完了: +$bonusCredits 合計: ${currentBonus + bonusCredits}');
-      
-    } catch (e) {
-      print('チャットボーナス付与エラー: $e');
-      _showMessage('ボーナスの付与中にエラーが発生しました');
-    }
-  }
-
-  // チャット使用量警告ダイアログ
-  void _showChatUsageWarningDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('チャット使用量のお知らせ'),
-          content: FutureBuilder<String>(
-            future: ChatUsageTracker.getUsageStatus(_userSubscription),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('現在の使用量: ${snapshot.data}'),
-                    const SizedBox(height: 10),
-                    const Text('制限に近づいています。プレミアム版では無制限でご利用いただけます。'),
-                  ],
-                );
-              }
-              return const CircularProgressIndicator();
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('閉じる'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _purchasePremium();
-              },
-              child: const Text('プレミアムにアップグレード'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   // 体操コンテキストを構築（APIに送信用）
   String _buildGymnasticsContext() {
@@ -4296,16 +4022,6 @@ $expertAnswer
 ''';
   }
 
-  // チャットをリセットする - 無効化済み
-  void _resetChat() {
-    return; // チャット機能無効化のため何もしない
-    /*
-    setState(() {
-      _messages.clear();
-      _session_id = Uuid().v4();
-    });
-    */
-  }
 
 
 
@@ -4337,6 +4053,97 @@ $expertAnswer
     return routine;
   }
 
+  // プレミアム誘導ダイアログ（計算制限時）
+  void _showCalculationLimitDialog() async {
+    final dailyUsage = await DScoreUsageTracker.getDailyUsage();
+    final bonusCredits = await DScoreUsageTracker.getBonusCredits();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.star, color: Colors.amber, size: 24),
+              SizedBox(width: 8),
+              Text('計算制限に達しました'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('本日の使用状況:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('・無料枠: $dailyUsage/${DScoreUsageTracker.dailyFreeLimit}回'),
+              Text('・ボーナス: ${bonusCredits}回'),
+              const SizedBox(height: 16),
+              const Text('続けてD-Score計算を行うには:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              if (bonusCredits == 0) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.play_circle_outline, color: Colors.orange, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('広告を見て+1回計算')),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.star, color: Colors.amber, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('プレミアムで無制限')),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            if (bonusCredits == 0)
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showDScoreRewardedAd();
+                },
+                icon: const Icon(Icons.play_circle_outline, size: 16),
+                label: const Text('広告を見る'),
+                style: TextButton.styleFrom(foregroundColor: Colors.orange),
+              ),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showUpgradeDialog('プレミアム機能');
+              },
+              icon: const Icon(Icons.star, size: 16),
+              label: const Text('プレミアム'),
+              style: TextButton.styleFrom(foregroundColor: Colors.amber),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // D-スコアを再計算
   Future<void> _calculateDScoreFromRoutine() async {
     if (_selectedApparatus == null || _routine.isEmpty) {
@@ -4346,13 +4153,7 @@ $expertAnswer
     // 使用量チェック
     final canCalculate = await DScoreUsageTracker.canCalculateDScore(_userSubscription);
     if (!canCalculate) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('D-Score計算の使用制限に達しました。プレミアムにアップグレードするか、明日再度お試しください。'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 4),
-        ),
-      );
+      _showCalculationLimitDialog();
       return;
     }
     
@@ -4604,7 +4405,7 @@ $expertAnswer
                         ),
                       ],
                     ),
-                    if (_userSubscription.isFree && !kIsWeb) ...[
+                    if (_userSubscription.isFree) ...[
                       SizedBox(height: 12),
                       Text(
                         'プレミアムでもっと多くの機能を！',
@@ -4620,13 +4421,8 @@ $expertAnswer
                         onPressed: _showSubscriptionPage,
                         child: Text(_getText('premiumUpgrade')),
                       ),
-                    ] else if (_userSubscription.isFree && kIsWeb) ...[
-                      SizedBox(height: 12),
-                      Text(
-                        'Web版では全機能を広告付きで無料提供',
-                        style: TextStyle(color: Colors.green.shade300, fontSize: 14),
-                      ),
                     ] else ...[
+                      SizedBox(height: 12),
                       SizedBox(height: 8),
                       Text(
                         'すべての機能をご利用いただけます',
@@ -4651,8 +4447,7 @@ $expertAnswer
                       onChanged: (String? newValue) {
                         setState(() {
                           _currentLang = newValue!;
-                          _resetChat();
-                          // UIを更新するためにsetStateを呼び出す
+                                          // UIを更新するためにsetStateを呼び出す
                         });
                       },
                       items: <String>['日本語', 'English']
@@ -4729,7 +4524,7 @@ $expertAnswer
                 title: Text(_currentLang == '日本語' ? '利用規約' : 'Terms of Service'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  _launchURL('https://www.gymnastics-ai.com/terms');
+                  _launchURL('https://daito-iwa.github.io/gym/terms.html');
                 },
               ),
               // プライバシーポリシー
@@ -4738,7 +4533,7 @@ $expertAnswer
                 title: Text(_currentLang == '日本語' ? 'プライバシーポリシー' : 'Privacy Policy'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  _launchURL('https://www.gymnastics-ai.com/privacy');
+                  _launchURL('https://daito-iwa.github.io/gym/privacy.html');
                 },
               ),
               const Divider(),
@@ -5333,16 +5128,35 @@ $expertAnswer
                       builder: (context, snapshot) {
                         if (snapshot.data == true) {
                           return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
+                            padding: const EdgeInsets.only(top: 12.0),
                             child: Center(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _showDScoreRewardedAd(),
-                                icon: const Icon(Icons.play_circle_outline, size: 16),
-                                label: const Text('広告を見て+2回計算'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.orange.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _showDScoreRewardedAd(),
+                                  icon: const Icon(Icons.play_circle_filled, size: 20),
+                                  label: const Text(
+                                    '🎬 広告を見て+1回計算',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 4,
+                                  ),
                                 ),
                               ),
                             ),
@@ -5737,8 +5551,8 @@ $expertAnswer
                           errorMessage = '演技構成は最大8技までです';
                         }
                         
-                        // グループ制限チェック（グループ1-3は最大4技）
-                        if (canAdd && _selectedSkill!.group >= 1 && _selectedSkill!.group <= 3) {
+                        // グループ制限チェック（全グループは最大4技）
+                        if (canAdd) {
                           final groupCounts = _countSkillsPerGroup(_routine);
                           final currentGroupCount = groupCounts[_selectedSkill!.group] ?? 0;
                           if (currentGroupCount >= 4) {
@@ -6336,109 +6150,10 @@ $expertAnswer
     );
   }
 
-  // チャットコンテンツの共通UI
-  Widget _buildChatContent() {
-    return SafeArea(
-      child: Column(
-        children: [
-          // AIチャット機能の説明バー
-          _buildChatInfoBar(),
-          // 無料ユーザーのみ広告を表示
-          if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
-            _buildBannerAd(),
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              padding: const EdgeInsets.all(8.0),
-              itemCount: _messages.length,
-              itemBuilder: (_, int index) => _messages[index],
-            ),
-          ),
-          if (_isLoading) const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              border: Border(top: BorderSide(color: Colors.grey[700]!)),
-            ),
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    onSubmitted: (_) => _handleSendPressed(),
-                    decoration: const InputDecoration.collapsed(
-                      hintText: 'メッセージを入力...',
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _handleSendPressed,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // チャット用のUI - 準備中画面
+  // チャット用のUI - 無効化済み
   Widget _buildChatInterface() {
-    if (AppConfig.enableAIChat) {
-      // デスクトップWeb版の場合はサイドバー広告付きレイアウト
-      final isDesktopWeb = PlatformConfig.isWeb && MediaQuery.of(context).size.width > 1024;
-      
-      if (isDesktopWeb && _userSubscription.shouldShowAds()) {
-        return Row(
-          children: [
-            // メインチャットエリア
-            Expanded(
-              child: _buildChatContent(),
-            ),
-            // 右サイドバー広告
-            Container(
-              width: 320,
-              padding: const EdgeInsets.all(8.0),
-              color: Colors.grey[900],
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  const Text(
-                    '広告',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // サイドバー広告（300x250）
-                  UniversalAdWidget(
-                    adType: AdType.banner,
-                    adUnitId: WebConfig.adUnits.sidebarRectangle,
-                  ),
-                  const SizedBox(height: 16),
-                  // 追加の広告スペース
-                  UniversalAdWidget(
-                    adType: AdType.banner,
-                    adUnitId: WebConfig.adUnits.sidebarRectangle,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      } else {
-        // モバイルまたは広告なしの場合は通常レイアウト
-        return _buildChatContent();
-      }
-    }
-    
-    // 準備中画面の場合
+    // チャット機能は無効化されており、常に準備中画面を表示
     return _buildComingSoonInterface();
   }
 
@@ -6526,82 +6241,6 @@ $expertAnswer
     );
   }
 
-  // 以下は既存のチャット機能コード（無効化中）
-  Widget _buildDisabledChatInterface() {
-    return SafeArea(
-      child: Column(
-        children: [
-          // AIチャット機能の説明バー
-          _buildChatInfoBar(),
-          // 無料ユーザーにはバナー広告を表示
-          if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
-            _buildBannerAd(),
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              padding: const EdgeInsets.all(8.0),
-              itemCount: _messages.length,
-              itemBuilder: (_, int index) => _messages[index],
-            ),
-          ),
-          if (_isLoading) const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: CircularProgressIndicator(),
-          ),
-          // 使用量インジケーター（無料ユーザーのみ）
-          if (!_userSubscription.canAccessUnlimitedChat())
-            FutureBuilder<String>(
-              future: ChatUsageTracker.getUsageStatus(_userSubscription),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    child: Text(
-                      snapshot.data!,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              border: Border(top: BorderSide(color: Colors.grey[700]!)),
-            ),
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    decoration: InputDecoration(
-                      hintText: _getText('enterMessage'),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    onSubmitted: (text) => () {}, // 無効化
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {}, // 無効化
-                  icon: const Icon(Icons.send),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   
   // Web版インタースティシャル広告表示
   void _showWebInterstitialAd(String adType) {
@@ -6747,38 +6386,6 @@ $expertAnswer
     }
   }
 
-  // テキスト入力欄
-  Widget _buildTextComposer() {
-    return IconTheme(
-      data: IconThemeData(color: Theme.of(context).colorScheme.secondary),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).dividerColor),
-          borderRadius: BorderRadius.circular(25.0),
-        ),
-        child: Row(
-          children: [
-            Flexible(
-              child: TextField(
-                controller: _textController,
-                onSubmitted: (text) => _handleSendPressed(),
-                decoration: const InputDecoration.collapsed(hintText: 'メッセージを送信'),
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: IconButton(
-                icon: const Icon(Icons.send),
-                onPressed: _isLoading ? null : () => _handleSendPressed(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
   
   // 演技構成を表示するWidgetリストを構築
   List<Widget> _buildRoutineDisplay() {
@@ -7052,18 +6659,72 @@ $expertAnswer
         }
       }
       
-      // 改善案の生成
+      // 改善案の生成（詳細版）
       final List<String> suggestions = [];
+      
+      // グループ不足の詳細分析
       if (missingGroups.isNotEmpty) {
-        suggestions.add('不足グループを補完してください: ${missingGroups.join('、')}');
+        final groupNames = {
+          'グループ1': '非アクロバット系要素',
+          'グループ2': '前方系アクロバット要素',
+          'グループ3': '後方系アクロバット要素',
+          'グループ4': '終末技',
+          'グループ5': '力技・特殊要素'
+        };
+        
+        String detailedMissingGroups = missingGroups.map((g) => 
+          '$g（${groupNames[g] ?? g}）').join('、');
+        
+        suggestions.add('【緊急：必須グループ不足】\n' +
+          '不足: $detailedMissingGroups\n' +
+          '影響: 大幅な減点が発生します\n' +
+          '対策: 早急に各グループの基本技から練習を始めてください');
       }
-      if (stats['averageDifficulty'] < 0.3) {
-        suggestions.add('より高難度の技を追加することを検討してください');
+      
+      // 難度分析の詳細化
+      final avgDifficulty = stats['averageDifficulty'] as double? ?? 0.0;
+      if (avgDifficulty < 0.3) {
+        suggestions.add('【難度不足】平均難度${(avgDifficulty * 10).toStringAsFixed(1)}点\n' +
+          '現状: 初級レベルの構成です\n' +
+          '改善: C難度以上の技を3-4個追加しましょう');
+      } else if (avgDifficulty < 0.4) {
+        suggestions.add('【難度向上の余地あり】平均難度${(avgDifficulty * 10).toStringAsFixed(1)}点\n' +
+          '現状: 中級レベル\n' +
+          '改善: D難度の技を1-2個追加でスコアアップ');
+      }
+      
+      // 技数分析
+      if (_routine.length < 8) {
+        suggestions.add('【技数不足】現在${_routine.length}技\n' +
+          '推奨: 8-10技\n' +
+          '対策: あと${8 - _routine.length}技以上追加が必要です');
+      } else if (_routine.length > 12) {
+        suggestions.add('【技数過多】現在${_routine.length}技\n' +
+          'リスク: 体力消耗、実施精度低下\n' +
+          '対策: 10技程度に絞り込みましょう');
+      }
+      
+      // 種目固有のアドバイス
+      if (_selectedApparatus == 'FX' && !(groupDistribution.containsKey(4))) {
+        suggestions.add('【フロア特有】終末技（グループ4）が必須です');
+      } else if (_selectedApparatus == 'HB' && !(groupDistribution.containsKey(5))) {
+        suggestions.add('【鉄棒特有】終末技（グループ5）が必須です');
+      }
+      
+      // 優先度の詳細設定
+      String priority = 'low';
+      if (missingGroups.isNotEmpty) {
+        priority = 'high';
+      } else if (avgDifficulty < 0.3 || _routine.length < 8) {
+        priority = 'medium';
       }
       
       final recommendations = {
         'suggestions': suggestions,
-        'priority': suggestions.isNotEmpty ? 'high' : 'low',
+        'priority': priority,
+        'totalScore': stats['totalDifficulty'] as double? ?? 0.0,
+        'averageDifficulty': avgDifficulty,
+        'completenessScore': completenessScore,
       };
       
       return RoutineAnalysis(
@@ -7241,15 +6902,8 @@ $expertAnswer
     try {
       String? routinesData;
       
-      if (kIsWeb) {
-        // Web版ではLocalStorageを使用
-        // ignore: avoid_web_libraries_in_flutter
-        // ignore: undefined_prefixed_name
-        routinesData = (await SharedPreferences.getInstance()).getString('saved_routines');
-      } else {
-        // モバイル版では従来のflutter_secure_storageを使用
-        routinesData = await _storage.read(key: 'saved_routines');
-      }
+      // モバイル版のみでflutter_secure_storageを使用
+      routinesData = await _storage.read(key: 'saved_routines');
       
       if (routinesData != null) {
         final Map<String, dynamic> decoded = json.decode(routinesData);
@@ -7382,17 +7036,11 @@ $expertAnswer
             final key = '${_selectedApparatus!}_${DateTime.now().millisecondsSinceEpoch}';
             _savedRoutines[key] = routineData;
             
-            // プラットフォーム別ストレージに保存
-            if (kIsWeb) {
-              // Web版ではSharedPreferencesを使用
-              (await SharedPreferences.getInstance()).setString('saved_routines', json.encode(_savedRoutines));
-            } else {
-              // モバイル版では従来のflutter_secure_storageを使用
-              await _storage.write(
-                key: 'saved_routines',
-                value: json.encode(_savedRoutines),
-              );
-            }
+            // モバイル版のみでflutter_secure_storageを使用
+            await _storage.write(
+              key: 'saved_routines',
+              value: json.encode(_savedRoutines),
+            );
             
             setState(() {});
             
@@ -7478,13 +7126,8 @@ $expertAnswer
     try {
       _savedRoutines.remove(key);
       
-      // プラットフォーム別ストレージに保存
-      if (kIsWeb) {
-        // Web版ではSharedPreferencesを使用
-        (await SharedPreferences.getInstance()).setString('saved_routines', json.encode(_savedRoutines));
-      } else {
-        // モバイル版では従来のflutter_secure_storageを使用
-        await _storage.write(
+      // モバイル版のみでflutter_secure_storageを使用
+      await _storage.write(
           key: 'saved_routines',
           value: json.encode(_savedRoutines),
         );
@@ -7815,9 +7458,6 @@ $expertAnswer
           if (_currentAnalysis != null) _buildAnalysisInfoBar(),
           
           const SizedBox(height: 16),
-          
-          // 分析AIチャット機能
-          if (_currentAnalysis != null) _buildAnalysisChat(),
         ],
       ),
     );
@@ -7837,8 +7477,6 @@ $expertAnswer
       
       setState(() {
         _currentAnalysis = analysis;
-        // 分析完了時に自動的に改善案を提示
-        _initializeAnalyticsChat(analysis);
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -7944,8 +7582,8 @@ $expertAnswer
         
         const SizedBox(height: 16),
         
-        // 改善案提案チャット
-        _buildImprovementChat(analysis),
+        // 改善提案表示
+        _buildStaticImprovementSuggestions(analysis),
       ],
     );
   }
@@ -7982,7 +7620,7 @@ $expertAnswer
           ),
           const SizedBox(height: 8),
           Text(
-            '下のAIチャットで現在の分析結果について詳しく質問できます。',
+            '今後AIチャットで自分の演技を分析する機能が実装されます。',
             style: TextStyle(
               color: Colors.blue[100],
               fontSize: 13,
@@ -8055,172 +7693,52 @@ $expertAnswer
     );
   }
 
-  // 分析AIチャット機能（高度な体操専門知識対応）
-  Widget _buildAnalysisChat() {
-    return Card(
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.psychology, color: Colors.amber),
-                const SizedBox(width: 8),
-                Text(
-                  '分析AIチャット',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+  // 詳細な改善提案を取得
+  String? _getDetailedSuggestion(String suggestion) {
+    // 提案内容に基づいて詳細な説明を返す
+    if (suggestion.contains('難度')) {
+      return '難度構成を見直すことで、より高い得点を狙えます。現在の技術レベルに合わせて、段階的に難度を上げていくことをお勧めします。';
+    } else if (suggestion.contains('接続')) {
+      return '技の接続をスムーズにすることで、演技の流れが良くなり、評価が上がります。特に難度の高い技の前後の流れに注意しましょう。';
+    } else if (suggestion.contains('バランス')) {
+      return '演技全体のバランスを考慮し、前半と後半の技の配分を調整することで、より完成度の高い演技になります。';
+    } else if (suggestion.contains('終末技')) {
+      return '終末技は演技の印象を大きく左右します。確実に実施できる技を選択し、着地の安定性を重視しましょう。';
+    } else if (suggestion.contains('組み合わせ')) {
+      return '技の組み合わせを工夫することで、加点要素を増やすことができます。練習で確実性を高めてから導入しましょう。';
+    }
+    return null;
+  }
+
+  // 改善提案の静的表示
+  Widget _buildImprovementSuggestions() {
+    if (_currentAnalysis?.recommendations == null) return const SizedBox.shrink();
+    
+    final suggestions = _currentAnalysis!.recommendations!['suggestions'] as List<String>? ?? [];
+    
+    if (suggestions.isEmpty) {
+      return Card(
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blue[300]),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '改善提案はありません\n\n現在の演技構成は体操競技規則に適合しており、基本的な要求を満たしています。さらなる向上のためには個別の技術指導をお勧めします。',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white70,
                   ),
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green[700],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.cloud_done, size: 12, color: Colors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        'オンライン',
-                        style: TextStyle(fontSize: 10, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '現在の分析結果について質問してください。例：「グループ3のB難度何がある？」',
-              style: TextStyle(fontSize: 12, color: Colors.grey[400]),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[700]!),
               ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      controller: _analyticsScrollController,
-                      padding: const EdgeInsets.all(12),
-                      itemCount: _analyticsMessages.length,
-                      itemBuilder: (context, index) {
-                        final message = _analyticsMessages[index];
-                        return _buildAnalyticsMessage(message);
-                      },
-                    ),
-                  ),
-                  if (_isAnalyticsLoading)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.amber),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'AI分析中...',
-                            style: TextStyle(color: Colors.grey[400]),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _analyticsController,
-                    decoration: InputDecoration(
-                      hintText: '分析について質問する...',
-                      hintStyle: TextStyle(color: Colors.grey[500]),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide(color: Colors.grey[600]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide(color: Colors.grey[600]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide(color: Colors.amber),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    style: TextStyle(color: Colors.white),
-                    onSubmitted: (text) {
-                      if (text.trim().isNotEmpty && _currentAnalysis != null) {
-                        _sendAnalyticsMessage(text.trim(), _currentAnalysis!);
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                FloatingActionButton.small(
-                  onPressed: () {
-                    final text = _analyticsController.text.trim();
-                    if (text.isNotEmpty && _currentAnalysis != null) {
-                      _sendAnalyticsMessage(text, _currentAnalysis!);
-                    }
-                  },
-                  backgroundColor: Colors.amber,
-                  child: Icon(Icons.send, color: Colors.black),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                _buildQuickActionChip('グループ3のB難度一覧'),
-                _buildQuickActionChip('不足しているグループは何？'),
-                _buildQuickActionChip('難度を上げるには？'),
-                _buildQuickActionChip('連続ボーナスのアドバイス'),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  // クイックアクションチップ
-  Widget _buildQuickActionChip(String text) {
-    return ActionChip(
-      label: Text(
-        text,
-        style: TextStyle(fontSize: 11, color: Colors.white),
-      ),
-      backgroundColor: Colors.grey[800],
-      onPressed: () {
-        if (_currentAnalysis != null) {
-          _sendAnalyticsMessage(text, _currentAnalysis!);
-        }
-      },
-    );
-  }
-
-  // 改善案提案チャット機能
-  Widget _buildImprovementChat(RoutineAnalysis analysis) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -8228,429 +7746,225 @@ $expertAnswer
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '改善案相談',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+            Row(
+              children: [
+                Icon(Icons.lightbulb, color: Colors.amber),
+                const SizedBox(width: 8),
+                Text(
+                  '改善提案',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[700]!),
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(8),
-                      itemCount: _analyticsMessages.length,
-                      itemBuilder: (context, index) {
-                        final message = _analyticsMessages[index];
-                        return _buildAnalyticsMessage(message);
-                      },
-                    ),
-                  ),
-                  if (_isAnalyticsLoading)
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: Colors.grey[700]!)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _analyticsController,
-                            decoration: const InputDecoration(
-                              hintText: '改善について相談してください...',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            ),
-                            onSubmitted: (text) => _sendAnalyticsMessage(text, analysis),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () => _sendAnalyticsMessage(_analyticsController.text, analysis),
-                          icon: const Icon(Icons.send),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '演技構成について質問やご相談がありましたらお気軽にどうぞ！',
-              style: TextStyle(color: Colors.grey[400], fontSize: 12),
-            ),
+            ..._buildSuggestionsList(suggestions),
           ],
         ),
       ),
     );
   }
 
-  // 分析チャットメッセージのウィジェット
-  Widget _buildAnalyticsMessage(AnalyticsMessage message) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: message.isUser ? Colors.blue : Colors.green,
-            child: Icon(
-              message.isUser ? Icons.person : Icons.psychology,
-              size: 16,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: message.isUser ? Colors.blue.withOpacity(0.1) : Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+  // 改善提案の静的表示（特定の分析用）
+  Widget _buildStaticImprovementSuggestions(RoutineAnalysis analysis) {
+    if (analysis.recommendations == null) return const SizedBox.shrink();
+    
+    final suggestions = analysis.recommendations!['suggestions'] as List<String>? ?? [];
+    
+    if (suggestions.isEmpty) {
+      return Card(
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blue[300]),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '改善提案はありません\n\n現在の演技構成は体操競技規則に適合しており、基本的な要求を満たしています。さらなる向上のためには個別の技術指導をお勧めします。',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white70,
+                  ),
+                ),
               ),
-              child: Text(
-                message.text,
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.lightbulb, color: Colors.amber),
+                const SizedBox(width: 8),
+                Text(
+                  '改善提案',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._buildSuggestionsList(suggestions),
+          ],
+        ),
       ),
     );
   }
 
-  // 分析メッセージの送信
-  void _sendAnalyticsMessage(String text, RoutineAnalysis analysis) {
-    if (text.trim().isEmpty) return;
-
-    setState(() {
-      _analyticsMessages.add(AnalyticsMessage(text: text, isUser: true));
-      _isAnalyticsLoading = true;
-    });
-
-    _analyticsController.clear();
-
-    // AIの応答を生成（実際の分析に基づく）
-    _generateAnalyticsResponse(text, analysis);
-  }
-
-  // AI応答の生成（高度な体操専門知識対応）
-  void _generateAnalyticsResponse(String userInput, RoutineAnalysis analysis) {
-    final lowerInput = userInput.toLowerCase();
-    String response = '';
+  // 提案リストの構築
+  List<Widget> _buildSuggestionsList(List<String> suggestions) {
+    final List<Widget> widgets = [];
+    int itemIndex = 0;
     
-    // 高度な質問パターンマッチング
-    if (lowerInput.contains('グループ') && lowerInput.contains('b難度')) {
-      response = _handleGroupDifficultyQuery(userInput, analysis);
-    } else if (lowerInput.contains('グループ') && RegExp(r'[1-5]').hasMatch(lowerInput)) {
-      response = _handleSpecificGroupQuery(userInput, analysis);
-    } else if (lowerInput.contains('連続') || lowerInput.contains('ボーナス')) {
-      response = _handleConnectionBonusQuery(analysis);
-    } else if (lowerInput.contains('不足') || lowerInput.contains('足りない')) {
-      response = _handleMissingElementsQuery(analysis);
-    } else if (lowerInput.contains('難度') && (lowerInput.contains('上げ') || lowerInput.contains('向上'))) {
-      response = _handleDifficultyUpgradeQuery(analysis);
-    } else if (lowerInput.contains('技') && (lowerInput.contains('追加') || lowerInput.contains('増や'))) {
-      response = _handleSkillAdditionQuery(analysis);
-    } else {
-      // 一般的な質問に対するコンテキスト回答
-      response = _handleGeneralAnalyticsQuery(lowerInput, analysis);
-    }
-
-    // サーバーベースのAI回答を模擬（実際の実装ではAPI呼び出し）
-    _processAdvancedAnalyticsResponse(userInput, response);
-  }
-
-  // 高度なAI回答処理（サーバー連携）
-  Future<void> _processAdvancedAnalyticsResponse(String userInput, String fallbackResponse) async {
-    try {
-      // 体操専門知識データベースから詳細回答を取得
-      final expertResponse = GymnasticsExpertDatabase.getExpertAnswer(userInput);
+    for (int i = 0; i < suggestions.length; i++) {
+      final suggestion = suggestions[i];
       
-      // 現在の分析データと組み合わせて回答を生成
-      String contextualResponse = _combineExpertResponseWithAnalysis(expertResponse, _currentAnalysis!);
-      
-      // 実際のサーバー連携時間を模擬
-      await Future.delayed(const Duration(milliseconds: 2000));
-      
-      setState(() {
-        _analyticsMessages.add(AnalyticsMessage(text: contextualResponse, isUser: false));
-        _isAnalyticsLoading = false;
-      });
-    } catch (e) {
-      // フォールバック回答
-      await Future.delayed(const Duration(milliseconds: 1500));
-      setState(() {
-        _analyticsMessages.add(AnalyticsMessage(text: fallbackResponse, isUser: false));
-        _isAnalyticsLoading = false;
-      });
-    }
-  }
-
-  // 専門知識と分析データの組み合わせ
-  String _combineExpertResponseWithAnalysis(String expertResponse, RoutineAnalysis analysis) {
-    if (expertResponse.contains('サーバー接続が必要です')) {
-      // オンライン必須回答をより詳細な分析ベース回答に置き換え
-      return '''🎯 **分析ベース回答**
-
-現在の演技構成分析：
-• **技数**: ${analysis.totalSkills}技
-• **平均難度**: ${analysis.averageDifficulty.toStringAsFixed(2)}
-• **要求充足率**: ${(analysis.completenessScore * 100).toStringAsFixed(1)}%
-• **連続ボーナス**: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%
-
-**📚 専門知識が必要な質問**
-より詳細な技術情報が必要です。以下をお試しください：
-
-🔸 **グループ別技構成**: 各グループの技分布
-🔸 **難度向上提案**: 現在の構成から無理なくレベルアップ
-🔸 **連続ボーナス最適化**: CV獲得のための技順序
-
-**💡 具体的な質問例:**
-• "このルーティンの弱点は？"
-• "C難度技を追加するなら？"
-• "連続ボーナスを増やすには？"
-
-現在の分析結果を基に、より具体的にご質問ください！''';
-    }
-    
-    // 専門知識回答に現在の分析データを追加
-    return '''$expertResponse
-
-**📊 現在の演技分析との関連：**
-• 技数: ${analysis.totalSkills}技 (理想: 8-10技)
-• 平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}
-• 要求充足率: ${(analysis.completenessScore * 100).toStringAsFixed(1)}%
-${analysis.missingGroups.isNotEmpty ? "• 不足グループ: ${analysis.missingGroups.join('、')}" : "• ✅ 全グループ要求充足"}''';
-  }
-
-  // グループ別難度クエリ処理
-  String _handleGroupDifficultyQuery(String query, RoutineAnalysis analysis) {
-    final groupNumber = RegExp(r'グループ([1-5])').firstMatch(query)?.group(1);
-    if (groupNumber != null) {
-      return '''🎯 **グループ${groupNumber}のB難度技**
-
-【${analysis.apparatus}・グループ${groupNumber}】
-
-**📋 代表的なB難度技 (0.2点):**
-• 種目により異なりますが、一般的なB難度技をご紹介します
-• より具体的な技名は種目別に確認が必要です
-
-**📊 現在の構成での${groupNumber}グループ:**
-${analysis.groupDistribution[int.parse(groupNumber)] != null ? 
-"現在${analysis.groupDistribution[int.parse(groupNumber)]}技を使用中" :
-"このグループの技は未使用です"}
-
-**💡 アドバイス:**
-B難度技はD-scoreの基礎となる重要な技です。
-安定して実施できるB難度技から段階的に習得しましょう！''';
-    }
-    return 'グループ番号を指定して再度質問してください（例：グループ3のB難度）';
-  }
-
-  // 特定グループクエリ処理
-  String _handleSpecificGroupQuery(String query, RoutineAnalysis analysis) {
-    final groupNumber = RegExp(r'[1-5]').firstMatch(query)?.group(0);
-    if (groupNumber != null) {
-      final groupCount = analysis.groupDistribution[int.parse(groupNumber)] ?? 0;
-      return '''🎯 **グループ${groupNumber}の詳細分析**
-
-**📊 現在の状況:**
-• 使用技数: ${groupCount}技
-• グループ要求: ${groupCount > 0 ? "✅ 充足" : "❌ 不足"}
-
-**🎯 グループ${groupNumber}の特徴:**
-${_getGroupDescription(int.parse(groupNumber), analysis.apparatus)}
-
-**💡 改善提案:**
-${groupCount == 0 ? 
-"このグループの技を1技以上追加することで0.5点のボーナスを獲得できます！" :
-"十分な技数があります。より高難度技への挑戦を検討しましょう。"}''';
-    }
-    return '特定のグループ番号を指定してください（1-5）';
-  }
-
-  // 連続ボーナスクエリ処理
-  String _handleConnectionBonusQuery(RoutineAnalysis analysis) {
-    return '''🔗 **連続ボーナス（CV）分析**
-
-**📊 現在の状況:**
-• 連続ボーナス率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%
-• 最大可能: 0.4点
-
-**⚡️ CV獲得の基本ルール:**
-• C+D: +0.1点
-• D+D: +0.2点  
-• D+E: +0.2点
-• E+E: +0.2点
-
-**💡 最適化のコツ:**
-1. 技と技の間に停止を作らない
-2. 着地で中断すると連続認定されない
-3. 演技の流れを重視した構成
-
-現在の構成で連続可能な技の組み合わせを見直してみましょう！''';
-  }
-
-  // 不足要素クエリ処理
-  String _handleMissingElementsQuery(RoutineAnalysis analysis) {
-    if (analysis.missingGroups.isEmpty) {
-      return '''✅ **要求充足完了**
-
-すべてのグループ要求を満たしています！
-現在の要求充足率: ${(analysis.completenessScore * 100).toStringAsFixed(1)}%
-
-**🎯 次のステップ:**
-• より高難度技への挑戦
-• 連続ボーナスの最適化
-• 演技の芸術性向上''';
+      // セクションヘッダーの場合
+      if (suggestion.startsWith('===')) {
+        if (widgets.isNotEmpty) {
+          widgets.add(const SizedBox(height: 16));
+        }
+        widgets.add(
+          Text(
+            suggestion.replaceAll('=', '').trim(),
+            style: TextStyle(
+              color: _getPriorityColor(suggestion),
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+        widgets.add(const SizedBox(height: 8));
+        itemIndex = 0; // セクションごとにインデックスをリセット
+      } else if (suggestion.trim().isEmpty) {
+        // 空行はスキップ
+        continue;
+      } else {
+        // 通常の提案項目
+        itemIndex++;
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _getSuggestionBorderColor(suggestion),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: _getSuggestionColor(suggestion).withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$itemIndex',
+                            style: TextStyle(
+                              color: _getSuggestionColor(suggestion),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          suggestion,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
     }
     
-    return '''❌ **不足要素の分析**
-
-**🚨 不足しているグループ:**
-${analysis.missingGroups.map((group) => "• $group").join('\n')}
-
-**💰 失われているボーナス:**
-${analysis.missingGroups.length * 0.5}点（各グループ0.5点×${analysis.missingGroups.length}）
-
-**💡 優先改善提案:**
-1. 最も習得しやすいグループから追加
-2. 現在の技レベルに合った難度選択
-3. 演技全体のバランスを考慮
-
-どのグループから改善したいか教えてください！''';
+    return widgets;
   }
-
-  // 難度向上クエリ処理  
-  String _handleDifficultyUpgradeQuery(RoutineAnalysis analysis) {
-    return '''📈 **難度向上戦略**
-
-**📊 現在の難度状況:**
-• 平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}
-• 総技数: ${analysis.totalSkills}技
-
-**🎯 向上戦略:**
-1. **段階的アップグレード**: 現在のA→B、B→Cに変更
-2. **技数最適化**: 8技以上で構成（上位8技がカウント）
-3. **バランス重視**: 全グループから均等に選択
-
-**💡 効率的な方法:**
-• 得意な技から難度を上げる
-• 安全性を最優先に選択
-• 連続ボーナスも考慮した配置
-
-具体的にどの技をアップグレードしたいですか？''';
+  
+  // 優先度に基づく色の取得
+  Color _getPriorityColor(String text) {
+    // 優先度レベルとしての文字列を処理
+    if (text == 'high' || text.contains('緊急')) return Colors.red;
+    if (text == 'medium' || text.contains('重要')) return Colors.orange;
+    if (text == 'low' || text.contains('推奨')) return Colors.blue;
+    return Colors.amber;
   }
-
-  // 技追加クエリ処理
-  String _handleSkillAdditionQuery(RoutineAnalysis analysis) {
-    return '''➕ **技追加の戦略的アプローチ**
-
-**📊 現在の構成:**
-• 技数: ${analysis.totalSkills}技
-• 推奨技数: 8-10技（上位8技がD-scoreに反映）
-
-**🎯 追加優先度:**
-1. **不足グループ**: ${analysis.missingGroups.isNotEmpty ? analysis.missingGroups.join('、') : "なし"}
-2. **高難度技**: 現在の平均${analysis.averageDifficulty.toStringAsFixed(2)}以上
-3. **連続可能技**: CV獲得のため
-
-**💡 選択基準:**
-• 安全に実施可能な技
-• 演技の流れに適合
-• グループ要求を満たす技
-
-どのグループの技を追加したいか、具体的に教えてください！''';
+  
+  // 提案内容に基づく色の取得
+  Color _getSuggestionColor(String suggestion) {
+    if (suggestion.contains('【緊急') || suggestion.contains('必須')) return Colors.red;
+    if (suggestion.contains('不足】')) return Colors.orange;
+    if (suggestion.contains('改善】')) return Colors.amber;
+    if (suggestion.contains('良好】') || suggestion.contains('適切')) return Colors.green;
+    return Colors.blue;
   }
-
-  // 一般クエリ処理
-  String _handleGeneralAnalyticsQuery(String lowerInput, RoutineAnalysis analysis) {
-    if (lowerInput.contains('弱点') || lowerInput.contains('問題')) {
-      final issues = <String>[];
-      if (analysis.missingGroups.isNotEmpty) issues.add('グループ要求不足');
-      if (analysis.averageDifficulty < 0.3) issues.add('難度が低い');
-      if (analysis.connectionBonusRatio < 0.5) issues.add('連続ボーナス未活用');
-      
-      return '''🔍 **演技の弱点分析**
-
-${issues.isNotEmpty ? 
-"**⚠️ 主な改善点:**\n${issues.map((issue) => "• $issue").join('\n')}" :
-"**✅ 良好な構成です！**"}
-
-**📊 詳細分析:**
-• 完成度: ${(analysis.completenessScore * 100).toStringAsFixed(1)}%
-• 技数バランス: ${analysis.totalSkills >= 8 ? "適切" : "不足"}
-• 難度分布: 平均${analysis.averageDifficulty.toStringAsFixed(2)}
-
-さらに詳しい改善提案が必要でしたら、具体的な項目を教えてください！''';
+  
+  // 提案の枠線色の取得
+  Color _getSuggestionBorderColor(String suggestion) {
+    return _getSuggestionColor(suggestion).withOpacity(0.3);
+  }
+  
+  // 優先度アイコンの取得
+  IconData _getPriorityIcon(String priority) {
+    switch (priority) {
+      case 'high':
+        return Icons.priority_high;
+      case 'medium':
+        return Icons.warning;
+      case 'low':
+        return Icons.lightbulb;
+      default:
+        return Icons.info;
     }
-    
-    return '''💬 **分析サマリー**
-
-**📊 現在の演技状況:**
-• 技数: ${analysis.totalSkills}技
-• 平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}
-• 要求充足率: ${(analysis.completenessScore * 100).toStringAsFixed(1)}%
-• 連続ボーナス活用率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%
-
-**🎯 質問例:**
-• "不足しているグループは？"
-• "難度を上げるには？"  
-• "連続ボーナスのコツは？"
-• "グループ3の技一覧"
-
-何について詳しく知りたいですか？''';
   }
-
-  // グループ説明の取得
-  String _getGroupDescription(int groupNumber, String apparatus) {
-    // 種目別のグループ特徴説明（簡略版）
-    final descriptions = {
-      1: "基本的な動作・姿勢グループ",
-      2: "回転・ひねり系技グループ", 
-      3: "宙返り・跳躍系技グループ",
-      4: "複合・応用技グループ",
-      5: "終末技・特殊技グループ",
-    };
-    return descriptions[groupNumber] ?? "詳細な技術情報";
-  }
-
-  // 分析チャットの初期化
-  void _initializeAnalyticsChat(RoutineAnalysis analysis) {
-    _analyticsMessages.clear();
-    
-    // 専門知識データベースから改善案を生成
-    final expertSuggestions = GymnasticsKnowledgeBase.generateImprovementSuggestions(
-      _selectedApparatus!,
-      analysis,
-    );
-    
-    String initialMessage = '📊 **分析完了**\n\n';
-    initialMessage += '【現在の状況】\n';
-    initialMessage += '・技数: ${analysis.totalSkills}技\n';
-    initialMessage += '・平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}\n';
-    initialMessage += '・要求充足率: ${(analysis.completenessScore * 100).toStringAsFixed(1)}%\n\n';
-    
-    initialMessage += expertSuggestions;
-    
-    _analyticsMessages.add(AnalyticsMessage(text: initialMessage, isUser: false));
+  
+  // 優先度テキストの取得
+  String _getPriorityText(String priority) {
+    switch (priority) {
+      case 'high':
+        return '緊急';
+      case 'medium':
+        return '重要';
+      case 'low':
+        return '推奨';
+      default:
+        return '情報';
+    }
   }
 
   // 統計カード
@@ -9397,8 +8711,6 @@ ${issues.isNotEmpty ?
     _subscriptionCheckTimer?.cancel();
     
     // コントローラーをクリーンアップ
-    _textController.dispose();
-    _analyticsController.dispose();
     _skillSearchController.dispose();
     
     super.dispose();
@@ -9837,56 +9149,6 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
       ],
     );
   }
-}
-
-// 分析チャット用のメッセージクラス
-class AnalyticsMessage {
-  final String text;
-  final bool isUser;
-  final DateTime timestamp;
-
-  AnalyticsMessage({
-    required this.text,
-    required this.isUser,
-    DateTime? timestamp,
-  }) : timestamp = timestamp ?? DateTime.now();
-}
-
-class ChatMessage extends StatelessWidget {
-  const ChatMessage({super.key, required this.text, required this.isUser});
-
-  final String text;
-  final bool isUser;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(child: Text(isUser ? 'You' : 'AI')),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(isUser ? 'You' : 'AI', style: Theme.of(context).textTheme.titleMedium),
-                Container(
-                  margin: const EdgeInsets.only(top: 5.0),
-                  child: Text(text),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  // dispose method removed - not needed in this class
 }
 
 // 演技構成保存ダイアログ
@@ -10370,9 +9632,13 @@ class GymnasticsKnowledgeBase {
         '【技数制限】\n'
         '• 跳馬: 1技のみ\n'
         '• その他種目: 最大8技まで\n\n'
+        '【ニュートラルディダクション（ND）】\n'
+        '• 5技: -3.0点 | 4技: -4.0点 | 3技: -5.0点\n'
+        '• 2技: -6.0点 | 1技: -7.0点 | 0技: -10.0点\n'
+        '• 6技以上: 減点なし\n\n'
         '【グループ別技数制限】\n'
-        '• グループ1-3: 各最大4技まで\n'
-        '• グループ4（終末技）: 制限なし（全体8技の範囲内）\n\n'
+        '• 同一グループ: 各最大4技まで\n'
+        '• グループ1-4: 各最大4技まで\n\n'
         'これらの制限は体操競技の公式ルールに基づいています。',
     
     '連続技ボーナス': '連続技ボーナスは種目によって異なるルールが適用されます。\n\n'
@@ -10573,6 +9839,8 @@ class GymnasticsKnowledgeBase {
   
   // 種目情報を取得
   static Map<String, dynamic>? getApparatusInfo(String apparatus) {
+    if (kDebugMode) print('DEBUG: getApparatusInfo called with apparatus: "$apparatus"');
+    
     // 種目コードを内部キーにマッピング
     final String internalKey;
     switch (apparatus.toLowerCase()) {
@@ -10597,7 +9865,14 @@ class GymnasticsKnowledgeBase {
       default:
         // 既に内部キー形式の場合はそのまま使用
         internalKey = apparatus.toLowerCase();
+        if (kDebugMode) print('DEBUG: Unknown apparatus code, using lowercase: "$internalKey"');
         break;
+    }
+    
+    if (kDebugMode) {
+      print('DEBUG: mapped internalKey: "$internalKey"');
+      print('DEBUG: apparatusInfo.keys: ${apparatusInfo.keys}');
+      print('DEBUG: lookup result: ${apparatusInfo[internalKey] != null ? "found" : "not found"}');
     }
     
     return apparatusInfo[internalKey];
@@ -10605,18 +9880,62 @@ class GymnasticsKnowledgeBase {
 
   // 演技分析に基づく改善案を生成
   static String generateImprovementSuggestions(String apparatus, RoutineAnalysis analysis) {
+    if (kDebugMode) print('DEBUG: generateImprovementSuggestions called with apparatus: "$apparatus"');
     final apparatusData = getApparatusInfo(apparatus);
-    if (apparatusData == null) return '改善案を生成できませんでした。';
+    if (apparatusData == null) {
+      if (kDebugMode) print('DEBUG: getApparatusInfo returned null for apparatus: "$apparatus"');
+      return '改善案を生成できませんでした。種目: "$apparatus" が見つかりません。';
+    }
 
-    String suggestions = '🎯 **専門的な改善案**\n\n';
+    String suggestions = '🎯 **${apparatusData['name_ja']} 改善案**\n\n';
+    
+    // 現在の状況分析
+    suggestions += '【現在の状況】\n';
+    suggestions += '• 技数: ${analysis.totalSkills}技\n';
+    suggestions += '• 平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}\n';
+    suggestions += '• 要求充足率: ${(analysis.completenessScore * 100).toStringAsFixed(0)}%\n\n';
     
     // 基本情報表示
     suggestions += '【${apparatusData['name_ja']}の特徴】\n';
     suggestions += '${apparatusData['description_ja']}\n\n';
     
+    // 技数分析（ニュートラルディダクション表に基づく）
+    if (apparatus.toLowerCase() != 'vt') {
+      double neutralDeduction = 0.0;
+      String deductionStatus = '';
+      
+      switch (analysis.totalSkills) {
+        case 0: neutralDeduction = 10.0; deductionStatus = '最大減点'; break;
+        case 1: neutralDeduction = 7.0; deductionStatus = '大幅減点'; break;
+        case 2: neutralDeduction = 6.0; deductionStatus = '大幅減点'; break;
+        case 3: neutralDeduction = 5.0; deductionStatus = '大幅減点'; break;
+        case 4: neutralDeduction = 4.0; deductionStatus = '減点あり'; break;
+        case 5: neutralDeduction = 3.0; deductionStatus = '減点あり'; break;
+        case 6:
+        case 7:
+        case 8: neutralDeduction = 0.0; deductionStatus = '減点なし'; break;
+        default: neutralDeduction = 0.0; deductionStatus = '構成完了'; break;
+      }
+      
+      if (neutralDeduction > 0.0) {
+        suggestions += '【🚨 技数不足（ニュートラルディダクション）】\n';
+        suggestions += '• 現在${analysis.totalSkills}技 → ND減点: ${neutralDeduction.toStringAsFixed(1)}点\n';
+        suggestions += '• 6技以上で減点回避が可能\n';
+        suggestions += '• 追加で${6 - analysis.totalSkills}技選択が急務\n\n';
+      } else if (analysis.totalSkills < 8) {
+        suggestions += '【⚠️ 技数推奨】\n';
+        suggestions += '• 現在${analysis.totalSkills}技（減点なし）\n';
+        suggestions += '• 最大8技まで追加可能\n';
+        suggestions += '• D-Score向上のため追加技を検討\n\n';
+      } else {
+        suggestions += '【✅ 技数適正】\n';
+        suggestions += '• 最大8技で構成完了\n\n';
+      }
+    }
+    
     // グループ要求分析
     if (analysis.missingGroups.isNotEmpty) {
-      suggestions += '【不足グループの対策】\n';
+      suggestions += '【🚨 不足グループの対策】\n';
       for (String missingGroup in analysis.missingGroups) {
         final groupNum = int.tryParse(missingGroup.replaceAll('グループ', ''));
         if (groupNum != null && apparatusData['groups_detail'][groupNum] != null) {
@@ -10625,6 +9944,9 @@ class GymnasticsKnowledgeBase {
         }
       }
       suggestions += '\n';
+    } else if (apparatus.toLowerCase() != 'vt') {
+      suggestions += '【✅ グループ要求】\n';
+      suggestions += '• 全グループ要求を満たしています\n\n';
     }
     
     // 種目別の具体的アドバイス
@@ -10648,6 +9970,19 @@ class GymnasticsKnowledgeBase {
         suggestions += '【${apparatusData['name_ja']}のアドバイス】\n';
         suggestions += '• 4グループすべてから技を実施してボーナス0.5点を獲得\n';
         suggestions += '• バランスの良い構成を心がけましょう\n';
+    }
+    
+    // グループ別技数制限とニュートラルディダクション表
+    if (apparatus.toLowerCase() != 'vt') {
+      suggestions += '\n【📋 技数制限ルール】\n';
+      suggestions += '• 全体: 最大8技まで\n';
+      suggestions += '• 同一グループ: 最大4技まで\n';
+      suggestions += '• グループ1-4: 各4技まで\n\n';
+      
+      suggestions += '【⚠️ ニュートラルディダクション（ND）表】\n';
+      suggestions += '• 5技: -3.0点 | 4技: -4.0点 | 3技: -5.0点\n';
+      suggestions += '• 2技: -6.0点 | 1技: -7.0点 | 0技: -10.0点\n';
+      suggestions += '• 6技以上: 減点なし（推奨）\n';
     }
     
     suggestions += '\n💡 具体的な技について相談したい場合は、お気軽にお聞きください！';
