@@ -23,8 +23,7 @@ import 'admob_config.dart'; // AdMob設定
 import 'platform_config.dart'; // プラットフォーム設定
 import 'ad_widget.dart'; // ユニバーサル広告ウィジェット
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
-// Web版は廃止しました
-import 'propellerads_widget.dart'; // PropellerAds広告
+// Web版は廃止しました（PropellerAds、Web関連import削除済み）
 
 // カスタム例外クラス
 class NetworkException implements Exception {
@@ -498,9 +497,9 @@ class UserSubscription {
 
   // 機能アクセス権限チェック（Web版拡張 + モバイル版フリーミアム）
   bool canAccessDScore() => true; // 全プラットフォーム対応
-  bool canAccessAllApparatus() => PlatformConfig.isWeb || isPremium; // Web無料 or モバイルプレミアム
-  bool canAccessAnalytics() => PlatformConfig.isWeb || isPremium; // Web無料 or モバイルプレミアム
-  bool canAccessUnlimitedChat() => !PlatformConfig.isWeb && isPremium; // モバイル限定プレミアム
+  bool canAccessAllApparatus() => isPremium; // モバイルプレミアムのみ
+  bool canAccessAnalytics() => isPremium; // モバイルプレミアムのみ
+  bool canAccessUnlimitedChat() => isPremium; // モバイルプレミアムのみ
   bool shouldShowAds() => isFree;
 }
 
@@ -1003,7 +1002,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       case AppMode.admin:
         return _isAdmin;
       case AppMode.chat:
-        return PlatformConfig.isWeb ? false : true; // Web版では制限、モバイル版では無料
+        return true; // モバイル版のみで無料アクセス
     }
   }
 
@@ -1044,8 +1043,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   // アップグレード促進ダイアログ
   void _showUpgradeDialog(String featureName) {
-    if (PlatformConfig.isWeb) {
-      // Web版ではAIチャット機能のモバイルアプリ誘導
+    // モバイルアプリ版のみでプレミアム機能を提供
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -1741,12 +1739,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _handleTabTap(int index) {
     HapticFeedback.lightImpact();
     
-    // Web版でのタブ切り替え広告チェック
-    if (PlatformConfig.isWeb && _userSubscription.shouldShowAds()) {
-      if (WebAdManager().shouldShowTabSwitchAd()) {
-        _showWebInterstitialAd('tab_switch');
-      }
-    }
+    // モバイルアプリ版のみ（Web版広告機能は廃止）
     
     final tabItems = PlatformUIConfig.getTabItems(isUserFree: _userSubscription.isFree);
     
@@ -2411,10 +2404,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
     _initializeApp(); // アプリの初期化を開始
     
-    // Web版広告管理の初期化
-    if (PlatformConfig.isWeb) {
-      WebAdManager().loadFromStorage();
-    }
+    // モバイルアプリ版のみ（Web版広告管理は廃止）
     
     // 定期的なサブスクリプション状態チェックを開始
     _startPeriodicSubscriptionCheck();
@@ -4565,21 +4555,7 @@ $expertAnswer
                           ? _buildChatInterface()
                           : _buildAdminInterface(),
             ),
-            // Web版フッターバナー広告
-            if (PlatformConfig.isWeb && _userSubscription.shouldShowAds())
-              Container(
-                height: 90,
-                width: double.infinity,
-                color: Colors.grey[900],
-                child: Center(
-                  child: PropellerAdsWidget(
-                    zoneId: PropellerAdsConfig.bannerZoneId,
-                    adType: PropellerAdType.banner,
-                    width: 728,
-                    height: 90,
-                  ),
-                ),
-              ),
+            // モバイルアプリ版のみ（Web版フッター広告は廃止）
           ],
         ),
       ),
@@ -6244,7 +6220,7 @@ $expertAnswer
   
   // Web版インタースティシャル広告表示
   void _showWebInterstitialAd(String adType) {
-    if (!PlatformConfig.isWeb) return;
+    return; // Web版広告機能は廃止
     
     // 広告表示を記録
     WebAdManager().recordAdShown(adType);
@@ -6349,7 +6325,8 @@ $expertAnswer
 
   // バナー広告ウィジェット
   Widget _buildBannerAd() {
-    if (PlatformConfig.isWeb) {
+    // Web版広告機能は廃止 - モバイル版のみでAdMob使用
+    if (false) { // 無効化されたWeb版コード
       // Web版：AdSenseバナー広告を表示
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -7051,14 +7028,7 @@ $expertAnswer
               ),
             );
             
-            // Web版での保存完了時広告
-            if (PlatformConfig.isWeb && _userSubscription.shouldShowAds()) {
-              if (WebAdManager().shouldShowSaveCompletedAd()) {
-                Future.delayed(const Duration(milliseconds: 2000), () {
-                  _showWebInterstitialAd('save_completed');
-                });
-              }
-            }
+            // モバイルアプリ版のみ（Web版広告機能は廃止）
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
