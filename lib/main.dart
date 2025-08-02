@@ -23,6 +23,8 @@ import 'admob_config.dart'; // AdMob設定
 import 'platform_config.dart'; // プラットフォーム設定
 // import 'ad_widget.dart'; // 未使用のためコメントアウト // ユニバーサル広告ウィジェット
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
+// import 'auth_screen.dart'; // 認証画面（現在未使用）
+// import 'social_auth_manager.dart'; // ソーシャル認証（現在未使用）
 // Web版は廃止しました（PropellerAds、Web関連import削除済み）
 
 // カスタム例外クラス
@@ -158,26 +160,28 @@ class RoutineAnalyzer {
         '• 必要に応じて難度を下げて安定性を確保することも重要です');
     }
     
-    // 技数最適化（詳細版）
-    if (totalSkills < 8) {
-      suggestions.add('【技数不足】現在${totalSkills}技しかありません。\n' +
-        '改善方法：\n' +
-        '• 推奨技数は8-10技です（${8 - totalSkills}技以上追加が必要）\n' +
-        '• 各グループから均等に技を選択してください\n' +
-        '• 簡単な技から始めて、徐々に難度を上げていきましょう\n' +
-        '• 連続技を活用して効率的に技数を増やすことも可能です');
-    } else if (totalSkills > 12) {
-      suggestions.add('【技数過多によるリスク】${totalSkills}技は多すぎます。\n' +
-        'リスクと対策：\n' +
-        '• 体力消耗により後半の実施が乱れる可能性があります\n' +
-        '• 各技の精度が低下し、減点が増える恐れがあります\n' +
-        '• 重要度の低い技を${totalSkills - 10}個程度削減しましょう\n' +
-        '• 高得点が期待できる技に絞って練習時間を確保してください');
-    } else {
-      suggestions.add('【適切な技数】${totalSkills}技は理想的な構成です。\n' +
-        '今後の方針：\n' +
-        '• 各技の実施精度を高めることに集中しましょう\n' +
-        '• 技の順序を工夫して体力配分を最適化してください');
+    // 技数最適化（詳細版）- 跳馬は除外
+    if (apparatus != 'VT') {
+      if (totalSkills < 8) {
+        suggestions.add('【技数不足】現在${totalSkills}技しかありません。\n' +
+          '改善方法：\n' +
+          '• 推奨技数は8-10技です（${8 - totalSkills}技以上追加が必要）\n' +
+          '• 各グループから均等に技を選択してください\n' +
+          '• 簡単な技から始めて、徐々に難度を上げていきましょう\n' +
+          '• 連続技を活用して効率的に技数を増やすことも可能です');
+      } else if (totalSkills > 12) {
+        suggestions.add('【技数過多によるリスク】${totalSkills}技は多すぎます。\n' +
+          'リスクと対策：\n' +
+          '• 体力消耗により後半の実施が乱れる可能性があります\n' +
+          '• 各技の精度が低下し、減点が増える恐れがあります\n' +
+          '• 重要度の低い技を${totalSkills - 10}個程度削減しましょう\n' +
+          '• 高得点が期待できる技に絞って練習時間を確保してください');
+      } else {
+        suggestions.add('【適切な技数】${totalSkills}技は理想的な構成です。\n' +
+          '今後の方針：\n' +
+          '• 各技の実施精度を高めることに集中しましょう\n' +
+          '• 技の順序を工夫して体力配分を最適化してください');
+      }
     }
     
     // グループバランス改善（詳細版）
@@ -287,15 +291,20 @@ class RoutineAnalyzer {
         break;
         
       case 'VT':
-        if (totalSkills < 2) {
-          suggestions.add('【跳馬種目の特殊性】跳馬では2本の跳躍が必要です。\n' +
+        if (totalSkills < 1) {
+          suggestions.add('【跳馬種目の特性】跳馬では1技のみ選択します。\n' +
             '要件：\n' +
-            '• 第1跳躍と第2跳躍は異なる技である必要があります\n' +
-            '• 2本の平均点が最終得点となります\n' +
-            '• 両方の跳躍で高い精度を保つことが重要です\n' +
+            '• 最も得意で確実な技を1つ選択してください\n' +
+            '• 実施の完成度が直接得点に反映されます\n' +
             '推奨：\n' +
-            '• まずは確実に実施できる跳躍を2つ選びましょう\n' +
-            '• 慣れてきたら難度を上げていきましょう');
+            '• 難度と実施のバランスを考慮\n' +
+            '• 着地の安定性を最重視\n' +
+            '• 技の美しさと正確性を重視しましょう');
+        } else if (totalSkills > 1) {
+          suggestions.add('【跳馬の技数過多】跳馬は1技のみ選択してください。\n' +
+            '現在${totalSkills}技が選択されています。\n' +
+            '• 最も得意な技1つに絞ってください\n' +
+            '• 複数技の練習よりも1技の完成度向上に集中');
         }
         break;
         
@@ -459,7 +468,88 @@ class MyApp extends StatelessWidget {
         ),
         // Add other theme properties as needed
       ),
-      home: const HomePage(),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _animationController.forward();
+    
+    // Navigate to main app after 3 seconds
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Gymnastics logo
+              Image.asset(
+                'assets/logo.png',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 30),
+              // App title
+              const Text(
+                'Gymnastics AI Chat',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -536,14 +626,7 @@ class DScoreUsageTracker {
   }
   
   static Future<bool> canCalculateDScore(UserSubscription subscription) async {
-    if (subscription.isPremium) {
-      return true; // プレミアムユーザーは無制限
-    }
-    
-    final dailyUsage = await getDailyUsage();
-    final bonusCredits = await getBonusCredits();
-    
-    return dailyUsage < dailyFreeLimit || bonusCredits > 0;
+    return true; // 無料版では制限なし
   }
   
   static Future<void> recordDScoreUsage(UserSubscription subscription) async {
@@ -761,7 +844,9 @@ class AdManager {
   // バナー広告読み込み
   void _loadBannerAd({int retryCount = 0}) {
     final adUnitId = _getBannerAdId();
-    print('🔄 バナー広告読み込み開始 (retry: $retryCount): $adUnitId');
+    if (kDebugMode) {
+      print('🔄 バナー広告読み込み開始 (retry: $retryCount): $adUnitId');
+    }
     
     _bannerAd = BannerAd(
       adUnitId: adUnitId,
@@ -769,37 +854,53 @@ class AdManager {
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
-          print('✅ バナー広告読み込み成功');
+          if (kDebugMode) {
+            print('✅ バナー広告読み込み成功');
+          }
           _isBannerAdReady = true;
         },
         onAdFailedToLoad: (ad, error) {
-          print('❌ バナー広告読み込み失敗: $error');
+          if (kDebugMode) {
+            print('❌ バナー広告読み込み失敗: $error');
+          }
           ad.dispose();
           _isBannerAdReady = false;
           
           // Retry logic with exponential backoff
-          if (retryCount < 5) { // リトライ回数を増加
+          if (retryCount < 5) {
             final delaySeconds = (retryCount + 1) * 2;
-            print('⏳ ${delaySeconds}秒後にリトライします...');
+            if (kDebugMode) {
+              print('⏳ ${delaySeconds}秒後にリトライします...');
+            }
             Timer(Duration(seconds: delaySeconds), () {
               _loadBannerAd(retryCount: retryCount + 1);
             });
           } else {
-            print('❌ バナー広告読み込み最終失敗 - リトライ上限に達しました');
+            if (kDebugMode) {
+              print('❌ バナー広告読み込み最終失敗 - リトライ上限に達しました');
+            }
           }
         },
-        onAdOpened: (ad) => print('📱 バナー広告が開かれました'),
-        onAdClosed: (ad) => print('🔒 バナー広告が閉じられました'),
-        onAdImpression: (ad) => print('👀 バナー広告インプレッション'),
+        onAdOpened: (ad) {
+          if (kDebugMode) print('📱 バナー広告が開かれました');
+        },
+        onAdClosed: (ad) {
+          if (kDebugMode) print('🔒 バナー広告が閉じられました');
+        },
+        onAdImpression: (ad) {
+          if (kDebugMode) print('👀 バナー広告インプレッション');
+        },
       ),
     );
     
     _bannerAd?.load();
     
-    // タイムアウト時間を延長
+    // タイムアウト処理
     Timer(Duration(seconds: 30), () {
       if (!_isBannerAdReady && _bannerAd != null) {
-        print('⏰ バナー広告読み込みタイムアウト (30秒)');
+        if (kDebugMode) {
+          print('⏰ バナー広告読み込みタイムアウト (30秒)');
+        }
         _bannerAd?.dispose();
         _isBannerAdReady = false;
       }
@@ -992,7 +1093,7 @@ class AdManager {
 }
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
-  AppMode _currentMode = AppMode.dScore; // 全プラットフォームでD-Score計算を初期画面に設定
+  AppMode _currentMode = AppMode.chat; // AIチャットを初期画面に設定
   
   // ユーザーサブスクリプション管理
   UserSubscription _userSubscription = UserSubscription(tier: UserTier.free);
@@ -1004,15 +1105,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   PurchaseManager? _purchaseManager;
   bool _isPurchaseManagerInitialized = false;
   
-  // 広告システム管理
-  late AdManager _adManager;
-  bool _isAdManagerInitialized = false;
+  // 広告システム管理（審査通過まで無効化）
+  // late AdManager _adManager;
+  // bool _isAdManagerInitialized = false;
+  // 広告審査通過まで一時的にダミー変数を定義
+  final dynamic _adManager = null;
+  final bool _isAdManagerInitialized = false;
   
   // サーバー接続状態
   bool _isServerOnline = false;
   
   // バックグラウンド初期化状態
   bool _isBackgroundInitComplete = false;
+  
+  // AIチャット関連の状態
+  List<Map<String, dynamic>> _chatMessages = [];
+  final TextEditingController _chatController = TextEditingController();
+  bool _isSendingMessage = false;
   
   // 管理者パネル用データ
   Map<String, dynamic>? _adminAnalytics;
@@ -1021,6 +1130,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   // プレミアム機能アクセス制御
   bool _checkPremiumAccess(AppMode mode) {
+    return true; // 一時的にプレミアム機能を無効化
     switch (mode) {
       case AppMode.dScore:
         return _userSubscription.canAccessDScore();
@@ -1035,23 +1145,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  // 安全にモード切り替えを行うメソッド（プレミアムチェック付き）
+  // 安全にモード切り替えを行うメソッド（プレミアムチェックを無効化）
   bool _safeSwitchToMode(AppMode targetMode, {String? featureName}) {
-    if (_checkPremiumAccess(targetMode)) {
-      setState(() {
-        _currentMode = targetMode;
-      });
-      
-      // 特殊処理
-      if (targetMode == AppMode.admin) {
-        _loadAdminData();
-      }
-      return true;
-    } else {
-      final displayName = featureName ?? _getModeDisplayName(targetMode);
-      _showUpgradeDialog(displayName);
-      return false;
+    setState(() {
+      _currentMode = targetMode;
+    });
+    
+    // 特殊処理
+    if (targetMode == AppMode.admin) {
+      _loadAdminData();
     }
+    return true;
   }
 
   // モード表示名を取得
@@ -1070,8 +1174,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  // アップグレード促進ダイアログ
+  // アップグレード促進ダイアログ（無効化）
   void _showUpgradeDialog(String featureName) {
+    return; // 無料版では表示しない
     // モバイルアプリ版でプレミアムアップグレードダイアログを表示
     showDialog(
       context: context,
@@ -1245,15 +1350,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       
       // PurchaseManagerの初期化確認
       if (_purchaseManager == null || !_isPurchaseManagerInitialized) {
-        _showMessage('購入システムが初期化されていません。しばらくお待ちください。');
+        print('⚠️ 購入システム未初期化 - 初期化を試行します');
+        _showMessage('購入システムを初期化しています...');
         
         // 初期化を再試行
         await _initializePurchaseManager();
         
+        // 少し待機して状態を更新
+        await Future.delayed(Duration(milliseconds: 500));
+        
         if (_purchaseManager == null || !_isPurchaseManagerInitialized) {
+          print('❌ 購入システムの初期化に失敗');
           _showMessage('購入システムの初期化に失敗しました。アプリを再起動してください。');
           return;
         }
+        
+        print('✅ 購入システムの初期化成功');
       }
       
       setState(() {
@@ -1666,9 +1778,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       case AppMode.admin:
         return _currentLang == '日本語' ? '管理者パネル' : 'Admin Panel';
       case AppMode.chat:
-        return AppConfig.enableAIChat 
-          ? 'Gymnastics AI Chat' 
-          : _currentLang == '日本語' ? 'AIチャット (準備中)' : 'AI Chat (Coming Soon)';
+        return _currentLang == '日本語' ? '体操アプリ' : 'Gymnastics App';
       default:
         return _currentLang == '日本語' ? '体操アプリ' : 'Gymnastics App';
     }
@@ -1841,21 +1951,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   // === D-SCORE REWARDED AD METHODS ===
   
-  /// D-Score計算用リワード広告ボタンを表示するかチェック
+  /// D-Score計算用リワード広告ボタンを表示するかチェック（無効化）
   Future<bool> _canShowDScoreRewardedAd() async {
-    // プレミアムユーザーには表示しない
-    if (_userSubscription.isPremium) {
-      return false;
-    }
-    
-    // D-Score計算が制限に達している場合のみ表示
-    final canCalculate = await DScoreUsageTracker.canCalculateDScore(_userSubscription);
-    return !canCalculate;
+    return false; // 無料版では広告表示なし
   }
   
-  /// D-Score計算用リワード広告を表示
+  /// D-Score計算用リワード広告を表示（審査通過まで無効化）
   void _showDScoreRewardedAd() async {
-    bool success = await _adManager.showRewardedAd();
+    // 広告機能を無効化し、直接ボーナスを付与
+    await DScoreUsageTracker.grantCalculationBonus();
+    _showSuccessSnackBar('🎉 D-Score計算回数が+1回追加されました！');
+    
+    // UI更新のため画面をリフレッシュ
+    if (mounted) {
+      setState(() {});
+    }
+    
+    /*
+    // 広告機能一時無効化
+    bool success = false; // await _adManager.showRewardedAd();
     
     if (success) {
       await DScoreUsageTracker.grantCalculationBonus();
@@ -1868,105 +1982,47 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     } else {
       _showErrorDialog('エラー', '広告の読み込みに失敗しました。しばらく時間をおいて再度お試しください。');
     }
+    */
   }
 
   // === ERROR HANDLING METHODS ===
   
-  /// Check if device has internet connectivity - 無効化済み
+  /// Check if device has internet connectivity
   Future<bool> _hasInternetConnection() async {
-    return true; // チャット機能無効化のため常にtrueを返す
     final String healthUrl = '${Config.apiBaseUrl}/health';
-    print('🔗 サーバー接続テスト開始: $healthUrl');
-    print('🕐 テスト開始時刻: ${DateTime.now().toString().substring(0, 19)}');
+    print('  └─ 実際のURL: $healthUrl');
     
-    // DNS解決テスト（エラーハンドリング付き）
     try {
-      await _performDnsCheck();
-    } catch (e) {
-      print('⚠️ DNS解決をスキップ: $e');
-    }
-    
-    // 段階的タイムアウト設定（より短く）
-    final timeouts = [5, 10, 15]; // 秒
-    
-    // 3回まで試行する
-    for (int attempt = 1; attempt <= 3; attempt++) {
-      final stopwatch = Stopwatch()..start();
-      final timeoutDuration = Duration(seconds: timeouts[attempt - 1]);
+      print('  └─ HTTPリクエスト送信中...');
+      final response = await http.get(
+        Uri.parse(healthUrl),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print('  └─ ❌ HTTPタイムアウト（10秒）');
+          throw TimeoutException('Connection timeout');
+        },
+      );
       
-      try {
-        print('🔄 接続試行 $attempt/3 (タイムアウト: ${timeouts[attempt - 1]}秒)...');
-        
-        final response = await http.get(
-          Uri.parse(healthUrl),
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'GymnasticsAI/1.3.0',
-            'Accept': 'application/json',
-          },
-        ).timeout(
-          timeoutDuration,
-          onTimeout: () {
-            throw TimeoutException('接続タイムアウト: ${timeouts[attempt - 1]}秒');
-          },
-        );
-        
-        stopwatch.stop();
-        final responseTime = stopwatch.elapsedMilliseconds;
-        
-        if (response.statusCode == 200) {
-          print('✅ サーバー接続成功！ (試行 $attempt/3)');
-          print('📊 レスポンス時間: ${responseTime}ms');
-          print('📊 レスポンス: ${response.body}');
-          print('🔒 HTTPS証明書検証: 成功');
-          print('📶 ネットワーク品質: ${_evaluateNetworkQuality(responseTime)}');
-          
-          // チャットエンドポイントも軽量テスト（エラーハンドリング付き）
-          try {
-            await _testChatEndpoint();
-          } catch (e) {
-            print('⚠️ チャットエンドポイントテストをスキップ: $e');
-          }
-          
-          return true;
-        } else {
-          print('⚠️ サーバー応答エラー: ${response.statusCode}');
-          print('📊 レスポンス時間: ${responseTime}ms');
-          print('📊 レスポンス内容: ${response.body}');
-          
-          // 4xxエラーの場合は認証問題の可能性
-          if (response.statusCode >= 400 && response.statusCode < 500) {
-            print('🔐 認証またはクライアントエラーの可能性があります');
-          }
-        }
-      } catch (e) {
-        stopwatch.stop();
-        final responseTime = stopwatch.elapsedMilliseconds;
-        
-        print('❌ 接続試行 $attempt/3 失敗: $e');
-        print('⏱️ 失敗までの時間: ${responseTime}ms');
-        print('🔍 エラー詳細: ${e.runtimeType} - ${e.toString()}');
-        
-        // より詳細なエラータイプ分析
-        final errorType = _analyzeConnectionError(e);
-        print('🔍 エラータイプ: ${errorType['type']}');
-        print('💡 推奨対策: ${errorType['suggestion']}');
-        
-        if (attempt < 3) {
-          // 次の試行まで少し待機（指数的バックオフ + ジッター）
-          int baseDelay = attempt * 3; // 3秒、6秒
-          int jitter = math.Random().nextInt(2000); // 0-2秒のランダム
-          int totalDelayMs = (baseDelay * 1000) + jitter;
-          
-          print('⏳ ${(totalDelayMs / 1000).toStringAsFixed(1)}秒後に再試行...');
-          await Future.delayed(Duration(milliseconds: totalDelayMs));
-        }
+      print('  └─ HTTPレスポンス受信: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        print('  └─ ✅ 正常なレスポンス');
+        print('  └─ ボディ: ${response.body}');
+        return true;
+      } else {
+        print('  └─ ❌ エラーレスポンス: ${response.statusCode}');
+        print('  └─ ボディ: ${response.body}');
+        return false;
       }
+    } catch (e) {
+      print('  └─ ❌ 例外発生: ${e.runtimeType}');
+      print('  └─ エラー詳細: $e');
+      return false;
     }
-    
-    print('💥 全ての接続試行が失敗しました');
-    await _performNetworkDiagnostics();
-    return false;
   }
 
   // ネットワーク品質評価
@@ -2381,17 +2437,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // デバッグ時はプレミアム状態をクリア
     if (kDebugMode) {
       _clearDeviceSubscription();
-      // デバッグ情報の定期出力（初期化完了確認のため）
-      Timer.periodic(Duration(seconds: 5), (timer) {
-        _debugAppState();
-        // 初期化完了後は出力頻度を減らす
-        if (_isBackgroundInitComplete && timer.tick > 6) {
-          timer.cancel();
-          Timer.periodic(Duration(seconds: 30), (newTimer) {
-            _debugAppState();
-          });
-        }
-      });
+      // デバッグ情報の定期出力を無効化（ログが多すぎるため）
+      // Timer.periodic(Duration(seconds: 5), (timer) {
+      //   _debugAppState();
+      // });
     }
     _initializeApp(); // アプリの初期化を開始
     
@@ -2416,6 +2465,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       // バックグラウンド初期化を開始
       _initializeCriticalDataInBackground();
       _initializeAppInBackground();
+      
+      // 広告初期化を確実に実行（審査通過まで無効化）
+      // _initializeAdManager();
       
     } catch (e) {
       print('アプリ初期化エラー: $e');
@@ -2446,12 +2498,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // 既存のトークンを優先チェック（最も高速）
-      String? storedToken = prefs.getString('device_auth_token');
-      if (storedToken != null && storedToken.isNotEmpty) {
-        _token = storedToken;
-        return; // 早期リターンで高速化
-      }
+      // 一時的に既存のトークンをクリア（新しい形式で生成するため）
+      // String? storedToken = prefs.getString('device_auth_token');
+      // if (storedToken != null && storedToken.isNotEmpty) {
+      //   _token = storedToken;
+      //   return; // 早期リターンで高速化
+      // }
       
       // デバイスIDを高速取得・生成
       String? deviceId = prefs.getString('device_id');
@@ -2464,13 +2516,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         print('📱 新しいデバイスIDを生成: $deviceId');
       }
       
-      // 簡易トークン生成（高速化）
+      // デバイス認証用の固定トークン生成（サーバー互換）
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final simpleToken = '${deviceId}_$timestamp';
-      _token = simpleToken;
+      final deviceToken = 'device_${deviceId.substring(0, 8)}_$timestamp';
+      _token = deviceToken;
       
       // バックグラウンドで保存（ノンブロッキング）
-      prefs.setString('device_auth_token', simpleToken).catchError((e) {
+      prefs.setString('device_auth_token', deviceToken).catchError((e) {
         print('トークン保存エラー: $e');
       });
       
@@ -2529,10 +2581,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           print('購入マネージャー初期化エラー: $e');
           return null;
         }),
-        _initializeAdManager().catchError((e) {
-          print('広告マネージャー初期化エラー: $e');
-          return null;
-        }),
+        // _initializeAdManager().catchError((e) {
+        //   print('広告マネージャー初期化エラー: $e');
+        //   return null;
+        // }),
       ];
       
       // Skills data loading deferred until needed
@@ -2573,37 +2625,96 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // サーバー接続を非同期でチェック (完全にノンブロッキング)
   Future<void> _checkServerConnection() async {
     try {
-      print('🌐 バックグラウンドでサーバー接続確認中...');
+      print('');
+      print('==================================================');
+      print('🌐 サーバー接続テスト開始');
+      print('==================================================');
+      print('📡 URL: ${Config.apiBaseUrl}/health');
+      print('🕐 時刻: ${DateTime.now()}');
       
       // Timeout to prevent long delays
       final isConnected = await _hasInternetConnection()
-          .timeout(Duration(seconds: 5), onTimeout: () => false);
+          .timeout(Duration(seconds: 5), onTimeout: () {
+            print('⏱️ タイムアウト（5秒）');
+            return false;
+          });
+      
+      print('==================================================');
+      print('🔍 結果: ${isConnected ? "✅ 接続成功" : "❌ 接続失敗"}');
+      print('==================================================');
+      print('');
       
       if (mounted) {
+        print('  └─ UI更新前: _isServerOnline = $_isServerOnline');
         setState(() {
           _isServerOnline = isConnected;
+          print('  └─ setState内: _isServerOnline = $_isServerOnline');
         });
+        print('  └─ UI更新後: _isServerOnline = $_isServerOnline');
         
         if (isConnected) {
           print('✅ サーバー接続確認完了: オンライン');
-          // チャットAPI機能テストを実行 (さらにバックグラウンドで)
-          _testChatAPIFunctionality();
+          
+          // 確実に状態を更新
+          if (!_isServerOnline) {
+            print('  └─ 🔄 強制的に状態を更新します');
+            setState(() {
+              _isServerOnline = true;
+            });
+            
+            // チャットモードの場合、強制的に再描画
+            if (_currentMode == AppMode.chat) {
+              print('  └─ 🎨 チャット画面を強制再描画');
+              Future.delayed(Duration(milliseconds: 100), () {
+                if (mounted) {
+                  setState(() {
+                    // 強制的に再描画をトリガー
+                  });
+                }
+              });
+            }
+          }
+          
+          // 接続成功時はSnackBarを表示しない（静かに接続）
+          
+          // チャットAPI機能テストを実行 (一時的に無効化 - 基本接続のみで判定)
+          // _testChatAPIFunctionality();
         } else {
           print('⚠️ サーバー接続確認完了: オフライン');
-          // Show warning only after a delay to not interrupt startup
-          Future.delayed(Duration(seconds: 2), () {
-            if (mounted && !_isServerOnline) {
-              _showConnectionWarning();
-            }
-          });
+          
+          // チャットモードの場合のみ軽微な通知を表示
+          if (_currentMode == AppMode.chat && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('オフラインモードで動作中'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          
+          // 詳細な警告は表示しない（状態インジケーターで十分）
         }
       }
     } catch (e) {
       print('❌ サーバー接続確認エラー: $e');
+      print('📋 エラー詳細: ${e.runtimeType}');
+      
       if (mounted) {
         setState(() {
           _isServerOnline = false;
         });
+        
+        // チャットモードの場合のみエラーを表示
+        if (_currentMode == AppMode.chat) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('接続に問題があります'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     }
   }
@@ -2797,6 +2908,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   // 課金システム初期化
   Future<void> _initializePurchaseManager() async {
     // モバイルアプリ版のみで課金システムを初期化
+    print('🔥🔥🔥 PURCHASE MANAGER 初期化開始 🔥🔥🔥');
     
     _purchaseManager = PurchaseManager();
     
@@ -2840,13 +2952,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         setState(() {
           _isPurchaseManagerInitialized = true;
         });
-        print('🟢 PurchaseManager initialized successfully');
+        print('🔥🔥🔥 PURCHASE MANAGER 初期化成功！ 🔥🔥🔥');
       } else {
         print('🔴 PurchaseManager initialization returned false');
         _showMessage('課金システムの初期化に失敗しました。');
       }
     } catch (e) {
-      print('🔴 Failed to initialize PurchaseManager: $e');
+      print('🔥🔥🔥 PURCHASE MANAGER 初期化エラー: $e 🔥🔥🔥');
       _showMessage('課金システムの初期化エラー: $e');
       setState(() {
         _isPurchaseManagerInitialized = false;
@@ -2889,28 +3001,33 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
   
-  // 広告システム初期化
+  // 広告システム初期化（審査通過まで無効化）
+  /*
   Future<void> _initializeAdManager() async {
     print('🔍 AdManager初期化開始: shouldShowAds=${_userSubscription.shouldShowAds()}');
     
     if (_userSubscription.shouldShowAds()) {
-      _adManager = AdManager();
-      try {
-        await _adManager.initialize();
+      // 広告機能一時無効化
+      // _adManager = AdManager();
+      // try {
+      //   await _adManager.initialize();
         setState(() {
-          _isAdManagerInitialized = true;
+          // _isAdManagerInitialized = true;  // 広告機能無効化により削除
         });
         print('✅ AdManager初期化成功');
         
         // 広告読み込み状況を定期的にチェック（デバッグ用）
         Timer.periodic(Duration(seconds: 2), (timer) {
-          if (_adManager.isBannerAdReady) {
+          // 広告機能一時無効化
+        if (false) { // _adManager.isBannerAdReady
             print('✅ バナー広告読み込み完了');
+            setState(() {}); // UIを更新
             timer.cancel();
           } else {
             print('⏳ バナー広告読み込み中...');
             if (timer.tick > 10) { // 20秒後にタイムアウト
               print('❌ バナー広告読み込みタイムアウト');
+              setState(() {}); // UIを更新
               timer.cancel();
             }
           }
@@ -2923,6 +3040,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       print('ℹ️ プレミアムユーザーのため広告無効');
     }
   }
+  */
   
   Future<void> _tryAutoLogin() async {
     try {
@@ -3988,17 +4106,27 @@ $expertAnswer
     
     if (listData.isEmpty) return [];
     
-    final headers = listData[0].map((e) => e.toString()).toList();
+    // 新しい形式: apparatus,name,group,value_letter
+    final skills = <Skill>[];
     
-    final skills = listData
-        .skip(1)
-        .map((row) {
-          final map = Map<String, dynamic>.fromIterables(headers, row);
-          return map;
-        })
-        .where((map) => map['apparatus'] == apparatus)
-        .map((map) => Skill.fromMap(map))
-        .toList();
+    for (int i = 1; i < listData.length; i++) {
+      final row = listData[i];
+      if (row.length >= 4) {
+        final skillApparatus = row[0].toString();
+        
+        if (skillApparatus == apparatus) {
+          final skill = Skill.fromMap({
+            'id': 'SKILL_${i.toString().padLeft(3, '0')}',
+            'apparatus': skillApparatus,
+            'name': row[1].toString(),
+            'group': row[2].toString(), // ローマ数字
+            'value_letter': row[3].toString(),
+            'description': row[1].toString(),
+          });
+          skills.add(skill);
+        }
+      }
+    }
     
     skills.sort((a, b) => a.name.compareTo(b.name));
     return skills;
@@ -4096,21 +4224,7 @@ $expertAnswer
                 ),
                 const SizedBox(height: 8),
               ],
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.amber, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text('プレミアムで無制限')),
-                  ],
-                ),
-              ),
+              // プレミアム表示を削除
             ],
           ),
           actions: [
@@ -4149,12 +4263,7 @@ $expertAnswer
       return;
     }
     
-    // 使用量チェック
-    final canCalculate = await DScoreUsageTracker.canCalculateDScore(_userSubscription);
-    if (!canCalculate) {
-      _showCalculationLimitDialog();
-      return;
-    }
+    // 使用量チェックを無効化（無料版では制限なし）
     
     // 連続技グループを適切に構築
     final routine = _buildConnectedSkillGroups(_routine, _connectionGroups);
@@ -4169,23 +4278,32 @@ $expertAnswer
       _dScoreResult = result;
     });
     
-    // 無料ユーザーの場合、計算完了後にインタースティシャル広告を表示
-    if (_userSubscription.shouldShowAds() && _isAdManagerInitialized) {
+    // 無料ユーザーの場合、計算完了後にインタースティシャル広告を表示（審査通過まで無効化）
+    /*
+    // 広告機能一時無効化
+    if (false) { // _userSubscription.shouldShowAds() && _isAdManagerInitialized
       // 計算結果の表示後、少し遅らせて広告を表示（UX向上のため）
       Future.delayed(const Duration(milliseconds: 1500), () {
         _showCalculationCompletedWithAd();
       });
     }
+    */
   }
 
-  // 計算完了時の広告表示とプレミアム誘導
+  // 計算完了時の広告表示とプレミアム誘導（審査通過まで無効化）
   void _showCalculationCompletedWithAd() {
-    if (!_userSubscription.shouldShowAds() || !_isAdManagerInitialized) {
+    // 広告機能を無効化
+    return;
+    
+    /*
+    // 広告機能一時無効化
+    if (true) { // !_userSubscription.shouldShowAds() || !_isAdManagerInitialized
       return;
     }
     
-    if (_adManager.isInterstitialAdReady) {
-      _adManager.showInterstitialAd();
+    // 広告機能一時無効化
+    // if (_adManager.isInterstitialAdReady) {
+    //   _adManager.showInterstitialAd();
       
       // 広告表示後にプレミアム誘導メッセージを表示
       Future.delayed(const Duration(seconds: 2), () {
@@ -4197,10 +4315,12 @@ $expertAnswer
       // 広告が利用できない場合は直接プレミアム誘導
       _showPremiumUpgradePrompt();
     }
+    */
   }
   
-  // プレミアムアップグレード誘導
+  // プレミアムアップグレード誘導（無効化）
   void _showPremiumUpgradePrompt() {
+    return; // 無料版では表示しない
     if (!mounted || !_userSubscription.isFree) return;
     
     // モバイル版のプレミアム誘導に統一
@@ -4386,15 +4506,16 @@ $expertAnswer
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          _userSubscription.isPremium ? Icons.star : Icons.star_border,
-                          color: _userSubscription.isPremium ? Colors.amber : Colors.grey.shade400,
-                          size: 28,
-                        ),
+                        // プレミアムマークを非表示
+                        // Icon(
+                        //   _userSubscription.isPremium ? Icons.star : Icons.star_border,
+                        //   color: _userSubscription.isPremium ? Colors.amber : Colors.grey.shade400,
+                        //   size: 28,
+                        // ),
                         SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            _userSubscription.isPremium ? 'プレミアムユーザー' : '無料ユーザー',
+                            'ユーザー',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -4404,30 +4525,7 @@ $expertAnswer
                         ),
                       ],
                     ),
-                    if (_userSubscription.isFree) ...[
-                      SizedBox(height: 12),
-                      Text(
-                        'プレミアムでもっと多くの機能を！',
-                        style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                      ),
-                      SizedBox(height: 8),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade600,
-                          foregroundColor: Colors.white,
-                          minimumSize: Size(double.infinity, 36),
-                        ),
-                        onPressed: _showSubscriptionPage,
-                        child: Text(_getText('premiumUpgrade')),
-                      ),
-                    ] else ...[
-                      SizedBox(height: 12),
-                      SizedBox(height: 8),
-                      Text(
-                        'すべての機能をご利用いただけます',
-                        style: TextStyle(color: Colors.amber.shade200, fontSize: 14),
-                      ),
-                    ],
+                    // Premium upgrade section removed - free version
                   ],
                 ),
               ),
@@ -4715,11 +4813,15 @@ $expertAnswer
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           // 無料ユーザーにはバナー広告を表示
-          if (_userSubscription.shouldShowAds() && _isAdManagerInitialized)
+          // バナー広告表示（審査通過まで無効化）
+          /*
+          // 広告機能一時無効化
+          if (false) // _userSubscription.shouldShowAds() && _isAdManagerInitialized
             Container(
               margin: EdgeInsets.only(bottom: isMobile ? 12.0 : 16.0),
               child: _buildBannerAd(),
             ),
+          */
           
           // 種目選択カード
           Card(
@@ -4860,10 +4962,7 @@ $expertAnswer
                           IconButton(
                             icon: const Icon(Icons.save_alt, size: 20),
                             onPressed: _routine.isNotEmpty ? () {
-                              if (!_userSubscription.isPremium) {
-                                _showUpgradeDialog('演技構成の保存');
-                                return;
-                              }
+                              // プレミアムチェックを削除
                               _saveCurrentRoutine();
                             } : null,
                             tooltip: '構成を保存',
@@ -4872,10 +4971,7 @@ $expertAnswer
                           IconButton(
                             icon: const Icon(Icons.folder_open, size: 20),
                             onPressed: () {
-                              if (!_userSubscription.isPremium) {
-                                _showUpgradeDialog('演技構成の読み込み');
-                                return;
-                              }
+                              // プレミアムチェックを削除
                               _showSavedRoutines();
                             },
                             tooltip: '保存済み構成',
@@ -4975,10 +5071,7 @@ $expertAnswer
                         ] else if (_routine.length >= 2 && (_selectedApparatus == 'FX' || _selectedApparatus == 'HB'))
                           ElevatedButton.icon(
                             onPressed: () {
-                              if (!_userSubscription.isPremium) {
-                                _showUpgradeDialog('連続技設定');
-                                return;
-                              }
+                              // プレミアムチェックを削除
                               _showConnectionDialog();
                             },
                             icon: const Icon(Icons.link, size: 16),
@@ -4997,18 +5090,7 @@ $expertAnswer
                         ElevatedButton.icon(
                           onPressed: _routine.isNotEmpty && _selectedApparatus != null
                             ? () async {
-                                // 使用量チェック
-                                final canCalculate = await DScoreUsageTracker.canCalculateDScore(_userSubscription);
-                                if (!canCalculate) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('D-Score計算の使用制限に達しました。プレミアムにアップグレードするか、明日再度お試しください。'),
-                                      backgroundColor: Colors.red,
-                                      duration: Duration(seconds: 4),
-                                    ),
-                                  );
-                                  return;
-                                }
+                                // 使用量チェックを無効化（無料版では制限なし）
                                 
                                 // 床運動の場合、バランス技チェック
                                 if (_selectedApparatus!.toLowerCase() == 'floor' || 
@@ -5079,33 +5161,7 @@ $expertAnswer
                       ],
                     ),
                     
-                    // D-Score計算使用回数ステータス
-                    if (!_userSubscription.isPremium)
-                      FutureBuilder<String>(
-                        future: DScoreUsageTracker.getUsageStatus(_userSubscription),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            return Container(
-                              margin: const EdgeInsets.only(top: 8.0),
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              child: Text(
-                                snapshot.data!,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.blue[700],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
+                    // 使用回数表示を削除
                     
                     // D-Score計算制限時の広告視聴ボタン（Row外に配置）
                     FutureBuilder<bool>(
@@ -5512,9 +5568,9 @@ $expertAnswer
             onPressed: _selectedSkill != null && 
                       (_isEditingSkill || // 編集モードは常に有効
                        _selectedApparatus == null || // 種目未選択
-                       _selectedApparatus!.toLowerCase() == 'vault' || // 跳馬
-                       _selectedApparatus!.toLowerCase() == 'vt' || // 跳馬
-                       _routine.length < 8) // 8技未満
+                       (_selectedApparatus!.toLowerCase() == 'vault' || _selectedApparatus!.toLowerCase() == 'vt') 
+                         ? _routine.length < 1 // 跳馬は1技まで
+                         : _routine.length < 8) // その他は8技未満
                 ? () {
                     HapticFeedback.mediumImpact();
                     if (_isEditingSkill) {
@@ -5525,24 +5581,31 @@ $expertAnswer
                       bool canAdd = true;
                       String errorMessage = '';
                       
-                      if (_selectedApparatus != null && 
-                          _selectedApparatus!.toLowerCase() != 'vault' && 
-                          _selectedApparatus!.toLowerCase() != 'vt') {
-                        // 跳馬以外の場合
-                        
-                        // 8技制限チェック
-                        if (_routine.length >= 8) {
-                          canAdd = false;
-                          errorMessage = '演技構成は最大8技までです';
-                        }
-                        
-                        // グループ制限チェック（全グループは最大4技）
-                        if (canAdd) {
-                          final groupCounts = _countSkillsPerGroup(_routine);
-                          final currentGroupCount = groupCounts[_selectedSkill!.group] ?? 0;
-                          if (currentGroupCount >= 4) {
+                      if (_selectedApparatus != null) {
+                        if (_selectedApparatus!.toLowerCase() == 'vault' || 
+                            _selectedApparatus!.toLowerCase() == 'vt') {
+                          // 跳馬の場合は1技のみ
+                          if (_routine.length >= 1) {
                             canAdd = false;
-                            errorMessage = 'グループ${_selectedSkill!.group}は最大4技までです';
+                            errorMessage = '跳馬は1技のみ選択可能です';
+                          }
+                        } else {
+                          // 跳馬以外の場合
+                          
+                          // 8技制限チェック
+                          if (_routine.length >= 8) {
+                            canAdd = false;
+                            errorMessage = '演技構成は最大8技までです';
+                          }
+                          
+                          // グループ制限チェック（全グループは最大4技）
+                          if (canAdd) {
+                            final groupCounts = _countSkillsPerGroup(_routine);
+                            final currentGroupCount = groupCounts[_selectedSkill!.group] ?? 0;
+                            if (currentGroupCount >= 4) {
+                              canAdd = false;
+                              errorMessage = 'グループ${_selectedSkill!.group}は最大4技までです';
+                            }
                           }
                         }
                       }
@@ -5946,6 +6009,34 @@ $expertAnswer
                       ),
                     ),
                     
+                    // チャットに送信ボタン
+                    if (_currentMode == 'ai_chat')
+                      Container(
+                        margin: EdgeInsets.only(top: isMobile ? 16 : 20),
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _sendAnalysisToChat(result);
+                          },
+                          icon: Icon(Icons.chat, size: isMobile ? 18 : 20),
+                          label: Text(
+                            'この分析結果について改善提案をもらう',
+                            style: TextStyle(fontSize: isMobile ? 14 : 16),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                              vertical: isMobile ? 12 : 14,
+                              horizontal: isMobile ? 16 : 20,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    
                   ],
                 ),
               ),
@@ -6136,10 +6227,14 @@ $expertAnswer
   }
 
 
-  // チャット用のUI - 無効化済み
+  // チャット用のUI - サーバー接続復旧
   Widget _buildChatInterface() {
-    // チャット機能は無効化されており、常に準備中画面を表示
-    return _buildComingSoonInterface();
+    // AIチャット機能が有効の場合は実際のチャット画面を表示
+    if (AppConfig.enableAIChat) {
+      return _buildActualChatInterface();
+    } else {
+      return _buildComingSoonInterface();
+    }
   }
 
   // 準備中画面のUI
@@ -6224,6 +6319,507 @@ $expertAnswer
         ),
       ),
     );
+  }
+
+  // 実際のAIチャット画面
+  Widget _buildActualChatInterface() {
+    return SafeArea(
+      child: Column(
+        children: [
+          // チャット状態バー（シンプル版）
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // 接続状態インジケーター（常時表示）
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _isServerOnline 
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _isServerOnline ? Icons.cloud_done : Icons.cloud_off, 
+                        size: 16, 
+                        color: _isServerOnline ? Colors.green : Colors.orange
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        _isServerOnline ? 'オンライン' : 'オフライン',
+                        style: TextStyle(
+                          fontSize: 12, 
+                          color: _isServerOnline ? Colors.green : Colors.orange
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                // チャットリセットボタン（より目立つデザイン）
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.refresh, color: Colors.blue),
+                    onPressed: () {
+                      setState(() {
+                        _chatMessages.clear();
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('チャットをリセットしました'),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    tooltip: 'チャットをリセット',
+                    iconSize: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // チャットメッセージリスト
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // AIチャットヘッダー
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.grey.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        AppConfig.enableAIChat 
+                          ? 'AIチャット' 
+                          : _currentLang == '日本語' ? 'AIチャット (準備中)' : 'AI Chat (Coming Soon)',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                      const Spacer(),
+                      // 接続状態バッジ
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _isServerOnline 
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _isServerOnline 
+                                ? Colors.green.withOpacity(0.3)
+                                : Colors.orange.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isServerOnline ? Icons.cloud_done : Icons.cloud_off, 
+                              size: 14, 
+                              color: _isServerOnline ? Colors.green : Colors.orange
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              _isServerOnline ? 'オンライン' : 'オフライン',
+                              style: TextStyle(
+                                fontSize: 11, 
+                                fontWeight: FontWeight.w500,
+                                color: _isServerOnline ? Colors.green : Colors.orange
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // メッセージエリア
+                Expanded(
+                  child: _chatMessages.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '体操のルールや技について\n何でも質問してください！',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _chatMessages.length,
+                          itemBuilder: (context, index) {
+                      final message = _chatMessages[index];
+                      final isUser = message['role'] == 'user';
+                      
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          left: isUser ? 40 : 8,
+                          right: isUser ? 8 : 40,
+                          top: 4,
+                          bottom: 4,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (!isUser) ...[
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.blue,
+                                child: Icon(
+                                  Icons.sports_gymnastics,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                            ],
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isUser 
+                                      ? Colors.blue 
+                                      : Colors.grey[100],
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(18),
+                                    topRight: Radius.circular(18),
+                                    bottomLeft: isUser ? Radius.circular(18) : Radius.circular(4),
+                                    bottomRight: isUser ? Radius.circular(4) : Radius.circular(18),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  message['content'],
+                                  style: TextStyle(
+                                    color: isUser ? Colors.white : Colors.black87,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (isUser) ...[
+                              SizedBox(width: 8),
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.grey,
+                                child: Icon(
+                                  Icons.person,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // メッセージ入力エリア
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _chatController,
+                    decoration: InputDecoration(
+                      hintText: '体操について質問してください...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    maxLines: null,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: _sendMessage,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    onPressed: _isSendingMessage ? null : () => _sendMessage(_chatController.text),
+                    icon: _isSendingMessage
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.send,
+                            color: Colors.white,
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 分析結果をチャットに送信して改善提案を取得
+  Future<void> _sendAnalysisToChat(DScoreResult result) async {
+    // 分析結果を詳細に整理
+    final analysisText = '''演技構成分析結果：
+🏆 Dスコア: ${result.totalDScore.toStringAsFixed(3)}点
+📊 内訳:
+- 難度点: ${result.difficultyValue.toStringAsFixed(3)}点
+- グループ要求 (${result.fulfilledGroups}/${result.requiredGroups}): ${result.groupBonus.toStringAsFixed(3)}点
+- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点
+
+📝 基本情報:
+- 種目: $_selectedApparatus
+- 技数: ${_routine.length}技
+
+この構成について改善提案をお願いします。''';
+    
+    // チャットに送信
+    await _sendMessage(analysisText);
+  }
+
+  // AIチャットメッセージ送信
+  Future<void> _sendMessage(String message) async {
+    print('=== _sendMessage 開始 ===');
+    print('メッセージ: $message');
+    print('_isServerOnline の現在値: $_isServerOnline');
+    
+    if (message.trim().isEmpty) return;
+    
+    setState(() {
+      _isSendingMessage = true;
+      _chatMessages.add({
+        'role': 'user',
+        'content': message,
+        'timestamp': DateTime.now(),
+      });
+    });
+    
+    _chatController.clear();
+    
+    try {
+      print('🔍 _sendMessage デバッグ: _isServerOnline = $_isServerOnline');
+      
+      // 一時的にローカル回答モード（サーバー認証問題解決中）
+      if (_isServerOnline) {
+        print('🌐 オンラインモード: サーバーに送信');
+      } else {
+        print('🔄 オフラインモード: ローカル回答をチェック');
+        String? localResponse = _getLocalGymnasticsResponse(message);
+        print('📝 ローカル回答結果: ${localResponse != null ? "見つかった" : "見つからない"}');
+        
+        if (localResponse != null) {
+          print('✅ ローカル回答を使用します');
+          setState(() {
+            _chatMessages.add({
+              'role': 'assistant',
+              'content': localResponse,
+              'timestamp': DateTime.now(),
+            });
+          });
+          return;
+        }
+        
+        print('🚀 ローカル回答なし');
+      }
+      
+      // サーバーの匿名ユーザー機能を利用（認証ヘッダーなし）
+      print('🔑 匿名ユーザーモードでサーバーに送信');
+      
+      // サーバーにメッセージを送信 (認証ヘッダーなし = 匿名ユーザー)
+      final response = await http.post(
+        Uri.parse('${Config.apiUrl}/chat/message'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'message': message,
+          'conversation_id': null,
+          'context': null,
+        }),
+      );
+      
+      print('📤 サーバーレスポンス: ${response.statusCode}');
+      print('📤 レスポンス本文: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('✅ サーバーから正常な回答を受信');
+        setState(() {
+          _chatMessages.add({
+            'role': 'assistant',
+            'content': responseData['response'] ?? '申し訳ありません。サーバーから応答がありませんでした。',
+            'timestamp': DateTime.now(),
+          });
+        });
+      } else if (response.statusCode == 401) {
+        // 認証エラーの場合、匿名ユーザーとしてローカル回答にフォールバック
+        print('認証エラー - ローカル回答にフォールバック');
+        
+        String? fallbackResponse = _getLocalGymnasticsResponse(message);
+        if (fallbackResponse != null) {
+          setState(() {
+            _chatMessages.add({
+              'role': 'assistant',
+              'content': fallbackResponse + '\n\n⚠️ （認証エラーのためローカル情報で回答しました）',
+              'timestamp': DateTime.now(),
+            });
+          });
+        } else {
+          setState(() {
+            _chatMessages.add({
+              'role': 'assistant',
+              'content': '申し訳ありません。現在サーバーに接続できません。体操に関する基本的な質問をお試しください。',
+              'timestamp': DateTime.now(),
+            });
+          });
+        }
+      } else {
+        print('Server error: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        print('Request URL: ${Config.apiUrl}/chat/message');
+        print('Request headers: ${json.encode({
+          'Content-Type': 'application/json',
+          if (_token != null && _token!.isNotEmpty) 
+            'Authorization': 'Bearer ${_token!.length > 20 ? _token!.substring(0, 20) : _token}...', // 安全なトークン表示
+        })}');
+        throw Exception('Server error: ${response.statusCode}');
+      }
+      
+    } catch (e) {
+      print('Chat error: $e');
+      
+      // サーバーエラー時のフォールバック: ローカル回答を試行
+      String? fallbackResponse = _getLocalGymnasticsResponse(message);
+      if (fallbackResponse != null) {
+        setState(() {
+          _chatMessages.add({
+            'role': 'assistant',
+            'content': fallbackResponse + '\n\n⚠️ （デバッグ: _isServerOnline=$_isServerOnline, エラー: $e）',
+            'timestamp': DateTime.now(),
+          });
+        });
+      } else {
+        setState(() {
+          _chatMessages.add({
+            'role': 'assistant',
+            'content': '申し訳ありません。現在AIチャット機能に一時的な問題が発生しています。しばらく後に再試行してください。',
+            'timestamp': DateTime.now(),
+          });
+        });
+      }
+    } finally {
+      setState(() {
+        _isSendingMessage = false;
+      });
+    }
+  }
+
+  // ローカル体操データベースから回答を生成
+  String? _getLocalGymnasticsResponse(String message) {
+    try {
+      // 基本的な挨拶や簡単な質問に先に対応
+      final lowerMessage = message.toLowerCase();
+      
+      if (lowerMessage.contains('こんにちは') || lowerMessage.contains('hello') || lowerMessage.contains('はじめまして')) {
+        return 'こんにちは！AIアシスタントです。\n\n体操のルールや技について何でもお聞きください。例えば：\n\n• 「床のグループ1の技を教えて」\n• 「つり輪のD難度技は？」\n• 「跳馬のルールは？」\n\nお気軽にご質問ください！';
+      }
+      
+      if (lowerMessage.contains('ありがとう') || lowerMessage.contains('thank')) {
+        return 'どういたしまして！他にも体操について質問がございましたら、お気軽にお聞きください。';
+      }
+      
+      if (lowerMessage.contains('テスト') || lowerMessage.contains('test')) {
+        return '✅ AIチャット機能が正常に動作しています！\n\n現在はローカルデータベースでの回答機能をテスト中です。サーバー接続が完了すると、より高度なAI機能をご利用いただけます。';
+      }
+      
+      // GymnasticsExpertDatabaseを使用して回答を生成
+      String response = GymnasticsExpertDatabase.getExpertAnswer(message);
+      
+      if (response.isNotEmpty && !response.contains('申し訳ありません')) {
+        // ローカル回答であることを明示
+        return '$response\n\n💡 この回答はローカルデータベースから生成されました。より詳細な情報については、サーバー接続後にご利用ください。';
+      }
+      
+      // 回答できない場合はnullを返す（サーバーにフォールバック）
+      return null;
+      
+    } catch (e) {
+      print('Local response error: $e');
+      return null;
+    }
   }
 
   
@@ -6326,60 +6922,45 @@ $expertAnswer
     );
   }
 
-  // バナー広告ウィジェット
+  // バナー広告ウィジェット（審査通過まで無効化）
   Widget _buildBannerAd() {
-    print('🔍 _buildBannerAd呼び出し - _adManager存在: ${_adManager != null}');
+    // 広告機能を無効化し、空のコンテナを返す
+    return SizedBox.shrink();
     
+    /*
     // Web版広告機能は廃止 - モバイル版のみでAdMob使用
     {
       // モバイル版：既存のAdMob実装
-      final adWidget = _adManager.createBannerAdWidget();
+      // 広告機能一時無効化
+      final adWidget = null; // _adManager?.createBannerAdWidget();
       
       if (adWidget != null) {
-        print('✅ バナー広告ウィジェット表示成功');
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           child: adWidget,
         );
       } else {
-        print('⏳ バナー広告読み込み中またはエラー - createBannerAdWidget returned null');
-        if (_adManager != null) {
-          print('_adManager.isBannerAdReady: ${_adManager.isBannerAdReady}');
-        }
+        // 広告読み込み中または失敗時のプレースホルダー
         return Container(
           height: 50,
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
-            border: Border.all(color: Colors.grey[300]!, width: 1),
+            color: Colors.grey[50],
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[500]!),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  '広告読み込み中...',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+            child: Text(
+              '広告読み込み中...',
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 12,
+              ),
             ),
           ),
         );
       }
     }
+    */
   }
 
   
@@ -6689,15 +7270,18 @@ $expertAnswer
           '改善: D難度の技を1-2個追加でスコアアップ');
       }
       
-      // 技数分析
-      if (_routine.length < 8) {
-        suggestions.add('【技数不足】現在${_routine.length}技\n' +
-          '推奨: 8-10技\n' +
-          '対策: あと${8 - _routine.length}技以上追加が必要です');
-      } else if (_routine.length > 12) {
-        suggestions.add('【技数過多】現在${_routine.length}技\n' +
-          'リスク: 体力消耗、実施精度低下\n' +
-          '対策: 10技程度に絞り込みましょう');
+      // 技数分析（跳馬は除外）
+      if (_selectedApparatus?.toLowerCase() != 'vault' && 
+          _selectedApparatus?.toLowerCase() != 'vt') {
+        if (_routine.length < 8) {
+          suggestions.add('【技数不足】現在${_routine.length}技\n' +
+            '推奨: 8技（難度上位7技+終末技）\n' +
+            '対策: あと${8 - _routine.length}技以上追加が必要です');
+        } else if (_routine.length > 12) {
+          suggestions.add('【技数過多】現在${_routine.length}技\n' +
+            'リスク: 体力消耗、実施精度低下\n' +
+            '対策: 8-10技程度に絞り込みましょう');
+        }
       }
       
       // 種目固有のアドバイス
@@ -7440,11 +8024,6 @@ $expertAnswer
           // 分析結果表示
           if (_currentAnalysis != null) _buildAnalysisResults(),
           
-          const SizedBox(height: 20),
-          
-          // 分析情報バー
-          if (_currentAnalysis != null) _buildAnalysisInfoBar(),
-          
           const SizedBox(height: 16),
         ],
       ),
@@ -7570,10 +8149,92 @@ $expertAnswer
         
         const SizedBox(height: 16),
         
-        // 改善提案表示
-        _buildStaticImprovementSuggestions(analysis),
+        // 改善提案を自動的にチャットに送信
+        _buildAutoSendToChat(analysis),
       ],
     );
+  }
+
+  // 分析結果を自動的にチャットに送信するウィジェット
+  Widget _buildAutoSendToChat(RoutineAnalysis analysis) {
+    // AI チャットモードでない場合は何も表示しない
+    if (_currentMode != 'ai_chat') {
+      return const SizedBox.shrink();
+    }
+
+    // 分析結果を詳細に整理してチャットに送信
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _sendAnalysisResultsToChat(analysis);
+      }
+    });
+
+    // 送信中の表示
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green[800]!, Colors.green[600]!],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green[400]!, width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.auto_awesome, color: Colors.green[200], size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '分析結果を自動的にチャットに送信しています...',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green[200]!),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 分析結果をチャットに送信する詳細版（自動送信用）
+  Future<void> _sendAnalysisResultsToChat(RoutineAnalysis analysis) async {
+    // 分析結果を詳細に整理
+    final analysisText = '''演技構成分析結果：
+
+🏆 総合評価: ${(analysis.completenessScore * 100).toStringAsFixed(1)}%
+📊 基本情報:
+- 種目: ${analysis.apparatus}
+- 技数: ${analysis.totalSkills}技
+- 平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}
+
+📈 詳細分析:
+- 難度分布: ${analysis.difficultyDistribution.entries.map((e) => '${e.key}難度:${e.value}技').join(', ')}
+- グループ分布: ${analysis.groupDistribution.entries.map((e) => 'G${e.key}:${e.value}技').join(', ')}
+- 連続技ボーナス率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%
+
+${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missingGroups.join(', ')}' : '✅ 全グループ要求を満たしています'}
+
+この構成について改善提案をお願いします。特に以下の観点でアドバイスをください：
+1. 技の構成バランス
+2. 難度アップの可能性
+3. 連続技ボーナスの最適化
+4. リスク管理''';
+    
+    // チャットに送信
+    await _sendMessage(analysisText);
   }
 
   // 分析情報バー
@@ -8694,20 +9355,23 @@ $expertAnswer
   void _debugAppState() {
     print('=== アプリ状態デバッグ ===');
     print('_isBackgroundInitComplete: $_isBackgroundInitComplete');
-    print('_isAdManagerInitialized: $_isAdManagerInitialized');
+    // print('_isAdManagerInitialized: $_isAdManagerInitialized');  // 広告機能無効化により削除
     print('_userSubscription.shouldShowAds(): ${_userSubscription.shouldShowAds()}');
     print('_userSubscription.tier: ${_userSubscription.tier}');
     print('_userSubscription.isActive: ${_userSubscription.isActive}');
     print('_userSubscription.isFree: ${_userSubscription.isFree}');
     print('kDebugMode: ${kDebugMode}');
-    print('広告表示条件: ${_userSubscription.shouldShowAds() && _isAdManagerInitialized}');
+    // print('広告表示条件: ${_userSubscription.shouldShowAds() && _isAdManagerInitialized}');
     
-    if (_adManager != null) {
-      print('_adManager存在: true');
-      _adManager.diagnoseBannerAdStatus();
-    } else {
-      print('_adManager存在: false');
+    /*
+    // 広告機能一時無効化
+    // if (_adManager != null) {
+    //   print('_adManager存在: true');
+    //   _adManager.diagnoseBannerAdStatus();
+    // } else {
+    //   print('_adManager存在: false');
     }
+    */
     print('========================');
   }
 
@@ -9414,15 +10078,17 @@ class GymnasticsKnowledgeBase {
       final String data = await rootBundle.loadString('data/skills_ja.csv');
       final List<List<dynamic>> csvData = const CsvToListConverter().convert(data);
       
-      // ヘッダーを除いて処理
+      // ヘッダーを除いて処理 (apparatus, name, group, value_letter)
       for (int i = 1; i < csvData.length; i++) {
         final row = csvData[i];
         if (row.length >= 4) {
           _skillsDatabase.add({
+            'id': 'SKILL_${i.toString().padLeft(3, '0')}', // 自動生成ID
             'apparatus': row[0].toString(),
             'name': row[1].toString(),
-            'group': row[2].toString(),
+            'group': row[2].toString(), // ローマ数字（Ⅰ、Ⅱ、Ⅲ、Ⅳ）
             'value_letter': row[3].toString(),
+            'description': row[1].toString(), // 技名をdescriptionとしても使用
           });
         }
       }
