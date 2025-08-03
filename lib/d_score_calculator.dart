@@ -57,9 +57,10 @@ class Skill {
 
  factory Skill.fromMap(Map<String, dynamic> map) {
     final skillName = map['name']?.toString() ?? '';
+    final apparatus = map['apparatus']?.toString() ?? '';
     
     // デバッグ情報
-    print('Skill.fromMap CSV Processing: name="$skillName", raw_data=$map');
+    print('Skill.fromMap CSV Processing: name="$skillName", apparatus="$apparatus", raw_data=$map');
     
     // CSVからグループを正しく解析（ローマ数字対応）
     int groupNumber = _parseRomanNumeral(map['group']?.toString());
@@ -68,7 +69,22 @@ class Skill {
     final valueLetter = map['value_letter']?.toString() ?? '';
     
     // 難度レターから数値を計算
-    double value = _parseValueLetter(valueLetter);
+    double value;
+    
+    // 跳馬（VT）の場合は、value_letterを直接数値として解析
+    if (apparatus == 'VT') {
+      // 跳馬では value_letter が実際のD-score値（例: "1.8", "2.0"）
+      try {
+        value = double.parse(valueLetter);
+        print('跳馬D-score解析: "$valueLetter" -> $value');
+      } catch (e) {
+        print('警告: 跳馬のD-score解析に失敗。技名="$skillName", 値="$valueLetter", デフォルト値=1.0を使用');
+        value = 1.0; // 跳馬のデフォルト値
+      }
+    } else {
+      // その他の種目では従来通り難度レター（A, B, C, etc.）として解析
+      value = _parseValueLetter(valueLetter);
+    }
     
     // フォールバック値（CSVデータが不正な場合のみ）
     if (groupNumber <= 0) {
@@ -77,14 +93,19 @@ class Skill {
     }
     
     if (value <= 0.0 || valueLetter.isEmpty) {
-      print('警告: 難度が不正です。技名="$skillName", 難度レター="$valueLetter", デフォルト値=0.1を使用');
-      value = 0.1;
+      if (apparatus == 'VT') {
+        print('警告: 跳馬のD-scoreが不正です。技名="$skillName", 値="$valueLetter", デフォルト値=1.0を使用');
+        value = 1.0;
+      } else {
+        print('警告: 難度が不正です。技名="$skillName", 難度レター="$valueLetter", デフォルト値=0.1を使用');
+        value = 0.1;
+      }
     }
     
-    final finalValueLetter = valueLetter.isNotEmpty ? valueLetter : 'A';
+    final finalValueLetter = valueLetter.isNotEmpty ? valueLetter : (apparatus == 'VT' ? '1.0' : 'A');
     
     // デバッグ情報
-    print('Skill.fromMap CSV Result: name="$skillName", group=$groupNumber, value=$value, letter=$finalValueLetter');
+    print('Skill.fromMap CSV Result: name="$skillName", apparatus="$apparatus", group=$groupNumber, value=$value, letter=$finalValueLetter');
 
     return Skill(
       id: map['id']?.toString() ?? '',
@@ -93,7 +114,7 @@ class Skill {
       group: groupNumber,
       value: value,
       description: map['description']?.toString() ?? '',
-      apparatus: map['apparatus']?.toString() ?? '',
+      apparatus: apparatus,
     );
   }
 }
