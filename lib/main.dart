@@ -4277,17 +4277,17 @@ $expertAnswer
     final routine = _buildConnectedSkillGroups(_routine, _connectionGroups);
     
     // デバッグ情報
-    debugPrint('DEBUG_CONNECTION: 連続技グループ構築結果');
-    debugPrint('DEBUG_CONNECTION: 種目: $_selectedApparatus');
-    debugPrint('DEBUG_CONNECTION: _connectionGroups: $_connectionGroups');
-    debugPrint('DEBUG_CONNECTION: _routine技詳細:');
+    print('DEBUG_CONNECTION: 連続技グループ構築結果');
+    print('DEBUG_CONNECTION: 種目: $_selectedApparatus');
+    print('DEBUG_CONNECTION: _connectionGroups: $_connectionGroups');
+    print('DEBUG_CONNECTION: _routine技詳細:');
     for (int i = 0; i < _routine.length; i++) {
       final skill = _routine[i];
-      debugPrint('DEBUG_CONNECTION:   [$i] ${skill.name}: グループ${skill.group}, 難度レター${skill.valueLetter}, 難度値${skill.value}');
+      print('DEBUG_CONNECTION:   [$i] ${skill.name}: グループ${skill.group}, 難度レター${skill.valueLetter}, 難度値${skill.value}');
     }
     for (int i = 0; i < routine.length; i++) {
       final group = routine[i];
-      debugPrint('DEBUG_CONNECTION: グループ${i + 1}: ${group.map((s) => '${s.name}(難度値:${s.value})').join(' → ')}');
+      print('DEBUG_CONNECTION: グループ${i + 1}: ${group.map((s) => '${s.name}(難度値:${s.value})').join(' → ')}');
     }
     
     // D-スコアを計算

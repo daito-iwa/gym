@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 
 // ローマ数字変換関数
 int _parseRomanNumeral(String? roman) {
@@ -264,27 +265,27 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
 
           // 手放し技同士の連続（グループII同士）
           if (skill1.group == 2 && skill2.group == 2) {
-            debugPrint('DEBUG_HB: 鉄棒手放し技連続: ${skill1.name}(難度値:${v1}, レター:${skill1.valueLetter}) + ${skill2.name}(難度値:${v2}, レター:${skill2.valueLetter})');
-            debugPrint('DEBUG_HB: 条件チェック: v1(${v1}) >= 0.4? ${v1 >= 0.4}, v2(${v2}) >= 0.5? ${v2 >= 0.5}');
-            debugPrint('DEBUG_HB: 逆方向チェック: v1(${v1}) >= 0.5? ${v1 >= 0.5}, v2(${v2}) >= 0.4? ${v2 >= 0.4}');
+            print('DEBUG_HB: 鉄棒手放し技連続: ${skill1.name}(難度値:${v1}, レター:${skill1.valueLetter}) + ${skill2.name}(難度値:${v2}, レター:${skill2.valueLetter})');
+            print('DEBUG_HB: 条件チェック: v1(${v1}) >= 0.4? ${v1 >= 0.4}, v2(${v2}) >= 0.5? ${v2 >= 0.5}');
+            print('DEBUG_HB: 逆方向チェック: v1(${v1}) >= 0.5? ${v1 >= 0.5}, v2(${v2}) >= 0.4? ${v2 >= 0.4}');
             
             // D難度以上 + E難度以上 = 0.20点（双方向）
             if ((v1 >= 0.4 && v2 >= 0.5) || (v1 >= 0.5 && v2 >= 0.4)) {
               bonusForThisPair = 0.2;
-              debugPrint('DEBUG_HB: → 0.2点: D以上+E以上の条件にマッチ');
+              print('DEBUG_HB: → 0.2点: D以上+E以上の条件にマッチ');
             }
             // D難度 + D難度 = 0.10点
             else if (v1 >= 0.4 && v2 >= 0.4) {
               bonusForThisPair = 0.1;
-              debugPrint('DEBUG_HB: → 0.1点: D+Dの条件にマッチ');
+              print('DEBUG_HB: → 0.1点: D+Dの条件にマッチ');
             }
             // C難度 + D難度以上 = 0.10点（双方向）
             else if ((v1 == 0.3 && v2 >= 0.4) || (v1 >= 0.4 && v2 == 0.3)) {
               bonusForThisPair = 0.1;
-              debugPrint('DEBUG_HB: → 0.1点: C+D以上の条件にマッチ');
+              print('DEBUG_HB: → 0.1点: C+D以上の条件にマッチ');
             }
             else {
-              debugPrint('DEBUG_HB: → 0.0点: 条件にマッチせず');
+              print('DEBUG_HB: → 0.0点: 条件にマッチせず');
             }
           }
           // グループI/III技 + 手放し技（グループII）の連続
