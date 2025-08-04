@@ -8171,8 +8171,10 @@ $expertAnswer
 
 📈 詳細分析:
 - 難度分布: ${analysis.difficultyDistribution.entries.map((e) => '${e.key}難度:${e.value}技').join(', ')}
-- グループ分布: ${analysis.groupDistribution.entries.map((e) => 'G${e.key}:${e.value}技').join(', ')}
-''' + \n    ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') \n        ? '- 連続技ボーナス率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%\\n' \n        : '') + '''
+- グループ分布: ${analysis.groupDistribution.entries.map((e) => 'G${e.key}:${e.value}技').join(', ')}''' + 
+    ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
+        ? '\n- 連続技ボーナス率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%' 
+        : '') + '''
 
 ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missingGroups.join(', ')}' : '✅ 全グループ要求を満たしています'}
 
