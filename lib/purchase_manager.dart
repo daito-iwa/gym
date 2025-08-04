@@ -19,16 +19,22 @@ enum SubscriptionState {
 }
 
 class PurchaseManager {
-  // サブスクリプション商品ID
-  static const String _premiumProductId_ios = 'com.daito.gymnasticsai.premium_monthly_subscription';
-  static const String _premiumProductId_android = 'premium_monthly_subscription';
+  // サブスクリプション商品ID（複数対応）
+  static const List<String> _premiumProductIds_ios = [
+    'com.daito.gymnasticsai.premium_monthly_subscription', // 元の商品
+    'com.daito.gymnasticsai.premium_sub', // 新しい商品
+    'com.daito.gymnasticsai.premium_monthly', // さらに新しい商品（必要に応じて）
+  ];
+  static const String _premiumProductId_android = 'premium_subscription';
   
-  // テスト用モックモード（開発時のみ使用）
-  static const bool _isTestMode = kDebugMode;
+  // テスト用モックモード（App Store審査用）
+  // 実際のStoreKit購入フローを使用（商品審査中でも試行）
+  static const bool _isTestMode = false; // 実際のStoreKit購入を使用
   
-  static String get premiumProductId => Platform.isIOS 
-      ? _premiumProductId_ios 
-      : _premiumProductId_android;
+  // 利用可能な商品IDを取得（最初に見つかった商品を使用）
+  static Set<String> get premiumProductIds => Platform.isIOS 
+      ? _premiumProductIds_ios.toSet()
+      : {_premiumProductId_android};
   
   // InAppPurchaseインスタンス
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
@@ -59,32 +65,73 @@ class PurchaseManager {
   
   // 初期化
   Future<bool> initialize() async {
-    if (_isInitialized) return true;
+    if (_isInitialized) {
+      print('✅ PurchaseManager already initialized');
+      return true;
+    }
+    
+    print('🚀 PurchaseManager initialization starting...');
+    print('   📱 Platform: ${Platform.operatingSystem}');
+    print('   🔧 Debug mode: ${kDebugMode}');
+    print('   🧪 Test mode: $_isTestMode');
     
     try {
       // テストモードの場合はモック初期化
       if (_isTestMode) {
-        print('PurchaseManager: Initializing in test mode');
+        print('🔥🔥🔥 TEST MODE で初期化中 🔥🔥🔥');
         await _initializeTestMode();
         return true;
       }
       
       // サービス利用可能確認
+      print('🔍 Checking StoreKit availability...');
       _isAvailable = await _inAppPurchase.isAvailable();
+      print('   📱 StoreKit available: $_isAvailable');
+      
       if (!_isAvailable) {
-        print('PurchaseManager: In-app purchases not available - falling back to test mode');
-        await _initializeTestMode();
-        return true;
+        print('❌ In-app purchases not available');
+        print('   🔍 Possible reasons:');
+        print('   - Device is in Airplane mode');
+        print('   - Parental controls are enabled');
+        print('   - StoreKit is not configured properly');
+        
+        // デバッグモードの場合のみテストモードにフォールバック
+        if (_isTestMode) {
+          print('Falling back to test mode (debug only)');
+          await _initializeTestMode();
+          return true;
+        } else {
+          // プロダクション/TestFlightではエラーとして処理
+          print('❌ In-app purchases not available in production build');
+          return false;
+        }
       }
       
       // 商品詳細取得
+      print('🔍 Loading products...');
       await _loadProducts();
+      print('📦 Products loaded: ${_products.length}');
       
-      // 商品が見つからない場合はテストモードにフォールバック
+      // 商品が見つからない場合の処理
       if (_products.isEmpty) {
-        print('PurchaseManager: No products found - falling back to test mode');
-        await _initializeTestMode();
-        return true;
+        if (_isTestMode) {
+          print('PurchaseManager: No products found - falling back to test mode');
+          await _initializeTestMode();
+          return true;
+        } else {
+          print('❌ No products found in production build');
+          print('🔥🔥🔥 CRITICAL: App Store Connect商品設定を確認してください 🔥🔥🔥');
+          print('   1. 商品ID: $premiumProductIds が存在するか');
+          print('   2. 商品ステータスが「準備完了」か');
+          print('   3. 有料アプリケーション契約がアクティブか');
+          print('   4. TestFlightビルドが配布済みか');
+          
+          // 商品審査中の場合でも初期化は成功とする
+          print('🔥 商品審査中のため一時的に利用不可');
+          _isInitialized = true;
+          _isAvailable = false; // 購入は無効だが初期化は成功
+          return true;
+        }
       }
       
       // 購入ストリーム監視開始
@@ -98,13 +145,34 @@ class PurchaseManager {
       await _restoreExistingPurchases();
       
       _isInitialized = true;
-      print('PurchaseManager: Initialization successful');
+      if (_isTestFlightBuild()) {
+        print('✅ TestFlight購入システム初期化完了');
+        print('   📱 StoreKit利用可能: $_isAvailable');
+        print('   📦 商品読み込み完了: ${_products.length}件');
+        print('   🧪 Sandbox環境準備完了');
+        print('   💡 購入テスト準備完了 - Sandboxアカウントで購入可能');
+      } else {
+        print('PurchaseManager: Initialization successful');
+      }
       return true;
       
-    } catch (e) {
-      print('PurchaseManager: Initialization error: $e - falling back to test mode');
-      await _initializeTestMode();
-      return true;
+    } catch (e, stackTrace) {
+      print('❌ PurchaseManager initialization error: $e');
+      print('📋 Stack trace: $stackTrace');
+      print('🔍 Error type: ${e.runtimeType}');
+      
+      if (_isTestMode) {
+        print('Falling back to test mode (debug only)');
+        await _initializeTestMode();
+        return true;
+      } else {
+        print('❌ Initialization failed in production build');
+        print('💡 Suggestions:');
+        print('   - Check internet connection');
+        print('   - Verify App Store Connect configuration');
+        print('   - Ensure Paid Applications contract is active');
+        return false;
+      }
     }
   }
   
@@ -120,83 +188,231 @@ class PurchaseManager {
     
     _currentSubscriptionState = SubscriptionState.unknown;
     print('PurchaseManager: Test mode initialized successfully');
+    print('PurchaseManager: _isAvailable = $_isAvailable, _isInitialized = $_isInitialized');
   }
   
   // 商品詳細読み込み
   Future<void> _loadProducts() async {
     try {
-      final Set<String> productIds = {premiumProductId};
+      final Set<String> productIds = premiumProductIds;
+      print('🔍 Loading products with IDs: $productIds');
+      print('🔍 Platform: ${Platform.operatingSystem}');
+      print('🔍 Bundle ID should match: com.daito.gymnasticsai');
+      print('🔍 TestFlight build: ${_isTestFlightBuild()}');
+      print('🔍 Debug mode: ${kDebugMode}');
+      
       final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(productIds);
       
+      if (response.error != null) {
+        print('❌ Product query error: ${response.error}');
+        print('❌ Error code: ${response.error?.code}');
+        print('❌ Error message: ${response.error?.message}');
+        print('❌ Error details: ${response.error?.details}');
+        
+        // iOS固有のエラーメッセージを追加
+        if (Platform.isIOS) {
+          print('📱 iOS specific error info:');
+          print('   - Check if app is properly signed');
+          print('   - Verify provisioning profile includes IAP capability');
+          print('   - Ensure StoreKit configuration is correct');
+        }
+      }
+      
       if (response.notFoundIDs.isNotEmpty) {
-        print('Products not found: ${response.notFoundIDs}');
-        print('Requested product ID: $premiumProductId');
+        print('❌ Products not found: ${response.notFoundIDs}');
+        print('❌ Requested product IDs: $productIds');
+        print('❌ Check App Store Connect:');
+        print('   1. Product exists with exact IDs: $productIds');
+        print('   2. Status is "Ready to Submit" or "Approved"');
+        print('   3. Price is set for at least one territory');
+        print('   4. At least one localization exists (title + description)');
+        print('   5. Paid Applications contract is active');
+        print('   6. Bank account information is complete');
+        print('   7. For TestFlight: App must be distributed to testers');
+        
+        // TestFlight特有の問題チェック
+        if (_isTestFlightBuild()) {
+          print('🔍 TestFlight購入テスト詳細情報:');
+          print('   📱 デバイス情報: iOS ${Platform.operatingSystemVersion}');
+          print('   📦 商品ID: $premiumProductIds');
+          print('   🏢 Bundle ID: com.daito.gymnasticsai');
+          print('');
+          print('✅ App Store Connect 必須確認項目:');
+          print('   1. In-App Purchase商品が「準備完了」状態');
+          print('   2. サブスクリプショングループが作成済み');
+          print('   3. 価格設定が完了（最低1地域）');
+          print('   4. 商品情報（名前・説明）が設定済み');
+          print('   5. 有料アプリケーション契約がアクティブ');
+          print('   6. 銀行・税務情報が完了');
+          print('   7. TestFlightでアプリが配布済み');
+          print('');
+          print('🧪 Sandbox設定手順:');
+          print('   1. App Store Connect > ユーザーとアクセス > Sandboxテスター');
+          print('   2. テスターアカウント作成（実在しないメールアドレス使用可）');
+          print('   3. デバイス設定 > App Store から現在のApple IDをサインアウト');
+          print('   4. TestFlightアプリでのみサインイン状態を維持');
+          print('   5. 購入時にSandboxアカウントでサインイン要求が表示される');
+          print('');
+          print('⚠️ よくある問題:');
+          print('   • 商品ステータスが「承認待ち」→「準備完了」まで待つ');
+          print('   • 本番Apple IDでサインイン→完全にサインアウトする');
+          print('   • ネットワーク問題→WiFi/モバイルデータ切り替え');
+        }
       }
       
       _products = response.productDetails;
-      print('Loaded ${_products.length} products');
+      print('✅ Loaded ${_products.length} products');
       for (var product in _products) {
-        print('Product ID: ${product.id}, Title: ${product.title}, Price: ${product.price}');
+        print('📦 Product found:');
+        print('   ID: ${product.id}');
+        print('   Title: ${product.title}');
+        print('   Description: ${product.description}');
+        print('   Price: ${product.price}');
+        print('   Currency: ${product.currencyCode}');
+        print('   Raw Price: ${product.rawPrice}');
       }
       
-    } catch (e) {
-      print('Error loading products: $e');
+    } catch (e, stackTrace) {
+      print('❌ Error loading products: $e');
+      print('❌ Stack trace: $stackTrace');
     }
+  }
+
+  // TestFlightビルドかどうかを検出
+  bool _isTestFlightBuild() {
+    // より正確なTestFlightビルドの検出
+    if (!Platform.isIOS) return false;
+    
+    // デバッグモードではない＋iOSプラットフォーム＋プロファイルモードでない
+    return !kDebugMode && !kProfileMode;
   }
   
   // 購入処理
   Future<bool> purchasePremium() async {
+    if (kDebugMode) {
+      print('🔴 PurchaseManager: purchasePremium called - _isAvailable=$_isAvailable, _isTestMode=$_isTestMode, _purchasePending=$_purchasePending');
+      print('📱 Device Info: iOS version=${Platform.operatingSystemVersion}');
+      print('📦 Available products count: ${_products.length}');
+      
+      if (_isTestMode) {
+        print('🟢 TEST MODE ACTIVE - This is a simulated purchase');
+      }
+    }
+    
     if (!_isAvailable) {
-      print('Purchase not available - service not initialized');
-      onPurchaseError?.call('購入サービスが利用できません。アプリを再起動してください。');
+      if (kDebugMode) {
+        print('🔴 Purchase not available - service not initialized');
+        print('📊 Initialization state: _products.length=${_products.length}');
+      }
+      
+      // 審査用：StoreKitが利用できない場合の適切なエラーメッセージ
+      String errorMessage = 'この機能は現在利用できません。\n\n' +
+                           '以下をお試しください：\n' +
+                           '• アプリを再起動\n' +
+                           '• デバイスを再起動\n' +
+                           '• インターネット接続を確認\n' +
+                           '• App Storeにサインイン\n\n' +
+                           'それでも解決しない場合は、しばらく時間をおいてからお試しください。';
+      
+      onPurchaseError?.call(errorMessage);
       return false;
     }
     
     if (_purchasePending) {
-      print('Purchase already pending');
+      if (kDebugMode) print('Purchase already pending');
       onPurchaseError?.call('購入処理が進行中です。しばらくお待ちください。');
       return false;
     }
     
     // テストモードの場合はモック購入を実行
     if (_isTestMode) {
+      if (kDebugMode) print('PurchaseManager: Executing test purchase in test mode');
       return await _executeTestPurchase();
     }
     
     try {
+      // 利用可能な商品を検索（複数商品対応）
       final ProductDetails? productDetails = _products
-          .where((product) => product.id == premiumProductId)
+          .where((product) => premiumProductIds.contains(product.id))
           .firstOrNull;
       
       if (productDetails == null) {
-        print('Product details not found for: $premiumProductId');
-        print('Available products: ${_products.map((p) => p.id).join(", ")}');
+        print('❌ Product details not found for: $premiumProductIds');
+        print('📋 Available products: ${_products.map((p) => p.id).join(", ")}');
         
         // 商品情報を再取得を試行
+        print('🔄 Retrying to load products...');
         await _loadProducts();
         final retryProductDetails = _products
-            .where((product) => product.id == premiumProductId)
+            .where((product) => premiumProductIds.contains(product.id))
             .firstOrNull;
             
         if (retryProductDetails == null) {
-          // 商品が見つからない場合はテスト購入にフォールバック
-          return await _executeTestPurchase();
+          // 商品が見つからない場合
+          if (_isTestMode) { // デバッグモードのみテスト購入を許可
+            print('🧪 Falling back to test purchase (debug mode only)');
+            return await _executeTestPurchase();
+          }
+          
+          // TestFlightビルドの場合の詳細なエラーメッセージ
+          String errorMessage;
+          if (_isTestFlightBuild()) {
+            errorMessage = '⚠️ TestFlightでの課金テスト\n\n' +
+                          '【事前準備の確認】\n' +
+                          '1. App Store Connectで商品が「準備完了」\n' +
+                          '2. Sandboxテスターアカウント作成済み\n' +
+                          '3. デバイスからApple IDサインアウト\n' +
+                          '4. TestFlightでアプリを起動\n' +
+                          '5. 購入時にSandboxアカウントでサインイン\n\n' +
+                          '【トラブルシューティング】\n' +
+                          '• アプリを完全終了して再起動\n' +
+                          '• デバイス再起動\n' +
+                          '• ネットワーク接続確認\n\n' +
+                          '商品ID: $premiumProductIds';
+          } else {
+            errorMessage = 'サブスクリプション商品が見つかりません。\n' +
+                          'アプリを再起動してお試しください。\n\n' +
+                          'それでも解決しない場合は、しばらく時間をおいてからお試しください。';
+          }
+          
+          print('🔴 Final error - no product found');
+          print('📊 Debug info:');
+          print('  - Product ID: $premiumProductIds');
+          print('  - Available products: ${_products.map((p) => "${p.id} (${p.title})").join(", ")}');
+          print('  - Is TestFlight: ${_isTestFlightBuild()}');
+          print('  - Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}');
+          
+          onPurchaseError?.call(errorMessage);
+          return false;
         }
         // 再取得した商品情報を使用
+        print('✅ Product found after retry');
         return await _executePurchase(retryProductDetails);
       }
       
       return await _executePurchase(productDetails);
       
-    } catch (e) {
+    } catch (e, stackTrace) {
       _purchasePending = false;
-      print('Purchase error: $e');
+      if (kDebugMode) {
+        print('❌ Purchase error: $e');
+        print('📋 Stack trace: $stackTrace');
+      }
       
-      // エラー時はテスト購入にフォールバック
-      print('Falling back to test purchase due to error: $e');
-      return await _executeTestPurchase();
+      // エラー時の処理
+      if (_isTestMode) {
+        print('Falling back to test purchase due to error: $e');
+        return await _executeTestPurchase();
+      }
+      
+      // プロダクションではエラーメッセージを表示して失敗を返す
+      onPurchaseError?.call('購入処理中にエラーが発生しました。しばらく後に再試行してください。');
+      return false;
     }
   }
+  
+  // テスト状態確認
+  static bool get isTestModeEnabled => _isTestMode;
   
   // テスト用購入処理
   Future<bool> _executeTestPurchase() async {
@@ -208,8 +424,8 @@ class PurchaseManager {
       // 購入処理をシミュレート（2秒待機）
       await Future.delayed(Duration(seconds: 2));
       
-      // ランダムで成功/失敗を決定（開発時は80%成功率）
-      final success = DateTime.now().millisecond % 10 < 8;
+      // テスト時は常に成功させる（100%成功率）
+      final success = true; // DateTime.now().millisecond % 100 < 99;
       
       if (success) {
         _updateSubscriptionState(SubscriptionState.active);
@@ -222,7 +438,7 @@ class PurchaseManager {
       } else {
         _purchasePending = false;
         print('Test purchase failed (simulated)');
-        onPurchaseError?.call('テスト購入が失敗しました（シミュレート）');
+        onPurchaseError?.call('テスト購入が失敗しました（シミュレート）\n\nデバッグモードでは1%の確率で失敗をシミュレートしています。\n再度お試しください。');
         return false;
       }
       
@@ -242,9 +458,9 @@ class PurchaseManager {
       
       // タイムアウト処理を追加
       bool success = await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam)
-          .timeout(Duration(seconds: 30), onTimeout: () {
+          .timeout(Duration(seconds: 60), onTimeout: () {
         _purchasePending = false;
-        throw TimeoutException('Purchase timeout', Duration(seconds: 30));
+        throw TimeoutException('Purchase timeout', Duration(seconds: 60));
       });
       
       if (!success) {
@@ -275,8 +491,12 @@ class PurchaseManager {
       print('Purchase restoration completed');
     } catch (e) {
       print('Error restoring purchases: $e');
-      // エラー時はテスト復元にフォールバック
-      await _executeTestRestore();
+      // デバッグモードの場合のみテスト復元にフォールバック
+      if (_isTestMode) {
+        await _executeTestRestore();
+      } else {
+        onPurchaseRestore?.call('復元処理でエラーが発生しました。しばらく後に再試行してください。');
+      }
     }
   }
   
@@ -288,8 +508,8 @@ class PurchaseManager {
       // 復元処理をシミュレート（1秒待機）
       await Future.delayed(Duration(seconds: 1));
       
-      // 既存の購入履歴があるかをシミュレート（50%の確率）
-      final hasPreviousPurchase = DateTime.now().millisecond % 2 == 0;
+      // 既存の購入履歴があるかをシミュレート（80%の確率）
+      final hasPreviousPurchase = DateTime.now().millisecond % 5 < 4;
       
       if (hasPreviousPurchase) {
         _updateSubscriptionState(SubscriptionState.restored);
@@ -352,7 +572,14 @@ class PurchaseManager {
           _updateSubscriptionState(SubscriptionState.active);
           _purchasePending = false;
           onPurchaseSuccess?.call();
-          print('Premium subscription activated');
+          if (_isTestFlightBuild()) {
+            print('🎉 TestFlight購入テスト成功！');
+            print('   ✅ サブスクリプション有効化完了');
+            print('   ✅ Sandbox決済完了');
+            print('   💡 本番環境での購入フローが正常に動作することを確認');
+          } else {
+            print('Premium subscription activated');
+          }
         } else {
           onPurchaseError?.call('Purchase verification failed');
         }
@@ -498,7 +725,7 @@ class PurchaseManager {
   
   // プレミアム商品確認
   bool _isPremiumProduct(String productId) {
-    return productId == _premiumProductId_ios ||
+    return _premiumProductIds_ios.contains(productId) ||
            productId == _premiumProductId_android;
   }
   
@@ -571,13 +798,13 @@ class PurchaseManager {
   String? get premiumPrice {
     // テストモードの場合はモック価格を返す
     if (_isTestMode) {
-      return '¥1,200'; // テスト用価格
+      return '¥500'; // 正しい価格
     }
     
     final ProductDetails? product = _products
-        .where((p) => p.id == premiumProductId)
+        .where((p) => premiumProductIds.contains(p.id))
         .firstOrNull;
-    return product?.price ?? '¥1,200'; // フォールバック価格
+    return product?.price ?? '¥500'; // 正しいフォールバック価格
   }
   
   // クリーンアップ

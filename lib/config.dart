@@ -19,7 +19,7 @@ class AppConfig {
   static const Map<Environment, String> _urls = {
     Environment.development: 'http://127.0.0.1:8891',
     Environment.staging: 'https://staging-api.your-domain.com',
-    Environment.production: 'https://gym-96488789666.asia-northeast1.run.app',
+    Environment.production: 'https://gymnastics-ai-server-96488789666.us-central1.run.app',
   };
   
   // モバイルアプリ版のみのサーバーURL
@@ -46,8 +46,8 @@ class AppConfig {
     : const Duration(seconds: 30);
   
   // AIチャット機能制御フラグ
-  // モバイルアプリ版のみ: 開発中状態（準備中画面を表示）
+  // サーバー接続復旧により有効化
   static bool get enableAIChat {
-    return false; // モバイル版では開発中（準備中画面表示）
+    return true; // サーバー接続有効化
   }
 }

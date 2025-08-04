@@ -117,9 +117,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     
-    // テスト用のデフォルト値を設定
-    _enteredUsername = 'testuser';
-    _enteredPassword = 'testpass123';
+    // 本番リリース用：デフォルト値なし
+    _enteredUsername = '';
+    _enteredPassword = '';
     
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),

@@ -47,7 +47,7 @@ class AdMobConfig {
   
   // デバッグモード判定（本番リリース用）
   static bool get _isDebugMode {
-    // kDebugModeを使用してFlutterのデバッグモードを判定
+    // 本番リリース用設定
     return kDebugMode;
   }
 }

@@ -1,2 +1,10 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
+
+// Simulator code signing fix - disable for simulator builds
+CODE_SIGNING_ALLOWED[sdk=iphonesimulator*] = NO
+CODE_SIGN_IDENTITY[sdk=iphonesimulator*] = 
+CODE_SIGNING_ALLOWED[sdk=iphoneos*] = YES
+CODE_SIGN_IDENTITY[sdk=iphoneos*] = Apple Development
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM = 3TDG65K4J5

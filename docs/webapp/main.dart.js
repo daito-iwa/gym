@@ -88677,7 +88677,7 @@ return A.B(null,r)}})
 return A.C($async$yy,r)},
 xK(){var s=0,r=A.D(t.y),q,p=2,o=[],n,m,l,k,j,i
 var $async$xK=A.z(function(a,b){if(a===1){o.push(b)
-s=p}while(true)switch(s){case 0:j="https://gym-new-96488789666.asia-northeast1.run.app/health"
+s=p}while(true)switch(s){case 0:j="https://gymnastics-ai-server-96488789666.us-central1.run.app/health"
 A.L("  \u2514\u2500 \u5b9f\u969b\u306eURL: "+A.k(j))
 p=4
 A.L("  \u2514\u2500 HTTP\u30ea\u30af\u30a8\u30b9\u30c8\u9001\u4fe1\u4e2d...")
@@ -88847,7 +88847,7 @@ A.L("")
 A.L(u.E)
 A.L("\ud83c\udf10 \u30b5\u30fc\u30d0\u30fc\u63a5\u7d9a\u30c6\u30b9\u30c8\u958b\u59cb")
 A.L(u.E)
-A.L("\ud83d\udce1 URL: https://gym-new-96488789666.asia-northeast1.run.app/health")
+A.L("\ud83d\udce1 URL: https://gymnastics-ai-server-96488789666.us-central1.run.app/health")
 A.L("\ud83d\udd50 \u6642\u523b: "+new A.cj(Date.now(),0,!1).k(0))
 s=6
 return A.u(o.xK().oV(0,A.cN(0,0,0,0,5),new A.ar3()),$async$x8)
@@ -89429,7 +89429,7 @@ s=6
 break
 case 12:A.L("\ud83d\ude80 \u30ed\u30fc\u30ab\u30eb\u56de\u7b54\u306a\u3057")
 case 9:A.L("\ud83d\udd11 \u533f\u540d\u30e6\u30fc\u30b6\u30fc\u30e2\u30fc\u30c9\u3067\u30b5\u30fc\u30d0\u30fc\u306b\u9001\u4fe1")
-e=A.eH("https://gym-new-96488789666.asia-northeast1.run.app/chat/message",0,null)
+e=A.eH("https://gymnastics-ai-server-96488789666.us-central1.run.app/chat/message",0,null)
 d=t.N
 c=A.a2(["Content-Type","application/json"],d,d)
 s=14
@@ -89465,7 +89465,7 @@ break
 case 21:A.L("Server error: "+k.b)
 e=k
 A.L("Response body: "+A.yt(A.yj(e.e)).cX(0,e.w))
-A.L("Request URL: https://gym-new-96488789666.asia-northeast1.run.app/chat/message")
+A.L("Request URL: https://gymnastics-ai-server-96488789666.us-central1.run.app/chat/message")
 h=A.y(d,d)
 J.ff(h,"Content-Type","application/json")
 e=m.id
@@ -91256,7 +91256,7 @@ yS(a){return this.aiY(a)},
 aiY(a){var s=0,r=A.D(t.y),q,p=2,o=[],n,m,l,k,j,i,h,g,f,e,d
 var $async$yS=A.z(function(b,c){if(b===1){o.push(c)
 s=p}while(true)switch(s){case 0:p=4
-n="https://gym-new-96488789666.asia-northeast1.run.app/purchase/verify"
+n="https://gymnastics-ai-server-96488789666.us-central1.run.app/purchase/verify"
 h=$.a0G()
 g=h?"ios":"android"
 f=t.N
@@ -91336,7 +91336,7 @@ if(q!=null)q.$0()}}},
 ue(){var s=0,r=A.D(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h,g,f,e,d
 var $async$ue=A.z(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
-n="https://gym-new-96488789666.asia-northeast1.run.app/subscription/status"
+n="https://gymnastics-ai-server-96488789666.us-central1.run.app/subscription/status"
 g=t.N
 s=6
 return A.u(A.aKL(A.eH(n,0,null),A.a2(["Content-Type","application/json"],g,g)),$async$ue)

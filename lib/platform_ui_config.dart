@@ -7,22 +7,13 @@ import 'config.dart';
 class PlatformUIConfig {
   /// 初期画面の設定
   static AppMode get defaultStartMode {
-    if (PlatformConfig.isWeb) {
-      return AppMode.dScore; // Web版はD-Scoreから開始
-    } else {
-      return AppMode.dScore; // モバイル版は従来通りD-Scoreから開始
-    }
+    return AppMode.chat; // AIチャットを初期画面に設定
   }
   
   /// タブの順序設定
   static List<AppMode> get tabOrder {
-    if (PlatformConfig.isWeb) {
-      // Web版：AIチャットなし（D-Score、全種目、分析のみ）
-      return [AppMode.dScore, AppMode.allApparatus, AppMode.analytics];
-    } else {
-      // モバイル版：従来の順序
-      return [AppMode.dScore, AppMode.allApparatus, AppMode.analytics, AppMode.chat];
-    }
+    // モバイル版のみ（Web版は廃止）- AIチャットを最左に配置
+    return [AppMode.chat, AppMode.dScore, AppMode.allApparatus, AppMode.analytics];
   }
   
   /// 指定されたAppModeの表示インデックスを取得
@@ -109,27 +100,18 @@ class PlatformUIConfig {
   }
   
   static String _getDScoreLabel({bool isUserFree = true}) {
-    if (PlatformConfig.isWeb) {
-      return 'D-Score'; // Web版はシンプル
-    }
-    // モバイル版は従来の表示
-    return isUserFree ? 'D-Score ⭐' : 'D-Score(オフライン対応)';
+    // モバイル版のみ（Web版は廃止）- スターシンボルを削除
+    return isUserFree ? 'D-Score' : 'D-Score(オフライン対応)';
   }
   
   static String _getAllApparatusLabel({bool isUserFree = true}) {
-    if (PlatformConfig.isWeb) {
-      return '全種目'; // Web版はシンプル
-    }
-    // モバイル版は従来の表示
-    return isUserFree ? '全種目 ⭐' : '全種目(オフライン対応)';
+    // モバイル版のみ（Web版は廃止）- スターシンボルを削除
+    return isUserFree ? '全種目' : '全種目(オフライン対応)';
   }
   
   static String _getAnalyticsLabel({bool isUserFree = true}) {
-    if (PlatformConfig.isWeb) {
-      return '分析'; // Web版はシンプル
-    }
-    // モバイル版は従来の表示
-    return isUserFree ? '分析 ⭐' : '分析(要ネット)';
+    // モバイル版のみ（Web版は廃止）- スターシンボルを削除
+    return isUserFree ? '分析' : '分析(要ネット)';
   }
   
   // プラットフォーム別のステータスアイコン設定
@@ -149,16 +131,9 @@ class PlatformUIConfig {
   }
   
   static StatusIconInfo? _getDScoreStatusIcon({bool isUserFree = true}) {
-    if (PlatformConfig.isWeb) {
-      return null; // Web版では表示しない
-    }
-    
+    // モバイル版のみ（Web版は廃止）- スターアイコンを削除
     if (isUserFree) {
-      return StatusIconInfo(
-        icon: Icons.star,
-        color: Colors.amber,
-        size: 12,
-      );
+      return null; // スターアイコンを表示しない
     } else {
       return StatusIconInfo(
         icon: Icons.offline_bolt,
@@ -169,16 +144,9 @@ class PlatformUIConfig {
   }
   
   static StatusIconInfo? _getAllApparatusStatusIcon({bool isUserFree = true}) {
-    if (PlatformConfig.isWeb) {
-      return null; // Web版では表示しない
-    }
-    
+    // モバイル版のみ（Web版は廃止）- スターアイコンを削除
     if (isUserFree) {
-      return StatusIconInfo(
-        icon: Icons.star,
-        color: Colors.amber,
-        size: 12,
-      );
+      return null; // スターアイコンを表示しない
     } else {
       return StatusIconInfo(
         icon: Icons.offline_bolt,
@@ -189,16 +157,9 @@ class PlatformUIConfig {
   }
   
   static StatusIconInfo? _getAnalyticsStatusIcon({bool isUserFree = true}) {
-    if (PlatformConfig.isWeb) {
-      return null; // Web版では表示しない
-    }
-    
+    // モバイル版のみ（Web版は廃止）- スターアイコンを削除
     if (isUserFree) {
-      return StatusIconInfo(
-        icon: Icons.star,
-        color: Colors.amber,
-        size: 12,
-      );
+      return null; // スターアイコンを表示しない
     } else {
       return StatusIconInfo(
         icon: Icons.cloud,

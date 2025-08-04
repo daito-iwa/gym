@@ -11,14 +11,14 @@ class PlatformConfig {
   /// 現在のプラットフォームがモバイル（iOS/Android）かどうか
   static bool get isMobile => isIOS || isAndroid;
   
-  /// サブスクリプション機能が利用可能かどうか
-  static bool get isSubscriptionEnabled => isMobile;
+  /// サブスクリプション機能が利用可能かどうか（現在停止中）
+  static bool get isSubscriptionEnabled => false;
   
-  /// アプリ内購入が利用可能かどうか
-  static bool get isInAppPurchaseEnabled => isMobile;
+  /// アプリ内購入が利用可能かどうか（現在停止中）
+  static bool get isInAppPurchaseEnabled => false;
   
-  /// AdMob広告が利用可能かどうか（モバイルのみ）
-  static bool get isAdMobEnabled => isMobile;
+  /// AdMob広告が利用可能かどうか（現在停止中）
+  static bool get isAdMobEnabled => false;
   
   /// プラットフォーム名を取得
   static String get platformName {
@@ -37,8 +37,8 @@ class PlatformConfig {
     return 50; // モバイル版のみ
   }
   
-  /// 1日のD-Score計算制限
+  /// 1日のD-Score計算制限（現在制限なし）
   static int get maxDailyDScoreCalculations {
-    return 1; // 課金誘導のため制限強化
+    return 999; // 実質制限なし
   }
 }

@@ -151,7 +151,12 @@ const Map<String, Map<String, dynamic>> APPARATUS_RULES = {
 };
 
 DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
+  print('DEBUG_CALC: calculateDScore開始');
+  print('DEBUG_CALC: apparatus: $apparatus');
+  print('DEBUG_CALC: routine.length: ${routine.length}');
+  
   if (routine.isEmpty || !APPARATUS_RULES.containsKey(apparatus)) {
+    print('DEBUG_CALC: 早期終了 - routine空またはapparatus不正');
     return DScoreResult();
   }
 
@@ -254,13 +259,18 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   }
   // 鉄棒の連続技ボーナス（FIG公式ルール準拠）
   else if (apparatus == "HB") {
-    for (final connectionGroup in routine) {
+    print('DEBUG_CALC: 鉄棒連続技ボーナス計算開始');
+    print('DEBUG_CALC: routine.length: ${routine.length}');
+    for (int groupIndex = 0; groupIndex < routine.length; groupIndex++) {
+      final connectionGroup = routine[groupIndex];
+      print('DEBUG_CALC: グループ$groupIndex, スキル数: ${connectionGroup.length}');
       if (connectionGroup.length > 1) {
         for (int i = 0; i < connectionGroup.length - 1; i++) {
           final skill1 = connectionGroup[i];
           final skill2 = connectionGroup[i + 1];
           final v1 = skill1.value;
           final v2 = skill2.value;
+          print('DEBUG_CALC: ペア${i}-${i+1}: ${skill1.name}(G${skill1.group}, ${v1}) + ${skill2.name}(G${skill2.group}, ${v2})');
           double bonusForThisPair = 0.0;
 
           // 手放し技同士の連続（グループII同士）
@@ -311,10 +321,12 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
             }
           }
           
+          print('DEBUG_CALC: ペアボーナス: ${bonusForThisPair}');
           connectionBonus += bonusForThisPair;
         }
       }
     }
+    print('DEBUG_CALC: 鉄棒連続技ボーナス合計: ${connectionBonus}');
   }
 
   // 連続技ボーナスの上限制限（FIG規則：最大0.4点まで）

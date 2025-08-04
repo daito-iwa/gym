@@ -192,7 +192,7 @@ class RoutineAnalyzer {
     }
     
     // グループバランス改善（詳細版）
-    final requiredGroups = _getRequiredGroupsForApparatus(apparatus);
+    final requiredGroups = {1, 2, 3, 4, 5}; // すべてのグループをチェック
     final missingGroups = requiredGroups.difference(groupDistribution.keys.toSet());
     if (missingGroups.isNotEmpty) {
       final groupNames = {
@@ -398,29 +398,10 @@ class RoutineAnalyzer {
     return sortedSuggestions.isEmpty ? suggestions : sortedSuggestions;
   }
   
-  // 種目に必要なグループを取得
-  static Set<int> _getRequiredGroupsForApparatus(String apparatus) {
-    switch (apparatus) {
-      case 'FX':
-        return {1, 2, 3, 4};
-      case 'PH':
-        return {1, 2, 3, 4, 5};
-      case 'SR':
-        return {1, 2, 3, 4, 5};
-      case 'VT':
-        return {1, 2, 3, 4, 5};
-      case 'PB':
-        return {1, 2, 3, 4, 5};
-      case 'HB':
-        return {1, 2, 3, 4, 5};
-      default:
-        return {1, 2, 3, 4};
-    }
-  }
   
   // 要求充足率の計算
   static double calculateCompletenessScore(String apparatus, Map<int, int> groupDistribution) {
-    final requiredGroups = _getRequiredGroupsForApparatus(apparatus);
+    final requiredGroups = {1, 2, 3, 4, 5}; // すべてのグループをチェック
     final presentGroups = groupDistribution.keys.toSet();
     return presentGroups.intersection(requiredGroups).length / requiredGroups.length;
   }
@@ -5196,19 +5177,19 @@ $expertAnswer
                             ? () async {
                                 // 使用量チェックを無効化（無料版では制限なし）
                                 
-                                // 床運動の場合、バランス技チェック
+                                // 床運動の場合、バランス技チェック（警告のみ、計算は続行）
                                 if (_selectedApparatus!.toLowerCase() == 'floor' || 
                                     _selectedApparatus!.toLowerCase() == 'fx') {
                                   final floorError = _checkFloorRequirements(_routine);
                                   if (floorError != null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(floorError),
-                                        backgroundColor: Colors.red,
+                                        content: Text('警告: $floorError（計算は実行されます）'),
+                                        backgroundColor: Colors.orange,
                                         duration: Duration(seconds: 4),
                                       ),
                                     );
-                                    return;
+                                    // return を削除 - 計算を続行
                                   }
                                 }
                                 
@@ -7843,7 +7824,7 @@ $expertAnswer
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          scoreResult?.dScore.toStringAsFixed(3) ?? '0.000',
+                          scoreResult?.totalDScore.toStringAsFixed(3) ?? '0.000',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -8974,7 +8955,7 @@ ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missin
     double total = 0.0;
     for (final result in _allDScoreResults.values) {
       if (result != null) {
-        total += result.dScore;
+        total += result.totalDScore;
       }
     }
     return total;
@@ -9453,6 +9434,89 @@ ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missin
     
     super.dispose();
   }
+
+  // 床運動の要求事項チェック
+  String? _checkFloorRequirements(List<Skill> routine) {
+    if (routine.isEmpty) return null;
+    
+    // グループ別の技数をカウント
+    final Map<int, int> groupCounts = {};
+    for (final skill in routine) {
+      groupCounts[skill.group] = (groupCounts[skill.group] ?? 0) + 1;
+    }
+    
+    // 床運動の基本要求事項チェック
+    final missingGroups = <int>[];
+    
+    // グループI（非アクロバット系要素）- 必須
+    if (!groupCounts.containsKey(1) || groupCounts[1]! == 0) {
+      missingGroups.add(1);
+    }
+    
+    // グループII（前方系アクロバット要素）- 必須  
+    if (!groupCounts.containsKey(2) || groupCounts[2]! == 0) {
+      missingGroups.add(2);
+    }
+    
+    // グループIII（後方系アクロバット要素）- 必須
+    if (!groupCounts.containsKey(3) || groupCounts[3]! == 0) {
+      missingGroups.add(3);
+    }
+    
+    // グループIV（終末技） - 必須ではないが推奨
+    if (!groupCounts.containsKey(4) || groupCounts[4]! == 0) {
+      // 警告として表示するが、エラーではない
+    }
+    
+    if (missingGroups.isNotEmpty) {
+      final groupNames = {
+        1: '非アクロバット系要素（バランス、柔軟性、ジャンプなど）',
+        2: '前方系アクロバット要素',
+        3: '後方系アクロバット要素',
+        4: '終末技'
+      };
+      
+      final missingGroupNames = missingGroups.map((g) => 'グループ$g: ${groupNames[g]}').join('、');
+      return '床運動の要求事項が不足しています：$missingGroupNames';
+    }
+    
+    return null; // 要求事項を満たしている
+  }
+
+  // 技のグループ別カウント
+  Map<int, int> _countSkillsPerGroup(List<Skill> routine) {
+    final Map<int, int> groupCounts = {};
+    for (final skill in routine) {
+      groupCounts[skill.group] = (groupCounts[skill.group] ?? 0) + 1;
+    }
+    return groupCounts;
+  }
+
+  // 種目別最大グループ数を取得
+  int _getMaxGroupsForApparatus(String? apparatus) {
+    switch (apparatus?.toUpperCase()) {
+      case 'FX':
+      case 'FLOOR':
+        return 4;
+      case 'PH':
+      case 'POMMEL':
+        return 5;
+      case 'SR':
+      case 'RINGS':
+        return 5;
+      case 'VT':
+      case 'VAULT':
+        return 5;
+      case 'PB':
+      case 'PARALLEL':
+        return 5;
+      case 'HB':
+      case 'HORIZONTAL':
+        return 5;
+      default:
+        return 5; // デフォルト
+    }
+  }
 }
 
 // 技選択ダイアログ（シンプルで安全な実装）
@@ -9889,6 +9953,32 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
       ],
     );
   }
+
+  // 種目別最大グループ数を取得
+  int _getMaxGroupsForApparatus(String? apparatus) {
+    switch (apparatus?.toUpperCase()) {
+      case 'FX':
+      case 'FLOOR':
+        return 4;
+      case 'PH':
+      case 'POMMEL':
+        return 5;
+      case 'SR':
+      case 'RINGS':
+        return 5;
+      case 'VT':
+      case 'VAULT':
+        return 5;
+      case 'PB':
+      case 'PARALLEL':
+        return 5;
+      case 'HB':
+      case 'HORIZONTAL':
+        return 5;
+      default:
+        return 5; // デフォルト
+    }
+  }
 }
 
 // 演技構成保存ダイアログ
@@ -10064,59 +10154,6 @@ class _SavedRoutinesDialog extends StatelessWidget {
   }
 }
 
-
-// DScoreResult class definition  
-class DScoreResult {
-  final double dScore;
-  final double difficultyValue;
-  final double groupBonus;
-  final double connectionBonus;
-  final int fulfilledGroups;
-  final int requiredGroups;
-  final double totalDScore;
-
-  DScoreResult({
-    required this.dScore,
-    required this.difficultyValue,
-    required this.groupBonus,
-    required this.connectionBonus,
-    required this.fulfilledGroups,
-    required this.requiredGroups,
-  }) : totalDScore = dScore;
-}
-
-// Global function for D-score calculation
-// 種目別要求グループを取得
-Set<int> _getRequiredGroupsForApparatus(String apparatus) {
-  switch (apparatus.toLowerCase()) {
-    case 'floor':
-    case 'fx':
-      return {1, 2, 3, 4}; // 床：全4グループ要求
-    case 'pommel':
-    case 'ph':
-      return {1, 2, 3, 4}; // あん馬：全4グループ要求  
-    case 'rings':
-    case 'sr':
-      return {1, 2, 3, 4}; // つり輪：全4グループ要求
-    case 'vault':
-    case 'vt':
-      return {1, 2, 3, 4, 5}; // 跳馬：5グループ存在
-    case 'parallel':
-    case 'pb':
-      return {1, 2, 3, 4}; // 平行棒：全4グループ要求
-    case 'horizontal':
-    case 'hb':
-      return {1, 2, 3, 4}; // 鉄棒：全4グループ要求
-    default:
-      return {1, 2, 3, 4}; // デフォルト
-  }
-}
-
-// 種目別最大グループ数を取得
-int _getMaxGroupsForApparatus(String? apparatus) {
-  return 4; // 全種目4グループに統一
-}
-
 // 体操専門知識データベース
 class GymnasticsKnowledgeBase {
   // 技データベース（skills_ja.csvから読み込み）
@@ -10137,750 +10174,63 @@ class GymnasticsKnowledgeBase {
       final String data = await rootBundle.loadString('data/skills_ja.csv');
       final List<List<dynamic>> csvData = const CsvToListConverter().convert(data);
       
-      // ヘッダーを除いて処理 (apparatus, name, group, value_letter)
-      for (int i = 1; i < csvData.length; i++) {
-        final row = csvData[i];
-        if (row.length >= 4) {
-          _skillsDatabase.add({
-            'id': 'SKILL_${i.toString().padLeft(3, '0')}', // 自動生成ID
-            'apparatus': row[0].toString(),
-            'name': row[1].toString(),
-            'group': row[2].toString(), // ローマ数字（Ⅰ、Ⅱ、Ⅲ、Ⅳ）
-            'value_letter': row[3].toString(),
-            'description': row[1].toString(), // 技名をdescriptionとしても使用
-          });
+      _skillsDatabase.clear(); // 既存のデータをクリア
+      
+      for (int i = 1; i < csvData.length; i++) { // 1行目はヘッダーなのでスキップ
+        if (csvData[i].length >= 4) {
+          final String apparatus = csvData[i][0]?.toString().trim() ?? '';
+          final String name = csvData[i][1]?.toString().trim() ?? '';
+          final String group = csvData[i][2]?.toString().trim() ?? '';
+          final String valueLetter = csvData[i][3]?.toString().trim() ?? '';
+          
+          if (apparatus.isNotEmpty && name.isNotEmpty) {
+            _skillsDatabase.add({
+              'id': '${apparatus}_${i}',
+              'apparatus': apparatus,
+              'name': name,
+              'group': group,
+              'value_letter': valueLetter,
+              'description': '',
+            });
+          }
         }
       }
       
       _isSkillsLoaded = true;
-      print('Skills database loaded: ${_skillsDatabase.length} skills');
+      print('技データベース読み込み完了: ${_skillsDatabase.length}技');
     } catch (e) {
-      print('Error loading skills database: $e');
+      print('技データベース読み込みエラー: $e');
+      _isSkillsLoaded = false;
     }
   }
   
-  // 技の検索
-  static List<Map<String, dynamic>> searchSkills({
-    String? apparatus,
-    String? group,
-    String? difficulty,
-    String? namePattern,
-  }) {
-    if (!_isSkillsLoaded) return [];
+  // 種目別技の検索
+  static List<Map<String, dynamic>> getSkillsForApparatus(String apparatus) {
+    if (!_isSkillsLoaded) {
+      print('技データベースが読み込まれていません');
+      return [];
+    }
     
-    return _skillsDatabase.where((skill) {
-      bool matches = true;
-      
-      if (apparatus != null) {
-        matches = matches && skill['apparatus'] == apparatus;
-      }
-      
-      if (group != null) {
-        matches = matches && skill['group'] == group;
-      }
-      
-      if (difficulty != null) {
-        matches = matches && skill['value_letter'] == difficulty;
-      }
-      
-      if (namePattern != null) {
-        matches = matches && skill['name'].toString().contains(namePattern);
-      }
-      
-      return matches;
-    }).toList();
+    return _skillsDatabase.where((skill) => 
+        skill['apparatus']?.toString().toLowerCase() == apparatus.toLowerCase()).toList();
   }
   
-  // 難度別技数の取得
-  static Map<String, int> getDifficultyCount({String? apparatus}) {
-    if (!_isSkillsLoaded) return {};
+  // 技名による検索
+  static Map<String, dynamic>? findSkillByName(String name, String apparatus) {
+    if (!_isSkillsLoaded) return null;
     
-    final skills = apparatus != null 
-      ? searchSkills(apparatus: apparatus)
-      : _skillsDatabase;
-    
-    final Map<String, int> count = {};
-    for (final skill in skills) {
-      final difficulty = skill['value_letter'];
-      count[difficulty] = (count[difficulty] ?? 0) + 1;
-    }
-    
-    return count;
-  }
-  
-  // グループ別技数の取得
-  static Map<String, int> getGroupCount({String? apparatus}) {
-    if (!_isSkillsLoaded) return {};
-    
-    final skills = apparatus != null 
-      ? searchSkills(apparatus: apparatus)
-      : _skillsDatabase;
-    
-    final Map<String, int> count = {};
-    for (final skill in skills) {
-      final group = skill['group'];
-      count[group] = (count[group] ?? 0) + 1;
-    }
-    
-    return count;
-  }
-  // 種目別基本情報
-  static Map<String, Map<String, dynamic>> apparatusInfo = {
-    'vault': {
-      'name_ja': '跳馬',
-      'name_en': 'Vault',
-      'groups': 5,
-      'groupBonus': 0.0,
-      'skillLimit': 1,
-      'description_ja': '跳馬は1技のみ実施する種目で、5つのグループが存在します。',
-      'groups_detail': {
-        1: '前転系跳躍',
-        2: '後転系跳躍', 
-        3: '前転系跳躍（1/2〜1/1ひねり）',
-        4: '後転系跳躍（1/2〜1/1ひねり）',
-        5: '前転系・後転系跳躍（1.5ひねり以上）'
-      }
-    },
-    'floor': {
-      'name_ja': '床',
-      'name_en': 'Floor Exercise',
-      'groups': 4,
-      'groupBonus': 0.5,
-      'skillLimit': null,
-      'description_ja': '床運動は最大90秒の演技で、4つのグループすべてから技を実施する必要があります。',
-      'groups_detail': {
-        1: '前方系統の非宙返り技および前方宙返り技',
-        2: '後方系統の非宙返り技および後方宙返り技',
-        3: '側方系統の非宙返り技および側方宙返り技',
-        4: '静止系技'
-      }
-    },
-    'pommel': {
-      'name_ja': 'あん馬',
-      'name_en': 'Pommel Horse',
-      'groups': 4,
-      'groupBonus': 0.5,
-      'skillLimit': null,
-      'description_ja': 'あん馬は4つのグループすべてから技を実施する必要があります。',
-      'groups_detail': {
-        1: 'シザーズ系およびフレア系技',
-        2: '円形転向系技',
-        3: '移動系技',
-        4: '終末技'
-      }
-    },
-    'rings': {
-      'name_ja': 'つり輪',
-      'name_en': 'Still Rings',
-      'groups': 4,
-      'groupBonus': 0.5,
-      'skillLimit': null,
-      'description_ja': 'つり輪は4つのグループすべてから技を実施する必要があります。',
-      'groups_detail': {
-        1: '引き上げ系および懸垂系技',
-        2: '静止系技（力技）',
-        3: 'スイング系技',
-        4: '終末技'
-      }
-    },
-    'parallel': {
-      'name_ja': '平行棒',
-      'name_en': 'Parallel Bars',
-      'groups': 4,
-      'groupBonus': 0.5,
-      'skillLimit': null,
-      'description_ja': '平行棒は4つのグループすべてから技を実施する必要があります。',
-      'groups_detail': {
-        1: '支持系および懸垂系技',
-        2: '上腕支持系技',
-        3: '長懸垂系および振動系技',
-        4: '終末技'
-      }
-    },
-    'horizontal': {
-      'name_ja': '鉄棒',
-      'name_en': 'Horizontal Bar',
-      'groups': 4,
-      'groupBonus': 0.5,
-      'skillLimit': null,
-      'description_ja': '鉄棒は4つのグループすべてから技を実施する必要があります。',
-      'groups_detail': {
-        1: '長懸垂系および振動系技',
-        2: '回転系技',
-        3: '飛行系技',
-        4: '終末技'
-      }
-    }
-  };
-
-  // 採点規則に関する基本知識
-  static Map<String, dynamic> scoringRules = {
-    'dScore': {
-      'description_ja': 'Dスコアは難度点とも呼ばれ、演技の難易度を評価します。',
-      'components': ['技の難度値', 'グループ要求ボーナス', '組み合わせボーナス'],
-      'groupRequirement': '各種目で指定されたグループから技を実施することでボーナスを獲得'
-    },
-    'eScore': {
-      'description_ja': 'Eスコアは実施点とも呼ばれ、演技の美しさや正確性を評価します。',
-      'startValue': 10.0,
-      'deductions': '技術的ミス、姿勢不良、着地ミスなどで減点'
-    }
-  };
-
-  // よくある質問への回答
-  static Map<String, String> faqResponses = {
-    '跳馬_グループ数': '跳馬には5つのグループが存在します。\n'
-        'グループ1: 前転系跳躍\n'
-        'グループ2: 後転系跳躍\n'
-        'グループ3: 前転系跳躍（1/2〜1/1ひねり）\n'
-        'グループ4: 後転系跳躍（1/2〜1/1ひねり）\n'
-        'グループ5: 前転系・後転系跳躍（1.5ひねり以上）',
-    
-    '跳馬_グループボーナス': '跳馬はグループボーナスがありません。跳馬は1技のみ実施する種目のため、その技の難度値がそのままDスコアとなります。',
-    
-    'グループ要求_床': '床運動では4つのグループすべてから最低1技ずつ実施する必要があります。また、必ずバランス技を含める必要があります。\n'
-        '• 各グループから最低1技（最大2.0点のグループ点）\n'
-        '• バランス技（必須要件）\n'
-        '• 最大90秒の演技時間',
-    
-    'Dスコア_計算': '【跳馬】Dスコア = 選択した1技の難度値（ボーナス等なし）\n'
-        '【その他種目】Dスコア = 技の難度値の合計 + グループ点 + 組み合わせボーナス\n\n'
-        '【グループ点の詳細】\n'
-        '• グループ1: 無条件で0.5点\n'
-        '• グループ2,3: D難度以上=0.5点、C難度以下=0.3点\n'
-        '• グループ4(終末技): 技の難度値がそのまま加算（D=0.4, E=0.5, F=0.6...）\n'
-        '• 床のグループ4: 通常ルール（D難度以上=0.5点、C難度以下=0.3点）',
-    
-    'グループ点_詳細': 'グループ点は各グループの最高難度技に基づいて計算されます：\n\n'
-        '【グループ1】\n'
-        '• 無条件で0.5点が加算されます\n\n'
-        '【グループ2,3】\n'
-        '• D難度以上の技を実施: 0.5点\n'
-        '• C難度以下の技のみ: 0.3点\n\n'
-        '【グループ4（終末技）】\n'
-        '• 床以外: 技の難度値がそのまま加算（D=0.4, E=0.5...）\n'
-        '• 床: 通常ルール（D難度以上=0.5点、C難度以下=0.3点）\n\n'
-        '※跳馬はグループ点なし（1技の難度値のみ）',
-    
-    '演技構成_制限': '体操競技の演技構成には以下の制限があります：\n\n'
-        '【技数制限】\n'
-        '• 跳馬: 1技のみ\n'
-        '• その他種目: 最大8技まで\n\n'
-        '【ニュートラルディダクション（ND）】\n'
-        '• 5技: -3.0点 | 4技: -4.0点 | 3技: -5.0点\n'
-        '• 2技: -6.0点 | 1技: -7.0点 | 0技: -10.0点\n'
-        '• 6技以上: 減点なし\n\n'
-        '【グループ別技数制限】\n'
-        '• 同一グループ: 各最大4技まで\n'
-        '• グループ1-4: 各最大4技まで\n\n'
-        'これらの制限は体操競技の公式ルールに基づいています。',
-    
-    '連続技ボーナス': '連続技ボーナスは種目によって異なるルールが適用されます。\n\n'
-        '【床・あん馬・つり輪・平行棒】\n'
-        '• 対象：グループ2, 3, 4の技\n'
-        '• グループ2同士、グループ3同士は加点あり\n'
-        '• グループ4同士は加点なし\n'
-        '• D以上 + B or C = +0.1点\n'
-        '• D以上 + D以上 = +0.2点\n\n'
-        '【鉄棒】\n'
-        '• 対象：グループ1, 2, 3の技（グループ4は対象外）\n\n'
-        '手放し技同士（グループ2同士）：\n'
-        '• C難度 + D難度以上 = +0.1点（順不同）\n'
-        '• D難度 + D難度 = +0.1点\n'
-        '• D難度以上 + E難度以上 = +0.2点（順不同）\n\n'
-        'グループ1,3 + グループ2：\n'
-        '• グループ1,3のD以上 + グループ2のD = +0.1点\n'
-        '• グループ1,3のD以上 + グループ2のE以上 = +0.2点\n'
-        '• 例：リバルコ→ウインクラー = +0.2点\n\n'
-        '【跳馬】\n'
-        '• 連続技ボーナスなし（1技のみ実施）\n\n'
-        '※現在のシステムでは簡易計算を使用',
-    
-    '床_バランス技': '床運動では必ずバランス技を含める必要があります。\n\n'
-        '【必須要件】\n'
-        '• 技名に「（バランス）」が付いた技を最低1技実施\n'
-        '• この要件を満たさない場合、D-Score計算ができません\n\n'
-        '【バランス技の例】\n'
-        '• V字バランス（バランス）\n'
-        '• シュタルダー（バランス）\n'
-        '• その他静止系技（バランス）\n\n'
-        'バランス技は床運動の重要な構成要素です。'
-  };
-
-  // 質問を分析して適切な回答を生成
-  static String? getKnowledgeResponse(String question) {
-    final q = question.toLowerCase();
-    
-    // 跳馬に関する質問
-    if (q.contains('跳馬') || q.contains('vault')) {
-      if (q.contains('グループ') && (q.contains('数') || q.contains('いくつ'))) {
-        return faqResponses['跳馬_グループ数'];
-      }
-      if (q.contains('グループ') && q.contains('ボーナス')) {
-        return faqResponses['跳馬_グループボーナス'];
-      }
-      if (q.contains('何') && q.contains('グループ')) {
-        return faqResponses['跳馬_グループ数'];
-      }
-    }
-    
-    // グループ要求に関する質問
-    if (q.contains('グループ') && q.contains('要求')) {
-      if (q.contains('床') || q.contains('floor')) {
-        return faqResponses['グループ要求_床'];
-      }
-    }
-    
-    // Dスコアに関する質問
-    if (q.contains('dスコア') || q.contains('d-スコア') || q.contains('難度')) {
-      if (q.contains('計算') || q.contains('どう')) {
-        return faqResponses['Dスコア_計算'];
-      }
-    }
-    
-    // グループ点に関する質問
-    if (q.contains('グループ点') || q.contains('グループボーナス')) {
-      return faqResponses['グループ点_詳細'];
-    }
-    
-    // 終末技に関する質問
-    if (q.contains('終末技') || q.contains('グループ4')) {
-      return faqResponses['グループ点_詳細'];
-    }
-    
-    // 演技構成制限に関する質問
-    if (q.contains('8技') || q.contains('技数') || q.contains('何技') || 
-        q.contains('制限') || q.contains('最大')) {
-      return faqResponses['演技構成_制限'];
-    }
-    
-    // 連続技に関する質問
-    if (q.contains('連続技') || q.contains('コネクション') || q.contains('組み合わせ') ||
-        q.contains('リバルコ') || q.contains('ウインクラー')) {
-      return faqResponses['連続技ボーナス'];
-    }
-    
-    // 床運動のバランス技に関する質問
-    if ((q.contains('床') || q.contains('floor')) && 
-        (q.contains('バランス') || q.contains('必須') || q.contains('必要'))) {
-      return faqResponses['床_バランス技'];
-    }
-    
-    // 技の検索（J難度の技など）
-    if (q.contains('j難度') || q.contains('j級') || (q.contains('j') && q.contains('難度'))) {
-      final jSkills = searchSkills(difficulty: 'J');
-      if (jSkills.isNotEmpty) {
-        final skillList = jSkills.map((skill) => 
-          '${skill['apparatus']} ${skill['name']} (グループ${skill['group']})').join('\n');
-        return 'J難度の技は以下の通りです：\n\n$skillList';
-      } else {
-        return 'J難度の技は見つかりませんでした。';
-      }
-    }
-    
-    // 特定の難度の技を検索
-    final difficultyMatch = RegExp(r'([A-J])難度.*技').firstMatch(q);
-    if (difficultyMatch != null) {
-      final difficulty = difficultyMatch.group(1);
-      final skills = searchSkills(difficulty: difficulty);
-      if (skills.isNotEmpty) {
-        final skillList = skills.take(10).map((skill) => 
-          '${skill['apparatus']} ${skill['name']} (グループ${skill['group']})').join('\n');
-        final moreText = skills.length > 10 ? '\n\n他にも${skills.length - 10}技あります。' : '';
-        return '$difficulty難度の技は以下の通りです：\n\n$skillList$moreText';
-      } else {
-        return '$difficulty難度の技は見つかりませんでした。';
-      }
-    }
-    
-    // 床のグループ別技検索
-    if (q.contains('床') && q.contains('グループ')) {
-      final groupMatch = RegExp(r'グループ([1-4ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ])').firstMatch(q);
-      if (groupMatch != null) {
-        String group = groupMatch.group(1)!;
-        // 数字をローマ数字に変換
-        final groupMapping = {'1': 'Ⅰ', '2': 'Ⅱ', '3': 'Ⅲ', '4': 'Ⅳ'};
-        if (groupMapping.containsKey(group)) {
-          group = groupMapping[group]!;
-        }
-        
-        final skills = searchSkills(apparatus: 'FX', group: group);
-        if (skills.isNotEmpty) {
-          final skillList = skills.take(15).map((skill) => 
-            '${skill['name']} (${skill['value_letter']}難度)').join('\n');
-          final moreText = skills.length > 15 ? '\n\n他にも${skills.length - 15}技あります。' : '';
-          return '床のグループ${groupMatch.group(1)}の技は以下の通りです：\n\n$skillList$moreText';
-        } else {
-          return '床のグループ${groupMatch.group(1)}の技は見つかりませんでした。';
-        }
-      }
-    }
-    
-    // 種目別グループ検索（一般的）
-    final apparatusMapping = {
-      '床': 'FX',
-      'floor': 'FX',
-      '跳馬': 'VT',
-      'vault': 'VT',
-      'あん馬': 'PH',
-      'pommel': 'PH',
-      'つり輪': 'SR',
-      'rings': 'SR',
-      '平行棒': 'PB',
-      'parallel': 'PB',
-      '鉄棒': 'HB',
-      'horizontal': 'HB'
-    };
-    
-    for (final entry in apparatusMapping.entries) {
-      if (q.contains(entry.key) && q.contains('グループ')) {
-        final groupMatch = RegExp(r'グループ([1-5ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ])').firstMatch(q);
-        if (groupMatch != null) {
-          String group = groupMatch.group(1)!;
-          // 数字をローマ数字に変換
-          final groupMapping = {'1': 'Ⅰ', '2': 'Ⅱ', '3': 'Ⅲ', '4': 'Ⅳ', '5': 'Ⅴ'};
-          if (groupMapping.containsKey(group)) {
-            group = groupMapping[group]!;
-          }
-          
-          final skills = searchSkills(apparatus: entry.value, group: group);
-          if (skills.isNotEmpty) {
-            final skillList = skills.take(10).map((skill) => 
-              '${skill['name']} (${skill['value_letter']}難度)').join('\n');
-            final moreText = skills.length > 10 ? '\n\n他にも${skills.length - 10}技あります。' : '';
-            return '${entry.key}のグループ${groupMatch.group(1)}の技は以下の通りです：\n\n$skillList$moreText';
-          } else {
-            return '${entry.key}のグループ${groupMatch.group(1)}の技は見つかりませんでした。';
-          }
-        }
-      }
-    }
-    
-    // 技の統計情報
-    if (q.contains('技数') || q.contains('何技') || q.contains('統計')) {
-      final difficultyStats = getDifficultyCount();
-      if (difficultyStats.isNotEmpty) {
-        final statsList = difficultyStats.entries
-          .where((entry) => entry.key.isNotEmpty)
-          .map((entry) => '${entry.key}難度: ${entry.value}技')
-          .join('\n');
-        return '技数統計：\n\n$statsList';
-      }
-    }
-    
-    return null; // 専門知識データベースに該当する回答がない場合
-  }
-  
-  // 種目情報を取得
-  static Map<String, dynamic>? getApparatusInfo(String apparatus) {
-    if (kDebugMode) print('DEBUG: getApparatusInfo called with apparatus: "$apparatus"');
-    
-    // 種目コードを内部キーにマッピング
-    final String internalKey;
-    switch (apparatus.toLowerCase()) {
-      case 'fx':
-        internalKey = 'floor';
-        break;
-      case 'ph':
-        internalKey = 'pommel';
-        break;
-      case 'sr':
-        internalKey = 'rings';
-        break;
-      case 'vt':
-        internalKey = 'vault';
-        break;
-      case 'pb':
-        internalKey = 'parallel';
-        break;
-      case 'hb':
-        internalKey = 'horizontal';
-        break;
-      default:
-        // 既に内部キー形式の場合はそのまま使用
-        internalKey = apparatus.toLowerCase();
-        if (kDebugMode) print('DEBUG: Unknown apparatus code, using lowercase: "$internalKey"');
-        break;
-    }
-    
-    if (kDebugMode) {
-      print('DEBUG: mapped internalKey: "$internalKey"');
-      print('DEBUG: apparatusInfo.keys: ${apparatusInfo.keys}');
-      print('DEBUG: lookup result: ${apparatusInfo[internalKey] != null ? "found" : "not found"}');
-    }
-    
-    return apparatusInfo[internalKey];
-  }
-
-  // 演技分析に基づく改善案を生成
-  static String generateImprovementSuggestions(String apparatus, RoutineAnalysis analysis) {
-    if (kDebugMode) print('DEBUG: generateImprovementSuggestions called with apparatus: "$apparatus"');
-    final apparatusData = getApparatusInfo(apparatus);
-    if (apparatusData == null) {
-      if (kDebugMode) print('DEBUG: getApparatusInfo returned null for apparatus: "$apparatus"');
-      return '改善案を生成できませんでした。種目: "$apparatus" が見つかりません。';
-    }
-
-    String suggestions = '🎯 **${apparatusData['name_ja']} 改善案**\n\n';
-    
-    // 現在の状況分析
-    suggestions += '【現在の状況】\n';
-    suggestions += '• 技数: ${analysis.totalSkills}技\n';
-    suggestions += '• 平均難度: ${analysis.averageDifficulty.toStringAsFixed(2)}\n';
-    suggestions += '• 要求充足率: ${(analysis.completenessScore * 100).toStringAsFixed(0)}%\n\n';
-    
-    // 基本情報表示
-    suggestions += '【${apparatusData['name_ja']}の特徴】\n';
-    suggestions += '${apparatusData['description_ja']}\n\n';
-    
-    // 技数分析（ニュートラルディダクション表に基づく）
-    if (apparatus.toLowerCase() != 'vt') {
-      double neutralDeduction = 0.0;
-      String deductionStatus = '';
-      
-      switch (analysis.totalSkills) {
-        case 0: neutralDeduction = 10.0; deductionStatus = '最大減点'; break;
-        case 1: neutralDeduction = 7.0; deductionStatus = '大幅減点'; break;
-        case 2: neutralDeduction = 6.0; deductionStatus = '大幅減点'; break;
-        case 3: neutralDeduction = 5.0; deductionStatus = '大幅減点'; break;
-        case 4: neutralDeduction = 4.0; deductionStatus = '減点あり'; break;
-        case 5: neutralDeduction = 3.0; deductionStatus = '減点あり'; break;
-        case 6:
-        case 7:
-        case 8: neutralDeduction = 0.0; deductionStatus = '減点なし'; break;
-        default: neutralDeduction = 0.0; deductionStatus = '構成完了'; break;
-      }
-      
-      if (neutralDeduction > 0.0) {
-        suggestions += '【🚨 技数不足（ニュートラルディダクション）】\n';
-        suggestions += '• 現在${analysis.totalSkills}技 → ND減点: ${neutralDeduction.toStringAsFixed(1)}点\n';
-        suggestions += '• 6技以上で減点回避が可能\n';
-        suggestions += '• 追加で${6 - analysis.totalSkills}技選択が急務\n\n';
-      } else if (analysis.totalSkills < 8) {
-        suggestions += '【⚠️ 技数推奨】\n';
-        suggestions += '• 現在${analysis.totalSkills}技（減点なし）\n';
-        suggestions += '• 最大8技まで追加可能\n';
-        suggestions += '• D-Score向上のため追加技を検討\n\n';
-      } else {
-        suggestions += '【✅ 技数適正】\n';
-        suggestions += '• 最大8技で構成完了\n\n';
-      }
-    }
-    
-    // グループ要求分析
-    if (analysis.missingGroups.isNotEmpty) {
-      suggestions += '【🚨 不足グループの対策】\n';
-      for (String missingGroup in analysis.missingGroups) {
-        final groupNum = int.tryParse(missingGroup.replaceAll('グループ', ''));
-        if (groupNum != null && apparatusData['groups_detail'][groupNum] != null) {
-          suggestions += '• **グループ$groupNum**: ${apparatusData['groups_detail'][groupNum]}\n';
-          suggestions += '  この系統から技を追加することをお勧めします。\n';
-        }
-      }
-      suggestions += '\n';
-    } else if (apparatus.toLowerCase() != 'vt') {
-      suggestions += '【✅ グループ要求】\n';
-      suggestions += '• 全グループ要求を満たしています\n\n';
-    }
-    
-    // 種目別の具体的アドバイス
-    final String apparatusKey = apparatus.toLowerCase();
-    switch (apparatusKey) {
-      case 'vault':
-      case 'vt':
-        suggestions += '【跳馬のアドバイス】\n';
-        suggestions += '• 1技のみの実施のため、最高難度の技を選択することが重要\n';
-        suggestions += '• グループボーナスはないため、個々の技の難度値が決定的\n';
-        suggestions += '• 着地の安定性も含めて技を選択しましょう\n';
-        break;
-      case 'floor':
-      case 'fx':
-        suggestions += '【床運動のアドバイス】\n';
-        suggestions += '• 4グループすべてから技を実施してボーナス0.5点を確実に獲得\n';
-        suggestions += '• 90秒の時間制限内での構成を考慮\n';
-        suggestions += '• 音楽との調和も重要な要素です\n';
-        break;
-      default:
-        suggestions += '【${apparatusData['name_ja']}のアドバイス】\n';
-        suggestions += '• 4グループすべてから技を実施してボーナス0.5点を獲得\n';
-        suggestions += '• バランスの良い構成を心がけましょう\n';
-    }
-    
-    // グループ別技数制限とニュートラルディダクション表
-    if (apparatus.toLowerCase() != 'vt') {
-      suggestions += '\n【📋 技数制限ルール】\n';
-      suggestions += '• 全体: 最大8技まで\n';
-      suggestions += '• 同一グループ: 最大4技まで\n';
-      suggestions += '• グループ1-4: 各4技まで\n\n';
-      
-      suggestions += '【⚠️ ニュートラルディダクション（ND）表】\n';
-      suggestions += '• 5技: -3.0点 | 4技: -4.0点 | 3技: -5.0点\n';
-      suggestions += '• 2技: -6.0点 | 1技: -7.0点 | 0技: -10.0点\n';
-      suggestions += '• 6技以上: 減点なし（推奨）\n';
-    }
-    
-    suggestions += '\n💡 具体的な技について相談したい場合は、お気軽にお聞きください！';
-    
-    return suggestions;
-  }
-}
-
-// 技の難度レベルを数値に変換
-double _getSkillDifficultyValue(String valueLetter) {
-  switch (valueLetter.toUpperCase()) {
-    case 'A': return 0.1;
-    case 'B': return 0.2;
-    case 'C': return 0.3;
-    case 'D': return 0.4;
-    case 'E': return 0.5;
-    case 'F': return 0.6;
-    case 'G': return 0.7;
-    case 'H': return 0.8;
-    case 'I': return 0.9;
-    case 'J': return 1.0;
-    default: return 0.0;
-  }
-}
-
-// D難度以上かを判定
-bool _isHighDifficulty(String valueLetter) {
-  return ['D', 'E', 'F', 'G', 'H', 'I', 'J'].contains(valueLetter.toUpperCase());
-}
-
-// グループ内の最高難度技を取得
-Skill? _getHighestSkillInGroup(List<Skill> routine, int group) {
-  final groupSkills = routine.where((skill) => skill.group == group).toList();
-  if (groupSkills.isEmpty) return null;
-  
-  groupSkills.sort((a, b) => b.value.compareTo(a.value));
-  return groupSkills.first;
-}
-
-// グループごとの技数をカウント
-Map<int, int> _countSkillsPerGroup(List<Skill> routine) {
-  final counts = <int, int>{};
-  for (var skill in routine) {
-    counts[skill.group] = (counts[skill.group] ?? 0) + 1;
-  }
-  return counts;
-}
-
-// 床運動にバランス技が含まれているかチェック
-bool _hasBalanceSkill(List<Skill> routine) {
-  return routine.any((skill) => skill.name.contains('（バランス）') || skill.name.contains('(バランス)'));
-}
-
-// 床運動の必須要件をチェック
-String? _checkFloorRequirements(List<Skill> routine) {
-  if (!_hasBalanceSkill(routine)) {
-    return 'バランス技が含まれていません。床運動では必ずバランス技を入れてください。';
-  }
-  return null; // 問題なし
-}
-
-// グループボーナスを計算（正確なルールに基づく）
-double _calculateGroupBonus(String apparatus, List<Skill> routine) {
-  // 跳馬は1技のみ実施、グループボーナスなし
-  if (apparatus.toLowerCase() == 'vault' || apparatus.toLowerCase() == 'vt') {
-    return 0.0;
-  }
-  
-  double totalGroupBonus = 0.0;
-  
-  // グループ1-4の処理
-  for (int groupNum = 1; groupNum <= 4; groupNum++) {
-    final highestSkill = _getHighestSkillInGroup(routine, groupNum);
-    if (highestSkill == null) continue; // グループに技がない場合
-    
-    // グループ1：無条件で0.5点
-    if (groupNum == 1) {
-      totalGroupBonus += 0.5;
-    }
-    // グループ2,3：D難度以上=0.5点、C難度以下=0.3点
-    else if (groupNum == 2 || groupNum == 3) {
-      if (_isHighDifficulty(highestSkill.valueLetter)) {
-        totalGroupBonus += 0.5;
-      } else {
-        totalGroupBonus += 0.3;
-      }
-    }
-    // グループ4（終末技）：床以外は技の難度値をそのまま使用
-    else if (groupNum == 4) {
-      if (apparatus.toLowerCase() == 'floor' || apparatus.toLowerCase() == 'fx') {
-        // 床はグループ4も通常ルール
-        if (_isHighDifficulty(highestSkill.valueLetter)) {
-          totalGroupBonus += 0.5;
-        } else {
-          totalGroupBonus += 0.3;
-        }
-      } else {
-        // その他種目：終末技の難度値をそのまま使用
-        totalGroupBonus += highestSkill.value;
-      }
+    try {
+      return _skillsDatabase.firstWhere(
+        (skill) => skill['name']?.toString().toLowerCase().contains(name.toLowerCase()) == true &&
+                   skill['apparatus']?.toString().toLowerCase() == apparatus.toLowerCase(),
+      );
+    } catch (e) {
+      return null;
     }
   }
   
-  return totalGroupBonus;
-}
-
-DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
-  double difficultyValue = 0.0;
-  double connectionBonus = 0.0;
-  
-  // 跳馬の特殊処理：1技のみでその技の難度値がDスコア
-  if (apparatus.toLowerCase() == 'vault' || apparatus.toLowerCase() == 'vt') {
-    // 跳馬は1技のみ、最初に見つかった技の難度値がDスコア
-    for (var group in routine) {
-      for (var skill in group) {
-        difficultyValue = skill.value; // 跳馬は1技のみなので、その技の難度値がDスコア
-        break; // 1技のみなので即座に終了
-      }
-      if (difficultyValue > 0) break; // 技が見つかったら終了
-    }
-    
-    return DScoreResult(
-      dScore: difficultyValue, // 跳馬はボーナス等なし、技の難度値のみ
-      difficultyValue: difficultyValue,
-      groupBonus: 0.0, // 跳馬はグループボーナスなし
-      connectionBonus: 0.0, // 跳馬は連続技ボーナスなし
-      fulfilledGroups: 1, // 技があれば1グループ充足
-      requiredGroups: 1, // 跳馬は1技のみ要求
-    );
+  // 全技データの取得（デバッグ用）
+  static List<Map<String, dynamic>> getAllSkills() {
+    return List.from(_skillsDatabase);
   }
-  
-  // その他の種目の通常処理
-  final requiredGroups = _getRequiredGroupsForApparatus(apparatus);
-  final presentGroups = <int>{};
-  
-  // フラットなスキルリストを作成
-  final flatRoutine = <Skill>[];
-  
-  // 技の難度値とグループを収集
-  for (var group in routine) {
-    for (var skill in group) {
-      difficultyValue += skill.value;
-      presentGroups.add(skill.group);
-      flatRoutine.add(skill);
-    }
-    
-    // 連続技ボーナスの計算（2技以上の場合）
-    if (group.length >= 2) {
-      connectionBonus += 0.1 * (group.length - 1); // 簡易的な連続技ボーナス
-    }
-  }
-  
-  // グループ要求充足率とボーナスの計算
-  final fulfilledGroups = requiredGroups.intersection(presentGroups).length;
-  final groupBonus = _calculateGroupBonus(apparatus, flatRoutine);
-  
-  double totalScore = difficultyValue + groupBonus + connectionBonus;
-  
-  return DScoreResult(
-    dScore: totalScore,
-    difficultyValue: difficultyValue,
-    groupBonus: groupBonus,
-    connectionBonus: connectionBonus,
-    fulfilledGroups: fulfilledGroups,
-    requiredGroups: requiredGroups.length,
-  );
 }

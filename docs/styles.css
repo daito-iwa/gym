@@ -146,6 +146,36 @@ body {
     max-width: 800px;
     margin: 0 auto;
     padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Desktop layout order */
+@media (min-width: 769px) {
+    .hero-content {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .hero-app-icon {
+        order: 1;
+    }
+    
+    .hero-title {
+        order: 2;
+    }
+    
+    .hero-subtitle {
+        order: 3;
+    }
+    
+    .hero-cta {
+        order: 4;
+    }
+    
+    .hero-image {
+        order: 5;
+    }
 }
 
 .hero-app-icon {
@@ -263,9 +293,18 @@ body {
 
 /* Hero Device Demo */
 .hero-image {
-    margin-top: 80px;
+    margin-top: 20px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: center;
+}
+
+/* Desktop hero image spacing */
+@media (min-width: 769px) {
+    .hero-image {
+        margin-top: 80px;
+        margin-bottom: 0;
+    }
 }
 
 .device-frame {
@@ -946,7 +985,8 @@ body {
     }
 
     .hero-content {
-        padding: 0 12px;
+        padding: 0 16px;
+        max-width: 100%;
     }
 
     .app-icon-image {
@@ -956,8 +996,8 @@ body {
     }
 
     .hero-title {
-        font-size: 32px;
-        line-height: 1.1;
+        font-size: 28px;
+        line-height: 1.2;
         margin-bottom: 16px;
     }
 
@@ -975,11 +1015,12 @@ body {
     }
 
     .hero-image {
-        margin-top: 40px;
+        margin-top: 24px;
+        margin-bottom: 24px;
     }
 
     .device-frame {
-        width: 180px;
+        width: 160px;
     }
 
     .features-section,
@@ -1206,6 +1247,39 @@ body {
     input[type="tel"],
     input[type="color"] {
         font-size: 16px;
+    }
+}
+
+/* Extra small mobile devices (320px and down) */
+@media (max-width: 320px) {
+    .hero-content {
+        padding: 0 12px;
+        max-width: 100%;
+    }
+    
+    .hero-title {
+        font-size: 24px;
+        line-height: 1.2;
+        margin-bottom: 12px;
+    }
+    
+    .hero-subtitle {
+        font-size: 16px;
+        line-height: 1.4;
+        margin-bottom: 24px;
+    }
+    
+    .hero-image {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .device-frame {
+        width: 140px;
+    }
+    
+    .nav-content {
+        padding: 0 8px;
     }
 }
 
