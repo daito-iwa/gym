@@ -6558,8 +6558,10 @@ $expertAnswer
 🏆 Dスコア: ${result.totalDScore.toStringAsFixed(3)}点
 📊 内訳:
 - 難度点: ${result.difficultyValue.toStringAsFixed(3)}点
-- グループ要求 (${result.fulfilledGroups}/${result.requiredGroups}): ${result.groupBonus.toStringAsFixed(3)}点
-'''\n      + ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') \n          ? '- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点\\n' \n          : '') + '''
+- グループ要求 (${result.fulfilledGroups}/${result.requiredGroups}): ${result.groupBonus.toStringAsFixed(3)}点''' + 
+      ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
+          ? '\n- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点' 
+          : '') + '''
 
 📝 基本情報:
 - 種目: $_selectedApparatus
