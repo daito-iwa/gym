@@ -4272,8 +4272,18 @@ $expertAnswer
     // 連続技グループを適切に構築
     final routine = _buildConnectedSkillGroups(_routine, _connectionGroups);
     
+    // デバッグ情報
+    print('🔍 連続技グループ構築結果:');
+    print('  種目: $_selectedApparatus');
+    print('  _connectionGroups: $_connectionGroups');
+    for (int i = 0; i < routine.length; i++) {
+      final group = routine[i];
+      print('  グループ${i + 1}: ${group.map((s) => '${s.name}(${s.valueLetter})').join(' → ')}');
+    }
+    
     // D-スコアを計算
     final result = calculateDScore(_selectedApparatus!, routine);
+    print('  計算結果 - 連続技ボーナス: ${result.connectionBonus}');
     
     // 使用量を記録
     await DScoreUsageTracker.recordDScoreUsage(_userSubscription);
