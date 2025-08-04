@@ -4164,15 +4164,19 @@ $expertAnswer
     if (skills.isEmpty) return routine;
     
     List<Skill> currentGroup = [skills[0]];
+    int currentConnectionId = connectionGroups.isNotEmpty ? connectionGroups[0] : 0;
     
     for (int i = 1; i < skills.length; i++) {
-      // 前の技と連続する場合
-      if (i < connectionGroups.length && connectionGroups[i] != 0) {
+      final connectionId = i < connectionGroups.length ? connectionGroups[i] : 0;
+      
+      // 同じ連続技IDを持つ技同士は連続技として扱う（0は連続技ではない）
+      if (connectionId != 0 && connectionId == currentConnectionId) {
         currentGroup.add(skills[i]);
       } else {
         // 連続技グループを確定し、新しいグループを開始
         routine.add(List.from(currentGroup));
         currentGroup = [skills[i]];
+        currentConnectionId = connectionId;
       }
     }
     
