@@ -40,7 +40,7 @@
       }
     }
     </script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile-styles.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤸</text></svg>">
 </head>
 <body>
@@ -51,11 +51,16 @@
                 <span class="logo-icon">🤸</span>
                 <span class="logo-text">Gymnastics AI</span>
             </div>
-            <div class="nav-links">
-                <a href="#features" class="nav-link">機能</a>
-                <a href="#download" class="nav-link">ダウンロード</a>
-                <a href="#support" class="nav-link">サポート</a>
-            </div>
+            <button class="nav-toggle" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+        <div class="nav-menu" id="navMenu">
+            <a href="#features" class="nav-link">機能</a>
+            <a href="#download" class="nav-link">ダウンロード</a>
+            <a href="#support" class="nav-link">サポート</a>
         </div>
     </nav>
 
@@ -80,9 +85,29 @@
                 あなたの成長をサポート
             </p>
             <div class="hero-cta">
-                <a href="webapp/" class="cta-button primary">ウェブ版を試す</a>
-                <a href="#download" class="cta-button secondary">モバイル版DL</a>
-                <a href="#features" class="cta-button secondary">詳しく見る</a>
+                <a href="webapp/" class="cta-button primary">🌐 ウェブ版を試す</a>
+                <a href="#download" class="cta-button secondary">📱 アプリをダウンロード</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features Quick -->
+    <section class="features-quick">
+        <div class="features-container">
+            <div class="feature-card">
+                <div class="feature-icon">🧮</div>
+                <h3>高精度D-Score計算</h3>
+                <p>FIG公式ルール準拠の正確な計算</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI技術相談</h3>
+                <p>24時間対応の技術サポート</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>技データベース</h3>
+                <p>1000以上の技を収録</p>
             </div>
         </div>
     </section>
@@ -95,13 +120,13 @@
                 <img src="app_icon_new.png" alt="Gymnastics AI" class="download-icon-image">
             </div>
             <p class="download-subtitle">
-                無料でダウンロードして、体操競技の新しい世界を体験してください
+                無料でダウンロードして、体操競技の新しい世界を体験
             </p>
             <div class="download-buttons">
-                <a href="webapp/" class="cta-button primary" style="margin-bottom: 20px; display: inline-block;">
+                <a href="webapp/" class="cta-button primary main-cta">
                     🌐 ウェブ版で今すぐ試す
                 </a>
-                <div style="width: 100%; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <div class="store-buttons">
                     <a href="https://apps.apple.com/app/gymnastics-ai/id6736816486" target="_blank" rel="noopener" class="store-button">
                         <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
                              alt="Download on the App Store" class="store-badge">
@@ -169,16 +194,6 @@
 
             <div class="feature-item">
                 <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🔍</span>
-                </div>
-                <h3 class="feature-title">技データベース</h3>
-                <p class="feature-description">
-                    1000以上の技を収録。難度別・グループ別で簡単検索。
-                </p>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
                     <span class="feature-icon">📊</span>
                 </div>
                 <h3 class="feature-title">演技分析</h3>
@@ -196,69 +211,8 @@
                     インターネット接続なしでも主要機能が利用可能。
                 </p>
             </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🌐</span>
-                </div>
-                <h3 class="feature-title">多言語対応</h3>
-                <p class="feature-description">
-                    日本語・英語に対応。世界中で利用可能。
-                </p>
-            </div>
         </div>
     </section>
-
-    <!-- Showcase Section -->
-    <section class="showcase-section">
-        <div class="showcase-content">
-            <div class="showcase-text">
-                <h2 class="showcase-title">
-                    すべての体操選手のために<br>
-                    設計されたアプリ
-                </h2>
-                <p class="showcase-description">
-                    初心者から上級者まで、すべてのレベルの選手が使いやすいインターフェース。
-                    直感的な操作で、複雑な計算も簡単に。
-                </p>
-                <div class="showcase-features">
-                    <div class="showcase-feature">
-                        <div class="check-icon">✓</div>
-                        <span>シンプルで美しいデザイン</span>
-                    </div>
-                    <div class="showcase-feature">
-                        <div class="check-icon">✓</div>
-                        <span>高速レスポンス</span>
-                    </div>
-                    <div class="showcase-feature">
-                        <div class="check-icon">✓</div>
-                        <span>定期的なアップデート</span>
-                    </div>
-                </div>
-            </div>
-            <div class="showcase-visual">
-                <div class="visual-card">
-                    <div class="card-header">
-                        <span class="card-icon">📱</span>
-                        <span class="card-title">モバイル最適化</span>
-                    </div>
-                    <p class="card-description">
-                        スマートフォンでもタブレットでも、最適な表示で快適に利用できます。
-                    </p>
-                </div>
-                <div class="visual-card">
-                    <div class="card-header">
-                        <span class="card-icon">⚡</span>
-                        <span class="card-title">リアルタイム計算</span>
-                    </div>
-                    <p class="card-description">
-                        技を追加するたびに、D-Scoreが瞬時に更新。練習中でも素早く確認。
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
 
     <!-- Support Section -->
     <section id="support" class="support-section">
@@ -291,23 +245,29 @@
                 <p>開発者: 岩崎大翔</p>
             </div>
             <div class="footer-link">
-                <a href="mobile.html?mobile=1" class="mobile-link">モバイル版を見る</a>
+                <a href="index.html?desktop=1" class="desktop-link">デスクトップ版を見る</a>
             </div>
         </div>
     </footer>
 
     <script>
-        // Mobile detection and redirect
-        function detectMobile() {
+        // Desktop detection and redirect
+        function detectDesktop() {
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
             const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-            const screenWidth = window.innerWidth <= 768;
-            return isMobile || screenWidth;
+            const screenWidth = window.innerWidth > 768;
+            return !isMobile && screenWidth;
         }
 
-        // Auto-redirect to mobile version on mobile devices
-        if (detectMobile() && !window.location.search.includes('desktop=1')) {
-            window.location.href = 'mobile.html';
+        // Auto-redirect to desktop version on desktop devices
+        if (detectDesktop() && !window.location.search.includes('mobile=1')) {
+            window.location.href = 'index.html';
+        }
+
+        // Mobile menu toggle
+        function toggleMenu() {
+            const navMenu = document.getElementById('navMenu');
+            navMenu.classList.toggle('active');
         }
 
         // Smooth scrolling for anchor links
@@ -320,6 +280,8 @@
                         behavior: 'smooth',
                         block: 'start'
                     });
+                    // Close mobile menu if open
+                    document.getElementById('navMenu').classList.remove('active');
                 }
             });
         });
@@ -349,7 +311,7 @@
         }, observerOptions);
 
         // Observe all animatable elements
-        document.querySelectorAll('.feature-item, .showcase-feature, .visual-card, .support-card').forEach(el => {
+        document.querySelectorAll('.feature-item, .feature-card, .support-card').forEach(el => {
             observer.observe(el);
         });
     </script>

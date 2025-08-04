@@ -304,8 +304,7 @@ body {
     .hero-image {
         margin-top: 80px;
         margin-bottom: 0;
-        justify-content: flex-start;
-        padding-left: 60px;
+        justify-content: center;
     }
 }
 
@@ -828,6 +827,23 @@ body {
     font-size: 14px;
     color: var(--text-secondary);
     margin: 5px 0;
+}
+
+.footer-link {
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.mobile-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.mobile-link:hover {
+    text-decoration: underline;
 }
 
 /* Responsive Design */
