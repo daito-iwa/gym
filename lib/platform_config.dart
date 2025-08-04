@@ -1,12 +1,16 @@
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 
-/// モバイルアプリ版のみの設定を管理するクラス
+/// プラットフォーム設定を管理するクラス
 class PlatformConfig {
   /// 現在のプラットフォームがiOSかどうか
-  static bool get isIOS => Platform.isIOS;
+  static bool get isIOS => !kIsWeb && Platform.isIOS;
   
   /// 現在のプラットフォームがAndroidかどうか
-  static bool get isAndroid => Platform.isAndroid;
+  static bool get isAndroid => !kIsWeb && Platform.isAndroid;
+  
+  /// 現在のプラットフォームがWebかどうか
+  static bool get isWeb => kIsWeb;
   
   /// 現在のプラットフォームがモバイル（iOS/Android）かどうか
   static bool get isMobile => isIOS || isAndroid;
@@ -19,6 +23,9 @@ class PlatformConfig {
   
   /// AdMob広告が利用可能かどうか（現在停止中）
   static bool get isAdMobEnabled => false;
+  
+  /// Web広告が利用可能かどうか
+  static bool get isWebAdsEnabled => isWeb;
   
   /// プラットフォーム名を取得
   static String get platformName {

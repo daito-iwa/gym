@@ -25,7 +25,10 @@ import 'platform_config.dart'; // プラットフォーム設定
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
 // import 'auth_screen.dart'; // 認証画面（現在未使用）
 // import 'social_auth_manager.dart'; // ソーシャル認証（現在未使用）
-// Web版は廃止しました（PropellerAds、Web関連import削除済み）
+// Web版広告システム
+import 'web_ads_manager.dart'; // Web広告管理
+import 'web_ad_widget.dart'; // Web広告ウィジェット
+import 'web_usage_manager.dart'; // Web使用制限管理
 
 // デバッグ用ヘルパー関数（本番では出力しない）
 void debugLog(String message) {
@@ -433,7 +436,15 @@ class RoutineAnalyzer {
   }
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Web広告システムの初期化
+  if (kIsWeb) {
+    await WebAdsManager.initialize();
+    await WebUsageManager.initialize();
+  }
+  
   runApp(const MyApp());
 }
 
@@ -4417,7 +4428,17 @@ $expertAnswer
         // キーボードフォーカスを外す
         FocusScope.of(context).unfocus();
       },
-      child: Scaffold(
+      child: PlatformConfig.isWeb 
+        ? ResponsiveAdLayout(
+            showAds: PlatformConfig.isWebAdsEnabled,
+            child: _buildMainScaffold(),
+          )
+        : _buildMainScaffold(),
+    );
+  }
+  
+  Widget _buildMainScaffold() {
+    return Scaffold(
         appBar: AppBar(
           titleSpacing: 0, // タイトル領域のスペーシングを最小化
           title: SizedBox(
@@ -5960,14 +5981,16 @@ $expertAnswer
               Colors.blue[700]!,
               isMobile
             ),
-            const SizedBox(height: 12),
-            _buildCleanScoreRow(
-              'グループ要求 (${result.fulfilledGroups}/${result.requiredGroups})',
-              result.groupBonus,
-              Colors.orange[100]!,
-              Colors.orange[700]!,
-              isMobile
-            ),
+            if (_selectedApparatus != 'VT') ...[
+              const SizedBox(height: 12),
+              _buildCleanScoreRow(
+                'グループ要求 (${result.fulfilledGroups}/${result.requiredGroups})',
+                result.groupBonus,
+                Colors.orange[100]!,
+                Colors.orange[700]!,
+                isMobile
+              ),
+            ],
             if (_selectedApparatus == 'FX' || _selectedApparatus == 'HB') ...[
               const SizedBox(height: 12),
               _buildCleanScoreRow(
@@ -6567,8 +6590,10 @@ $expertAnswer
       analysisText = '''演技構成分析結果：
 🏆 Dスコア: ${result.totalDScore.toStringAsFixed(3)}点
 📊 内訳:
-- 難度点: ${result.difficultyValue.toStringAsFixed(3)}点
-- グループ要求 (${result.fulfilledGroups}/${result.requiredGroups}): ${result.groupBonus.toStringAsFixed(3)}点''' + 
+- 難度点: ${result.difficultyValue.toStringAsFixed(3)}点''' + 
+      ((_selectedApparatus != 'VT') 
+          ? '\n- グループ要求 (${result.fulfilledGroups}/${result.requiredGroups}): ${result.groupBonus.toStringAsFixed(3)}点' 
+          : '') +
       ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
           ? '\n- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点' 
           : '') + '''
@@ -6592,20 +6617,43 @@ $expertAnswer
     
     if (message.trim().isEmpty) return;
     
-    // 使用制限チェック
-    bool canSend = await ChatUsageTracker.canSendMessage(_userSubscription);
-    if (!canSend) {
-      setState(() {
-        _chatMessages.add({
-          'role': 'system',
-          'content': '❌ **利用制限に達しました**\n\n'
-              'AIチャット機能は1日${ChatUsageTracker.dailyFreeLimit}回、月${ChatUsageTracker.monthlyFreeLimit}回までご利用いただけます。\n\n'
-              '明日または来月になると、再度ご利用いただけます。\n'
-              'それまでは、D-score計算や技検索などの他の機能をお使いください。',
-          'timestamp': DateTime.now(),
+    // Web版の使用制限チェック
+    if (PlatformConfig.isWeb) {
+      bool canSend = await WebUsageManager.canUseChat();
+      if (!canSend) {
+        final stats = await WebUsageManager.getUsageStats();
+        await UsageLimitDialog.showLimitReached(
+          context,
+          onWatchAd: () async {
+            // 広告視聴後の処理
+            await WebUsageManager.incrementAdViewCount();
+            WebAdsManager.trackRevenue(
+              adNetwork: 'AdSense',
+              adUnit: 'incentive',
+              action: 'watch',
+            );
+            setState(() {}); // UI更新
+          },
+          onClose: () {},
+        );
+        return;
+      }
+    } else {
+      // モバイル版の制限チェック
+      bool canSend = await ChatUsageTracker.canSendMessage(_userSubscription);
+      if (!canSend) {
+        setState(() {
+          _chatMessages.add({
+            'role': 'system',
+            'content': '❌ **利用制限に達しました**\n\n'
+                'AIチャット機能は1日${ChatUsageTracker.dailyFreeLimit}回、月${ChatUsageTracker.monthlyFreeLimit}回までご利用いただけます。\n\n'
+                '明日または来月になると、再度ご利用いただけます。\n'
+                'それまでは、D-score計算や技検索などの他の機能をお使いください。',
+            'timestamp': DateTime.now(),
+          });
         });
-      });
-      return;
+        return;
+      }
     }
     
     setState(() {
@@ -6678,7 +6726,11 @@ $expertAnswer
         });
         
         // 使用回数を記録（サーバー応答成功時のみ）
-        await ChatUsageTracker.recordChatUsage(_userSubscription);
+        if (PlatformConfig.isWeb) {
+          await WebUsageManager.incrementChatCount();
+        } else {
+          await ChatUsageTracker.recordChatUsage(_userSubscription);
+        }
       } else if (response.statusCode == 401) {
         // 認証エラーの場合、匿名ユーザーとしてローカル回答にフォールバック
         print('認証エラー - ローカル回答にフォールバック');
@@ -6693,7 +6745,11 @@ $expertAnswer
             });
           });
           // フォールバック回答も使用回数として記録
-          await ChatUsageTracker.recordChatUsage(_userSubscription);
+          if (PlatformConfig.isWeb) {
+            await WebUsageManager.incrementChatCount();
+          } else {
+            await ChatUsageTracker.recordChatUsage(_userSubscription);
+          }
         } else {
           setState(() {
             _chatMessages.add({
@@ -6728,8 +6784,12 @@ $expertAnswer
             'timestamp': DateTime.now(),
           });
         });
-        // エラー時のフォールバック回答も使用回数として記録
-        await ChatUsageTracker.recordChatUsage(_userSubscription);
+        // 使用回数を記録
+        if (PlatformConfig.isWeb) {
+          await WebUsageManager.incrementChatCount();
+        } else {
+          await ChatUsageTracker.recordChatUsage(_userSubscription);
+        }
       } else {
         setState(() {
           _chatMessages.add({
@@ -9500,21 +9560,21 @@ ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missin
         return 4;
       case 'PH':
       case 'POMMEL':
-        return 5;
+        return 4;
       case 'SR':
       case 'RINGS':
-        return 5;
+        return 4;
       case 'VT':
       case 'VAULT':
-        return 5;
+        return 0; // 跳馬はグループなし
       case 'PB':
       case 'PARALLEL':
-        return 5;
+        return 4;
       case 'HB':
       case 'HORIZONTAL':
-        return 5;
+        return 4;
       default:
-        return 5; // デフォルト
+        return 4; // デフォルト
     }
   }
 }
@@ -9962,21 +10022,21 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
         return 4;
       case 'PH':
       case 'POMMEL':
-        return 5;
+        return 4;
       case 'SR':
       case 'RINGS':
-        return 5;
+        return 4;
       case 'VT':
       case 'VAULT':
-        return 5;
+        return 0; // 跳馬はグループなし
       case 'PB':
       case 'PARALLEL':
-        return 5;
+        return 4;
       case 'HB':
       case 'HORIZONTAL':
-        return 5;
+        return 4;
       default:
-        return 5; // デフォルト
+        return 4; // デフォルト
     }
   }
 }

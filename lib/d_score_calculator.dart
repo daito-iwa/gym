@@ -143,11 +143,11 @@ class DScoreResult {
 // --- 定数定義 ---
 const Map<String, Map<String, dynamic>> APPARATUS_RULES = {
     "FX": {"count_limit": 8, "groups_required": 4, "bonus_per_group": 0.5},
-    "PH": {"count_limit": 8, "groups_required": 5, "bonus_per_group": 0.5},
+    "PH": {"count_limit": 8, "groups_required": 4, "bonus_per_group": 0.5},
     "SR": {"count_limit": 8, "groups_required": 4, "bonus_per_group": 0.5},
     "VT": {"count_limit": 1, "groups_required": 0, "bonus_per_group": 0.0},
-    "PB": {"count_limit": 8, "groups_required": 5, "bonus_per_group": 0.5},
-    "HB": {"count_limit": 8, "groups_required": 5, "bonus_per_group": 0.5},
+    "PB": {"count_limit": 8, "groups_required": 4, "bonus_per_group": 0.5},
+    "HB": {"count_limit": 8, "groups_required": 4, "bonus_per_group": 0.5},
 };
 
 DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
