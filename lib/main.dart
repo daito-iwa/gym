@@ -4280,9 +4280,14 @@ $expertAnswer
     print('🔍 連続技グループ構築結果:');
     print('  種目: $_selectedApparatus');
     print('  _connectionGroups: $_connectionGroups');
+    print('  _routine技詳細:');
+    for (int i = 0; i < _routine.length; i++) {
+      final skill = _routine[i];
+      print('    [$i] ${skill.name}: グループ${skill.group}, 難度レター${skill.valueLetter}, 難度値${skill.value}');
+    }
     for (int i = 0; i < routine.length; i++) {
       final group = routine[i];
-      print('  グループ${i + 1}: ${group.map((s) => '${s.name}(${s.valueLetter})').join(' → ')}');
+      print('  グループ${i + 1}: ${group.map((s) => '${s.name}(難度値:${s.value})').join(' → ')}');
     }
     
     // D-スコアを計算
