@@ -213,7 +213,7 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   // 3. 連続技ボーナス
   double connectionBonus = 0.0;
   
-  // 床運動の連続技ボーナス
+  // 床運動の連続技ボーナス（FIG公式ルール準拠）
   if (apparatus == "FX") {
     for (final connectionGroup in routine) {
       if (connectionGroup.length > 1) {
@@ -221,32 +221,37 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
           final skill1 = connectionGroup[i];
           final skill2 = connectionGroup[i + 1];
           
-          // グループ2,3,4の技のみ（グループ1は除外）
-          if ((skill1.group == 2 || skill1.group == 3 || skill1.group == 4) &&
-              (skill2.group == 2 || skill2.group == 3 || skill2.group == 4)) {
-            
-            // グループ4同士の連続は除外
-            if (skill1.group == 4 && skill2.group == 4) {
-              continue;
-            }
-            
-            final v1 = skill1.value;
-            final v2 = skill2.value;
-            
-            // D+D以上 = 0.2点
-            if (v1 >= 0.4 && v2 >= 0.4) {
-              connectionBonus += 0.2;
-            }
-            // D+B/C または B/C+D = 0.1点
-            else if ((v1 >= 0.4 && v2 >= 0.2) || (v1 >= 0.2 && v2 >= 0.4)) {
-              connectionBonus += 0.1;
-            }
+          // グループ1（技術系）は連続技ボーナス対象外
+          if (skill1.group == 1 || skill2.group == 1) {
+            continue;
+          }
+          
+          // 「切り返し系」（前方系↔後方系）は連続技ボーナス対象外
+          if ((skill1.group == 2 && skill2.group == 3) || (skill1.group == 3 && skill2.group == 2)) {
+            continue;
+          }
+          
+          // グループ4同士の連続は連続技ボーナス対象外
+          if (skill1.group == 4 && skill2.group == 4) {
+            continue;
+          }
+          
+          final v1 = skill1.value;
+          final v2 = skill2.value;
+          
+          // D難度以上 + D難度以上 = 0.2点
+          if (v1 >= 0.4 && v2 >= 0.4) {
+            connectionBonus += 0.2;
+          }
+          // D難度以上 + B/C難度 = 0.1点（双方向）
+          else if ((v1 >= 0.4 && v2 >= 0.2 && v2 <= 0.3) || (v1 >= 0.2 && v1 <= 0.3 && v2 >= 0.4)) {
+            connectionBonus += 0.1;
           }
         }
       }
     }
   }
-  // 鉄棒の連続技ボーナス
+  // 鉄棒の連続技ボーナス（FIG公式ルール準拠）
   else if (apparatus == "HB") {
     for (final connectionGroup in routine) {
       if (connectionGroup.length > 1) {
@@ -257,41 +262,51 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
           final v2 = skill2.value;
           double bonusForThisPair = 0.0;
 
-          // ルールセット1: 「離れ技」同士の連続 (G2 -> G2)
+          // 手放し技同士の連続（グループII同士）
           if (skill1.group == 2 && skill2.group == 2) {
-            if ((v1 >= 0.4 && v2 >= 0.5) || (v1 >= 0.5 && v2 >= 0.4)) { // D+E, E+D
+            // D難度以上 + E難度以上 = 0.20点（双方向）
+            if ((v1 >= 0.4 && v2 >= 0.5) || (v1 >= 0.5 && v2 >= 0.4)) {
               bonusForThisPair = 0.2;
-            } else if (v1 >= 0.4 && v2 >= 0.4) { // D+D
+            }
+            // D難度 + D難度 = 0.10点
+            else if (v1 >= 0.4 && v2 >= 0.4) {
               bonusForThisPair = 0.1;
-            } else if ((v1 == 0.3 && v2 >= 0.4) || (v1 >= 0.4 && v2 == 0.3)) { // C+D, D+C
+            }
+            // C難度 + D難度以上 = 0.10点（双方向）
+            else if ((v1 == 0.3 && v2 >= 0.4) || (v1 >= 0.4 && v2 == 0.3)) {
               bonusForThisPair = 0.1;
             }
           }
-          // ルールセット2: 「グループI/III」と「グループII」の接続
-          else {
-            final isS1G1Or3 = skill1.group == 1 || skill1.group == 3;
-            final isS2G1Or3 = skill2.group == 1 || skill2.group == 3;
-            final isS1G2 = skill1.group == 2;
-            final isS2G2 = skill2.group == 2;
-
-            if ((isS1G1Or3 && isS2G2) || (isS1G2 && isS2G1Or3)) {
-              final vG1Or3 = isS1G1Or3 ? v1 : v2;
-              final vG2 = isS1G2 ? v1 : v2;
-
-              if (vG1Or3 >= 0.4 && vG2 >= 0.5) { // D以上 + E以上
-                bonusForThisPair = 0.2;
-              } else if (vG1Or3 >= 0.4 && vG2 >= 0.4) { // D以上 + D以上
-                bonusForThisPair = 0.1;
-              }
+          // グループI/III技 + 手放し技（グループII）の連続
+          else if ((skill1.group == 1 || skill1.group == 3) && skill2.group == 2) {
+            // D難度以上(EGI/III) + E難度以上(手放し技) = 0.20点
+            if (v1 >= 0.4 && v2 >= 0.5) {
+              bonusForThisPair = 0.2;
+            }
+            // D難度以上(EGI/III) + D難度(手放し技) = 0.10点
+            else if (v1 >= 0.4 && v2 >= 0.4) {
+              bonusForThisPair = 0.1;
             }
           }
+          // 手放し技（グループII） + グループI/III技の連続（双方向）
+          else if (skill1.group == 2 && (skill2.group == 1 || skill2.group == 3)) {
+            // E難度以上(手放し技) + D難度以上(EGI/III) = 0.20点
+            if (v1 >= 0.5 && v2 >= 0.4) {
+              bonusForThisPair = 0.2;
+            }
+            // D難度(手放し技) + D難度以上(EGI/III) = 0.10点
+            else if (v1 >= 0.4 && v2 >= 0.4) {
+              bonusForThisPair = 0.1;
+            }
+          }
+          
           connectionBonus += bonusForThisPair;
         }
       }
     }
   }
 
-  // 連続技ボーナスの上限制限（FIGルール：最大0.4点）
+  // 連続技ボーナスの上限制限（FIG規則：最大0.4点まで）
   connectionBonus = connectionBonus > 0.4 ? 0.4 : connectionBonus;
 
   // 4. 最終Dスコア

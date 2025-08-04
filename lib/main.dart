@@ -27,6 +27,13 @@ import 'platform_ui_config.dart'; // プラットフォーム別UI設定
 // import 'social_auth_manager.dart'; // ソーシャル認証（現在未使用）
 // Web版は廃止しました（PropellerAds、Web関連import削除済み）
 
+// デバッグ用ヘルパー関数（本番では出力しない）
+void debugLog(String message) {
+  if (kDebugMode) {
+    print(message);
+  }
+}
+
 // カスタム例外クラス
 class NetworkException implements Exception {
   final String message;
@@ -455,7 +462,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gymnastics AI Chat',
+      title: 'Gymnastics AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.black,
@@ -529,21 +536,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Gymnastics logo
+              // Gymnastics logo（大きなサイズ）
               Image.asset(
                 'assets/logo.png',
-                width: 200,
-                height: 200,
+                width: 280,
+                height: 280,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
               // App title
               const Text(
-                'Gymnastics AI Chat',
+                'Gymnastics AI',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
+                  letterSpacing: 1.5,
                 ),
               ),
             ],
@@ -785,10 +793,6 @@ class ChatUsageTracker {
   }
   
   static Future<String> getUsageStatus(UserSubscription subscription) async {
-    if (subscription.canAccessUnlimitedChat()) {
-      return 'プレミアム: 無制限';
-    }
-    
     final dailyUsage = await getDailyUsage();
     final monthlyUsage = await getMonthlyUsage();
     final bonusCredits = await getBonusCredits();
@@ -1760,7 +1764,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   String _getText(String key) {
     // AI機能は常に英語表示（ダサくなるのを防ぐため）
-    if (key == 'ruleBookChat') return 'Gymnastics AI Chat';
+    if (key == 'ruleBookChat') return 'Gymnastics AI';
     if (key == 'dScoreCalculator') return 'D-Score Calculator';
     
     return _appTexts[_currentLang]![key] ?? _appTexts['English']![key] ?? key;
@@ -1778,9 +1782,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       case AppMode.admin:
         return _currentLang == '日本語' ? '管理者パネル' : 'Admin Panel';
       case AppMode.chat:
-        return _currentLang == '日本語' ? '体操アプリ' : 'Gymnastics App';
+        return 'Gymnastics AI';
       default:
-        return _currentLang == '日本語' ? '体操アプリ' : 'Gymnastics App';
+        return 'Gymnastics AI';
     }
   }
 
@@ -4414,57 +4418,134 @@ $expertAnswer
           titleSpacing: 0, // タイトル領域のスペーシングを最小化
           title: SizedBox(
             width: MediaQuery.of(context).size.width * 0.75, // 画面幅の75%まで使用
-            child: Text(
-              _getAppBarTitle(),
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
+            child: _currentMode == AppMode.chat 
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _getAppBarTitle(),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    FutureBuilder<String>(
+                      future: ChatUsageTracker.getUsageStatus(_userSubscription),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Text(
+                            snapshot.data!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                              fontWeight: FontWeight.w400,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ],
+                )
+              : Text(
+                  _getAppBarTitle(),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
           ),
           actions: [
-            // バックグラウンド初期化インジケーター
-            if (!_isBackgroundInitComplete)
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Center(
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withOpacity(0.7),
+            // AIチャットモードの場合はリセットボタンとフィードバックボタンを表示
+            if (_currentMode == AppMode.chat) ...[
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  setState(() {
+                    _chatMessages.clear();
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_currentLang == '日本語' ? 'チャットをリセットしました' : 'Chat has been reset'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                tooltip: _currentLang == '日本語' ? 'チャットをリセット' : 'Reset Chat',
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (String value) {
+                  switch (value) {
+                    case 'feedback':
+                      _showFeedbackDialog();
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem<String>(
+                    value: 'feedback',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.feedback, size: 20),
+                        const SizedBox(width: 8),
+                        Text(_currentLang == '日本語' ? 'フィードバック' : 'Feedback'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ]
+            // その他のモードでは既存のアクションを表示
+            else ...[
+              // バックグラウンド初期化インジケーター
+              if (!_isBackgroundInitComplete)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white.withOpacity(0.7),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            // メニューボタン（複数の機能を統合）
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (String value) {
-                switch (value) {
-                  case 'feedback':
-                    _showFeedbackDialog();
-                    break;
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'feedback',
-                  child: Row(
-                    children: [
-                      Icon(Icons.feedback, size: 20),
-                      SizedBox(width: 8),
-                      Text(_currentLang == '日本語' ? 'フィードバック' : 'Feedback'),
-                    ],
+              // メニューボタン（複数の機能を統合）
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (String value) {
+                  switch (value) {
+                    case 'feedback':
+                      _showFeedbackDialog();
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem<String>(
+                    value: 'feedback',
+                    child: Row(
+                      children: [
+                        Icon(Icons.feedback, size: 20),
+                        SizedBox(width: 8),
+                        Text(_currentLang == '日本語' ? 'フィードバック' : 'Feedback'),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -4563,6 +4644,19 @@ $expertAnswer
                 child: Text(_getText('modeSelection'), style: Theme.of(context).textTheme.titleSmall),
               ),
               RadioListTile<AppMode>(
+                title: Text('AIチャット${AppConfig.enableAIChat ? '' : ' (準備中)'}'),
+                value: AppMode.chat,
+                groupValue: _currentMode,
+                onChanged: (AppMode? value) {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).pop(); // ドロワーを自動で閉じる
+                  // プレミアムチェック付きでモード切り替え
+                  if (value != null) {
+                    _safeSwitchToMode(value);
+                  }
+                },
+              ),
+              RadioListTile<AppMode>(
                 title: Text(_getText('dScoreCalculator')),
                 value: AppMode.dScore,
                 groupValue: _currentMode,
@@ -4591,19 +4685,6 @@ $expertAnswer
               RadioListTile<AppMode>(
                 title: Text(_getText('routineAnalysis')),
                 value: AppMode.analytics,
-                groupValue: _currentMode,
-                onChanged: (AppMode? value) {
-                  HapticFeedback.lightImpact();
-                  Navigator.of(context).pop(); // ドロワーを自動で閉じる
-                  // プレミアムチェック付きでモード切り替え
-                  if (value != null) {
-                    _safeSwitchToMode(value);
-                  }
-                },
-              ),
-              RadioListTile<AppMode>(
-                title: Text('AIチャット${AppConfig.enableAIChat ? '' : ' (準備中)'}'),
-                value: AppMode.chat,
                 groupValue: _currentMode,
                 onChanged: (AppMode? value) {
                   HapticFeedback.lightImpact();
@@ -5744,7 +5825,7 @@ $expertAnswer
   }
 
   void _showDifficultyFilterDialog() {
-    final difficulties = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+    final difficulties = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     
     showDialog(
       context: context,
@@ -5803,247 +5884,153 @@ $expertAnswer
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
     
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 800),
-      tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeOutBack,
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: Card(
-            elevation: 6,
-            shadowColor: Colors.green.withOpacity(0.3),
-            margin: EdgeInsets.symmetric(vertical: isMobile ? 8 : 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.green.withOpacity(0.05),
-                    Colors.blue.withOpacity(0.05)
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 20.0 : 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // メインスコア表示
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    'D-Score',
+                    style: TextStyle(
+                      fontSize: isMobile ? 16 : 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    result.totalDScore.toStringAsFixed(3),
+                    style: TextStyle(
+                      fontSize: isMobile ? 42 : 52,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.blue[700],
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Text(
+                    'points',
+                    style: TextStyle(
+                      fontSize: isMobile ? 14 : 16,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              child: Padding(
-                padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
-                child: Column(
-                  children: [
-                    // メインスコア表示（アニメーション付き）
-                    TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 1200),
-                      tween: Tween(begin: 0.0, end: result.totalDScore),
-                      curve: Curves.easeOutCubic,
-                      builder: (context, animatedValue, child) {
-                        return Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.green.withOpacity(0.2),
-                                Colors.blue.withOpacity(0.2)
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.green.withOpacity(0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.emoji_events,
-                                    color: Colors.green[700],
-                                    size: isMobile ? 24 : 32,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'D-Score',
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                      fontSize: isMobile ? 20 : 24,
-                                      shadows: [
-                                        Shadow(
-                                          offset: Offset(-1.0, -1.0),
-                                          color: Colors.white,
-                                        ),
-                                        Shadow(
-                                          offset: Offset(1.0, -1.0),
-                                          color: Colors.white,
-                                        ),
-                                        Shadow(
-                                          offset: Offset(1.0, 1.0),
-                                          color: Colors.white,
-                                        ),
-                                        Shadow(
-                                          offset: Offset(-1.0, 1.0),
-                                          color: Colors.white,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                animatedValue.toStringAsFixed(3),
-                                style: TextStyle(
-                                  fontSize: isMobile ? 36 : 48,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.black,
-                                  letterSpacing: 1.2,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(-1.5, -1.5),
-                                      color: Colors.white,
-                                    ),
-                                    Shadow(
-                                      offset: Offset(1.5, -1.5),
-                                      color: Colors.white,
-                                    ),
-                                    Shadow(
-                                      offset: Offset(1.5, 1.5),
-                                      color: Colors.white,
-                                    ),
-                                    Shadow(
-                                      offset: Offset(-1.5, 1.5),
-                                      color: Colors.white,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'points',
-                                style: TextStyle(
-                                  fontSize: isMobile ? 14 : 16,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(-1.0, -1.0),
-                                      color: Colors.white,
-                                    ),
-                                    Shadow(
-                                      offset: Offset(1.0, -1.0),
-                                      color: Colors.white,
-                                    ),
-                                    Shadow(
-                                      offset: Offset(1.0, 1.0),
-                                      color: Colors.white,
-                                    ),
-                                    Shadow(
-                                      offset: Offset(-1.0, 1.0),
-                                      color: Colors.white,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // スコア内訳
+            Text(
+              'スコア内訳',
+              style: TextStyle(
+                fontSize: isMobile ? 16 : 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            _buildCleanScoreRow(
+              '難度点',
+              result.difficultyValue,
+              Colors.blue[100]!,
+              Colors.blue[700]!,
+              isMobile
+            ),
+            const SizedBox(height: 12),
+            _buildCleanScoreRow(
+              'グループ要求 (${result.fulfilledGroups}/${result.requiredGroups})',
+              result.groupBonus,
+              Colors.orange[100]!,
+              Colors.orange[700]!,
+              isMobile
+            ),
+            if (_selectedApparatus == 'FX' || _selectedApparatus == 'HB') ...[
+              const SizedBox(height: 12),
+              _buildCleanScoreRow(
+                '連続技ボーナス',
+                result.connectionBonus,
+                Colors.green[100]!,
+                Colors.green[700]!,
+                isMobile
+              ),
+            ],
+            
+            // チャットに送信ボタン
+            if (_currentMode == 'ai_chat') ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _sendAnalysisToChat(result);
+                  },
+                  icon: Icon(Icons.chat_bubble_outline, size: 18),
+                  label: Text('改善提案をもらう'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[600],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    
-                    SizedBox(height: isMobile ? 16 : 24),
-                    
-                    // 詳細スコア表示（順次アニメーション）
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            '内訳',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: isMobile ? 16 : 18,
-                              color: Colors.black,
-                            ),
-                          ),
-                          SizedBox(height: isMobile ? 12 : 16),
-                          _buildAnimatedScoreRow(
-                            '難度点合計', 
-                            result.difficultyValue, 
-                            Colors.blue, 
-                            0,
-                            isMobile
-                          ),
-                          SizedBox(height: isMobile ? 8 : 12),
-                          _buildAnimatedScoreRow(
-                            'グループ要求 (${result.fulfilledGroups}/${result.requiredGroups})', 
-                            result.groupBonus, 
-                            Colors.orange, 
-                            200,
-                            isMobile
-                          ),
-                          SizedBox(height: isMobile ? 8 : 12),
-                          _buildAnimatedScoreRow(
-                            '連続技ボーナス', 
-                            result.connectionBonus, 
-                            Colors.purple, 
-                            400,
-                            isMobile
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    // チャットに送信ボタン
-                    if (_currentMode == 'ai_chat')
-                      Container(
-                        margin: EdgeInsets.only(top: isMobile ? 16 : 20),
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            _sendAnalysisToChat(result);
-                          },
-                          icon: Icon(Icons.chat, size: isMobile ? 18 : 20),
-                          label: Text(
-                            'この分析結果について改善提案をもらう',
-                            style: TextStyle(fontSize: isMobile ? 14 : 16),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              vertical: isMobile ? 12 : 14,
-                              horizontal: isMobile ? 16 : 20,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                    
-                  ],
+                    elevation: 0,
+                  ),
                 ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildCleanScoreRow(String label, double value, Color backgroundColor, Color textColor, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 20,
+        vertical: isMobile ? 12 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: isMobile ? 14 : 16,
+                fontWeight: FontWeight.w500,
+                color: textColor,
               ),
             ),
           ),
-        );
-      },
+          Text(
+            value.toStringAsFixed(3),
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
   
@@ -6326,76 +6313,7 @@ $expertAnswer
     return SafeArea(
       child: Column(
         children: [
-          // チャット状態バー（シンプル版）
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // 接続状態インジケーター（常時表示）
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _isServerOnline 
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _isServerOnline ? Icons.cloud_done : Icons.cloud_off, 
-                        size: 16, 
-                        color: _isServerOnline ? Colors.green : Colors.orange
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        _isServerOnline ? 'オンライン' : 'オフライン',
-                        style: TextStyle(
-                          fontSize: 12, 
-                          color: _isServerOnline ? Colors.green : Colors.orange
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                // チャットリセットボタン（より目立つデザイン）
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.refresh, color: Colors.blue),
-                    onPressed: () {
-                      setState(() {
-                        _chatMessages.clear();
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('チャットをリセットしました'),
-                          duration: Duration(seconds: 1),
-                        ),
-                      );
-                    },
-                    tooltip: 'チャットをリセット',
-                    iconSize: 20,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // チャット状態バーを削除（リセットボタンはAppBarに移動済み）
           
           // チャットメッセージリスト
           Expanded(
@@ -6417,16 +6335,6 @@ $expertAnswer
                   ),
                   child: Row(
                     children: [
-                      Text(
-                        AppConfig.enableAIChat 
-                          ? 'AIチャット' 
-                          : _currentLang == '日本語' ? 'AIチャット (準備中)' : 'AI Chat (Coming Soon)',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
                       const Spacer(),
                       // 接続状態バッジ
                       Container(
@@ -6632,19 +6540,33 @@ $expertAnswer
 
   // 分析結果をチャットに送信して改善提案を取得
   Future<void> _sendAnalysisToChat(DScoreResult result) async {
-    // 分析結果を詳細に整理
-    final analysisText = '''演技構成分析結果：
+    String analysisText;
+    
+    if (_selectedApparatus == 'VT') {
+      // 跳馬専用の分析メッセージ
+      analysisText = '''跳馬分析結果：
+🏆 Dスコア: ${result.totalDScore.toStringAsFixed(1)}点
+
+📝 基本情報:
+- 種目: 跳馬 (VT)
+- 跳躍技: ${_routine.length}技
+
+この跳躍について技術的な改善提案をお願いします。''';
+    } else {
+      // その他種目の分析メッセージ（従来形式）
+      analysisText = '''演技構成分析結果：
 🏆 Dスコア: ${result.totalDScore.toStringAsFixed(3)}点
 📊 内訳:
 - 難度点: ${result.difficultyValue.toStringAsFixed(3)}点
 - グループ要求 (${result.fulfilledGroups}/${result.requiredGroups}): ${result.groupBonus.toStringAsFixed(3)}点
-- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点
+'''\n      + ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') \n          ? '- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点\\n' \n          : '') + '''
 
 📝 基本情報:
 - 種目: $_selectedApparatus
 - 技数: ${_routine.length}技
 
 この構成について改善提案をお願いします。''';
+    }
     
     // チャットに送信
     await _sendMessage(analysisText);
@@ -6657,6 +6579,22 @@ $expertAnswer
     print('_isServerOnline の現在値: $_isServerOnline');
     
     if (message.trim().isEmpty) return;
+    
+    // 使用制限チェック
+    bool canSend = await ChatUsageTracker.canSendMessage(_userSubscription);
+    if (!canSend) {
+      setState(() {
+        _chatMessages.add({
+          'role': 'system',
+          'content': '❌ **利用制限に達しました**\n\n'
+              'AIチャット機能は1日${ChatUsageTracker.dailyFreeLimit}回、月${ChatUsageTracker.monthlyFreeLimit}回までご利用いただけます。\n\n'
+              '明日または来月になると、再度ご利用いただけます。\n'
+              'それまでは、D-score計算や技検索などの他の機能をお使いください。',
+          'timestamp': DateTime.now(),
+        });
+      });
+      return;
+    }
     
     setState(() {
       _isSendingMessage = true;
@@ -6689,6 +6627,8 @@ $expertAnswer
               'timestamp': DateTime.now(),
             });
           });
+          // ローカル回答も使用回数として記録
+          await ChatUsageTracker.recordChatUsage(_userSubscription);
           return;
         }
         
@@ -6724,6 +6664,9 @@ $expertAnswer
             'timestamp': DateTime.now(),
           });
         });
+        
+        // 使用回数を記録（サーバー応答成功時のみ）
+        await ChatUsageTracker.recordChatUsage(_userSubscription);
       } else if (response.statusCode == 401) {
         // 認証エラーの場合、匿名ユーザーとしてローカル回答にフォールバック
         print('認証エラー - ローカル回答にフォールバック');
@@ -6737,6 +6680,8 @@ $expertAnswer
               'timestamp': DateTime.now(),
             });
           });
+          // フォールバック回答も使用回数として記録
+          await ChatUsageTracker.recordChatUsage(_userSubscription);
         } else {
           setState(() {
             _chatMessages.add({
@@ -6771,6 +6716,8 @@ $expertAnswer
             'timestamp': DateTime.now(),
           });
         });
+        // エラー時のフォールバック回答も使用回数として記録
+        await ChatUsageTracker.recordChatUsage(_userSubscription);
       } else {
         setState(() {
           _chatMessages.add({
@@ -7826,8 +7773,6 @@ $expertAnswer
               children: [
                 Row(
                   children: [
-                    _getApparatusIcon(apparatus),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -8149,8 +8094,8 @@ $expertAnswer
         
         const SizedBox(height: 16),
         
-        // 改善提案を自動的にチャットに送信
-        _buildAutoSendToChat(analysis),
+        // 分析結果用AIチャットインターフェース
+        _buildAnalyticsAIChatInterface(analysis),
       ],
     );
   }
@@ -8223,18 +8168,93 @@ $expertAnswer
 📈 詳細分析:
 - 難度分布: ${analysis.difficultyDistribution.entries.map((e) => '${e.key}難度:${e.value}技').join(', ')}
 - グループ分布: ${analysis.groupDistribution.entries.map((e) => 'G${e.key}:${e.value}技').join(', ')}
-- 連続技ボーナス率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%
+''' + \n    ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') \n        ? '- 連続技ボーナス率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%\\n' \n        : '') + '''
 
 ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missingGroups.join(', ')}' : '✅ 全グループ要求を満たしています'}
 
 この構成について改善提案をお願いします。特に以下の観点でアドバイスをください：
 1. 技の構成バランス
-2. 難度アップの可能性
-3. 連続技ボーナスの最適化
-4. リスク管理''';
+2. 難度アップの可能性''' + 
+    ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
+        ? '\n3. 連続技ボーナスの最適化\n4. リスク管理' 
+        : '\n3. リスク管理');
     
     // チャットに送信
     await _sendMessage(analysisText);
+  }
+
+  // 分析結果用AIチャットインターフェース（簡易版）
+  Widget _buildAnalyticsAIChatInterface(RoutineAnalysis analysis) {
+    // AIチャット機能が無効の場合は情報バーを表示
+    if (!AppConfig.enableAIChat) {
+      return _buildAnalysisInfoBar();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // アイコンと説明
+          Icon(
+            Icons.psychology,
+            size: 48,
+            color: Colors.blue[400],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '分析結果について詳しく質問する',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'AIチャットで構成の改善提案や詳細な分析を受けられます',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          // AIチャットへ移動ボタン
+          ElevatedButton.icon(
+            onPressed: () async {
+              // 分析結果を自動的にチャットに送信
+              await _sendAnalysisResultsToChat(analysis);
+              // AIチャットタブに切り替え
+              setState(() {
+                _currentMode = AppMode.chat;
+              });
+            },
+            icon: Icon(Icons.chat, size: 20),
+            label: Text('より詳細はAIチャットへ'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // 分析情報バー
@@ -9627,7 +9647,7 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
   }
 
   void _showDifficultyFilterDialog() {
-    final difficulties = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    final difficulties = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     
     showDialog(
       context: context,
@@ -10047,15 +10067,7 @@ Set<int> _getRequiredGroupsForApparatus(String apparatus) {
 
 // 種目別最大グループ数を取得
 int _getMaxGroupsForApparatus(String? apparatus) {
-  if (apparatus == null) return 4; // デフォルトは4グループ
-  
-  switch (apparatus.toLowerCase()) {
-    case 'vault':
-    case 'vt':
-      return 5; // 跳馬：5グループ
-    default:
-      return 4; // その他の種目：4グループ
-  }
+  return 4; // 全種目4グループに統一
 }
 
 // 体操専門知識データベース
