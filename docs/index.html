@@ -1,357 +1,38 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Gymnastics AI - 体操競技D-Score計算・AI分析アプリ</title>
-    <meta name="description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。体操競技の演技構成分析と改善提案で競技力向上をサポート。iOS・Android対応。">
-    <!-- Last updated: 2025-01-28 -->
-    <meta name="keywords" content="体操競技, D-Score, 計算, アプリ, iOS, Android, FIG, 採点, AI, 技検索, 演技構成, 分析, 床運動, あん馬, つり輪, 跳馬, 平行棒, 鉄棒">
-    
-    <!-- Open Graph Tags -->
-    <meta property="og:title" content="Gymnastics AI - 体操競技D-Score計算・AI分析アプリ">
-    <meta property="og:description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。体操競技の演技構成分析アプリ。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://daito-iwa.github.io/gym/">
-    <meta property="og:site_name" content="Gymnastics AI">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Gymnastics AI - 体操競技D-Score計算・AI分析アプリ">
-    <meta name="twitter:description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。">
-    
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "MobileApplication",
-      "name": "Gymnastics AI",
-      "description": "体操競技のD-Score計算、AI分析、技データベース検索アプリ",
-      "applicationCategory": "SportsApplication",
-      "operatingSystem": ["iOS", "Android"],
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "JPY"
-      },
-      "author": {
-        "@type": "Person",
-        "name": "岩崎大翔"
-      }
-    }
-    </script>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤸</text></svg>">
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="gymnasticsai">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>gymnasticsai</title>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-content">
-            <div class="nav-logo">
-                <span class="logo-icon">🤸</span>
-                <span class="logo-text">Gymnastics AI</span>
-            </div>
-            <div class="nav-links">
-                <a href="#features" class="nav-link">機能</a>
-                <a href="#download" class="nav-link">ダウンロード</a>
-                <a href="#support" class="nav-link">サポート</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-background"></div>
-        <div class="hero-content">
-            <div class="hero-app-icon">
-                <img src="app_icon_new.png" alt="Gymnastics AI" class="app-icon-image">
-            </div>
-            <h1 class="hero-title">
-                <span class="title-line">体操競技を</span>
-                <span class="title-line gradient-text">次のレベルへ</span>
-            </h1>
-            <div class="hero-image">
-                <div class="device-frame">
-                    <img src="app_screenshot.png" alt="Gymnastics AI Screenshot" class="app-screenshot">
-                </div>
-            </div>
-            <p class="hero-subtitle">
-                高精度D-Score計算とAIによる演技構成分析で<br>
-                あなたの成長をサポート
-            </p>
-            <div class="hero-cta">
-                <a href="webapp/" class="cta-button primary">ウェブ版を試す</a>
-                <a href="#download" class="cta-button secondary">モバイル版DL</a>
-                <a href="#features" class="cta-button secondary">詳しく見る</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Download Section -->
-    <section id="download" class="download-section">
-        <div class="download-content">
-            <h2 class="download-title">今すぐ始めよう</h2>
-            <div class="download-app-icon">
-                <img src="app_icon_new.png" alt="Gymnastics AI" class="download-icon-image">
-            </div>
-            <p class="download-subtitle">
-                無料でダウンロードして、体操競技の新しい世界を体験してください
-            </p>
-            <div class="download-buttons">
-                <a href="webapp/" class="cta-button primary" style="margin-bottom: 20px; display: inline-block;">
-                    🌐 ウェブ版で今すぐ試す
-                </a>
-                <div style="width: 100%; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-                    <a href="https://apps.apple.com/app/gymnastics-ai/id6736816486" target="_blank" rel="noopener" class="store-button">
-                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
-                             alt="Download on the App Store" class="store-badge">
-                    </a>
-                    <a href="https://play.google.com/store/apps/details?id=com.daito.gym" target="_blank" rel="noopener" class="store-button">
-                        <img src="https://play.google.com/intl/ja/badges/static/images/badges/ja_badge_web_generic.png" 
-                             alt="Get it on Google Play" class="store-badge">
-                    </a>
-                </div>
-            </div>
-            <div class="download-info">
-                <div class="info-item">
-                    <span class="info-icon">✓</span>
-                    <span>基本機能は無料</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-icon">✓</span>
-                    <span>登録不要ですぐ使える</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-icon">✓</span>
-                    <span>広告なしのプレミアム版あり</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="features-section">
-        <div class="section-header">
-            <h2 class="section-title">革新的な機能</h2>
-            <p class="section-subtitle">体操競技のあらゆるニーズに対応</p>
-        </div>
-
-        <div class="features-grid">
-            <div class="feature-item highlight">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🧮</span>
-                </div>
-                <h3 class="feature-title">高精度D-Score計算</h3>
-                <p class="feature-description">
-                    最新ルールに対応した正確な計算。複雑な演技構成も瞬時に分析。
-                </p>
-                <ul class="feature-list">
-                    <li>全6種目対応</li>
-                    <li>グループボーナス自動計算</li>
-                    <li>連続技ボーナス判定</li>
-                </ul>
-            </div>
-
-            <div class="feature-item highlight">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🤖</span>
-                </div>
-                <h3 class="feature-title">AI技術相談</h3>
-                <p class="feature-description">
-                    最新のAI技術で、あなたの疑問に即座に回答。技術向上をサポート。
-                </p>
-                <ul class="feature-list">
-                    <li>24時間対応</li>
-                    <li>詳細な技術解説</li>
-                    <li>構成改善提案</li>
-                </ul>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🔍</span>
-                </div>
-                <h3 class="feature-title">技データベース</h3>
-                <p class="feature-description">
-                    1000以上の技を収録。難度別・グループ別で簡単検索。
-                </p>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">📊</span>
-                </div>
-                <h3 class="feature-title">演技分析</h3>
-                <p class="feature-description">
-                    演技構成の詳細分析で、改善点を明確化。
-                </p>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">💾</span>
-                </div>
-                <h3 class="feature-title">オフライン対応</h3>
-                <p class="feature-description">
-                    インターネット接続なしでも主要機能が利用可能。
-                </p>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🌐</span>
-                </div>
-                <h3 class="feature-title">多言語対応</h3>
-                <p class="feature-description">
-                    日本語・英語に対応。世界中で利用可能。
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Showcase Section -->
-    <section class="showcase-section">
-        <div class="showcase-content">
-            <div class="showcase-text">
-                <h2 class="showcase-title">
-                    すべての体操選手のために<br>
-                    設計されたアプリ
-                </h2>
-                <p class="showcase-description">
-                    初心者から上級者まで、すべてのレベルの選手が使いやすいインターフェース。
-                    直感的な操作で、複雑な計算も簡単に。
-                </p>
-                <div class="showcase-features">
-                    <div class="showcase-feature">
-                        <div class="check-icon">✓</div>
-                        <span>シンプルで美しいデザイン</span>
-                    </div>
-                    <div class="showcase-feature">
-                        <div class="check-icon">✓</div>
-                        <span>高速レスポンス</span>
-                    </div>
-                    <div class="showcase-feature">
-                        <div class="check-icon">✓</div>
-                        <span>定期的なアップデート</span>
-                    </div>
-                </div>
-            </div>
-            <div class="showcase-visual">
-                <div class="visual-card">
-                    <div class="card-header">
-                        <span class="card-icon">📱</span>
-                        <span class="card-title">モバイル最適化</span>
-                    </div>
-                    <p class="card-description">
-                        スマートフォンでもタブレットでも、最適な表示で快適に利用できます。
-                    </p>
-                </div>
-                <div class="visual-card">
-                    <div class="card-header">
-                        <span class="card-icon">⚡</span>
-                        <span class="card-title">リアルタイム計算</span>
-                    </div>
-                    <p class="card-description">
-                        技を追加するたびに、D-Scoreが瞬時に更新。練習中でも素早く確認。
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-    <!-- Support Section -->
-    <section id="support" class="support-section">
-        <div class="support-content">
-            <h2 class="support-title">サポート</h2>
-            <div class="support-grid">
-                <a href="privacy.html" class="support-card">
-                    <div class="support-icon">🔒</div>
-                    <h3>プライバシーポリシー</h3>
-                    <p>お客様の個人情報の取り扱いについて</p>
-                </a>
-                <a href="terms.html" class="support-card">
-                    <div class="support-icon">📋</div>
-                    <h3>利用規約</h3>
-                    <p>アプリケーションの利用条件について</p>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <span class="footer-logo">🤸</span>
-                <span class="footer-name">Gymnastics AI</span>
-            </div>
-            <div class="footer-info">
-                <p>&copy; 2025 Gymnastics AI. All rights reserved.</p>
-                <p>開発者: 岩崎大翔</p>
-            </div>
-            <div class="footer-link">
-                <a href="mobile.html?mobile=1" class="mobile-link">モバイル版を見る</a>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        // Mobile detection and redirect
-        function detectMobile() {
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-            const screenWidth = window.innerWidth <= 768;
-            return isMobile || screenWidth;
-        }
-
-        // Auto-redirect to mobile version on mobile devices
-        if (detectMobile() && !window.location.search.includes('desktop=1')) {
-            window.location.href = 'mobile.html';
-        }
-
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Navbar background on scroll
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
-
-        // Intersection Observer for animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        // Observe all animatable elements
-        document.querySelectorAll('.feature-item, .showcase-feature, .visual-card, .support-card').forEach(el => {
-            observer.observe(el);
-        });
-    </script>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

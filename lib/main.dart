@@ -25,10 +25,7 @@ import 'platform_config.dart'; // プラットフォーム設定
 import 'platform_ui_config.dart'; // プラットフォーム別UI設定
 // import 'auth_screen.dart'; // 認証画面（現在未使用）
 // import 'social_auth_manager.dart'; // ソーシャル認証（現在未使用）
-// Web版広告システム
-import 'web_ads_manager.dart'; // Web広告管理
-import 'web_ad_widget.dart'; // Web広告ウィジェット
-import 'web_usage_manager.dart'; // Web使用制限管理
+// Web版広告システムは廃止
 
 // デバッグ用ヘルパー関数（本番では出力しない）
 void debugLog(String message) {
@@ -441,8 +438,7 @@ void main() async {
   
   // Web広告システムの初期化
   if (kIsWeb) {
-    await WebAdsManager.initialize();
-    await WebUsageManager.initialize();
+    // Web広告システムは廃止済み
   }
   
   runApp(const MyApp());
@@ -4428,12 +4424,7 @@ $expertAnswer
         // キーボードフォーカスを外す
         FocusScope.of(context).unfocus();
       },
-      child: PlatformConfig.isWeb 
-        ? ResponsiveAdLayout(
-            showAds: PlatformConfig.isWebAdsEnabled,
-            child: _buildMainScaffold(),
-          )
-        : _buildMainScaffold(),
+      child: _buildMainScaffold(),
     );
   }
   
@@ -4527,9 +4518,9 @@ $expertAnswer
                   ),
                 ],
               ),
-            ]
+            ],
             // その他のモードでは既存のアクションを表示
-            else ...[
+            if (_currentMode != AppMode.chat) ...[
               // バックグラウンド初期化インジケーター
               if (!_isBackgroundInitComplete)
                 Padding(
@@ -4571,6 +4562,21 @@ $expertAnswer
                 ],
               ),
             ],
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: _currentMode == AppMode.dScore
+                    ? _buildDScoreInterface()
+                    : _currentMode == AppMode.allApparatus
+                      ? _buildAllApparatusInterface()
+                      : _currentMode == AppMode.analytics
+                        ? _buildAnalyticsInterface()
+                        : _currentMode == AppMode.chat
+                          ? _buildChatInterface()
+                          : _buildAdminInterface(),
+            ),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -4755,24 +4761,7 @@ $expertAnswer
             ],
           ),
         ),
-        body: Column(
-          children: [
-            Expanded(
-              child: _currentMode == AppMode.dScore
-                    ? _buildDScoreInterface()
-                    : _currentMode == AppMode.allApparatus
-                      ? _buildAllApparatusInterface()
-                      : _currentMode == AppMode.analytics
-                        ? _buildAnalyticsInterface()
-                        : _currentMode == AppMode.chat
-                          ? _buildChatInterface()
-                          : _buildAdminInterface(),
-            ),
-            // モバイルアプリ版のみ（Web版フッター広告は廃止）
-          ],
-        ),
-      ),
-    );
+      );
   }
 
   // 管理者パネル用のUI
@@ -6617,27 +6606,9 @@ $expertAnswer
     
     if (message.trim().isEmpty) return;
     
-    // Web版の使用制限チェック
+    // Web版の使用制限チェック（廃止済み）
     if (PlatformConfig.isWeb) {
-      bool canSend = await WebUsageManager.canUseChat();
-      if (!canSend) {
-        final stats = await WebUsageManager.getUsageStats();
-        await UsageLimitDialog.showLimitReached(
-          context,
-          onWatchAd: () async {
-            // 広告視聴後の処理
-            await WebUsageManager.incrementAdViewCount();
-            WebAdsManager.trackRevenue(
-              adNetwork: 'AdSense',
-              adUnit: 'incentive',
-              action: 'watch',
-            );
-            setState(() {}); // UI更新
-          },
-          onClose: () {},
-        );
-        return;
-      }
+      // Web版の使用制限は廃止済み
     } else {
       // モバイル版の制限チェック
       bool canSend = await ChatUsageTracker.canSendMessage(_userSubscription);
@@ -6727,7 +6698,7 @@ $expertAnswer
         
         // 使用回数を記録（サーバー応答成功時のみ）
         if (PlatformConfig.isWeb) {
-          await WebUsageManager.incrementChatCount();
+          // Web版の使用制限は廃止済み
         } else {
           await ChatUsageTracker.recordChatUsage(_userSubscription);
         }
@@ -6746,7 +6717,7 @@ $expertAnswer
           });
           // フォールバック回答も使用回数として記録
           if (PlatformConfig.isWeb) {
-            await WebUsageManager.incrementChatCount();
+            // Web版の使用制限は廃止済み
           } else {
             await ChatUsageTracker.recordChatUsage(_userSubscription);
           }
@@ -6786,7 +6757,7 @@ $expertAnswer
         });
         // 使用回数を記録
         if (PlatformConfig.isWeb) {
-          await WebUsageManager.incrementChatCount();
+          // Web版の使用制限は廃止済み
         } else {
           await ChatUsageTracker.recordChatUsage(_userSubscription);
         }
