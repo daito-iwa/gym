@@ -4267,7 +4267,11 @@ $expertAnswer
 
   // D-スコアを再計算
   Future<void> _calculateDScoreFromRoutine() async {
+    print('CALCULATION_START: 計算処理開始');
+    print('CALCULATION_START: 種目: $_selectedApparatus, 技数: ${_routine.length}');
+    
     if (_selectedApparatus == null || _routine.isEmpty) {
+      print('CALCULATION_START: 計算処理終了（条件不足）');
       return;
     }
     
@@ -5229,6 +5233,10 @@ $expertAnswer
                                 }
                                 
                                 // 新規計算
+                                print('CALCULATION_START: 計算ボタン押下');
+                                print('CALCULATION_START: 種目: $_selectedApparatus, 技数: ${_routine.length}');
+                                print('CALCULATION_START: _connectionGroups: $_connectionGroups');
+                                print('CALCULATION_START: routineForCalculation: ${routineForCalculation.length}グループ');
                                 final result = calculateDScore(_selectedApparatus!, routineForCalculation);
                                 
                                 // 使用量を記録
@@ -7088,6 +7096,10 @@ $expertAnswer
   List<List<Skill>> _convertToGroupedRoutine() {
     if (_routine.isEmpty) return [];
     
+    print('DEBUG_CONVERT: 連続技グループ変換開始');
+    print('DEBUG_CONVERT: _routine.length: ${_routine.length}');
+    print('DEBUG_CONVERT: _connectionGroups: $_connectionGroups');
+    
     List<List<Skill>> grouped = [];
     List<Skill> currentGroup = [];
     int currentConnectionId = 0;
@@ -7113,6 +7125,12 @@ $expertAnswer
     // 最後のグループを追加
     if (currentGroup.isNotEmpty) {
       grouped.add(currentGroup);
+    }
+    
+    print('DEBUG_CONVERT: 変換結果: ${grouped.length}グループ');
+    for (int i = 0; i < grouped.length; i++) {
+      final group = grouped[i];
+      print('DEBUG_CONVERT: グループ${i + 1}: ${group.map((s) => '${s.name}(${s.valueLetter}=${s.value})').join(' → ')}');
     }
     
     return grouped;
