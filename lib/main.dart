@@ -9823,7 +9823,7 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    _selectedApparatus == 'VT' 
+                                    widget.apparatus == 'VT' 
                                         ? 'D値: ${skill.valueLetter}' // 跳馬は valueLetter のみ表示
                                         : 'D値: ${skill.valueLetter} (${skill.value.toStringAsFixed(1)})',
                                     style: const TextStyle(fontSize: 12, color: Colors.white),
