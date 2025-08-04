@@ -828,7 +828,7 @@ body {
 
     .hero-cta {
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
         align-items: center;
     }
 
@@ -836,6 +836,7 @@ body {
         width: 100%;
         max-width: 280px;
         text-align: center;
+        padding: 14px 32px;
     }
 
     .hero-image {
