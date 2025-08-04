@@ -6639,34 +6639,9 @@ $expertAnswer
     _chatController.clear();
     
     try {
-      print('🔍 _sendMessage デバッグ: _isServerOnline = $_isServerOnline');
+      print('🔍 _sendMessage デバッグ: サーバーを優先使用');
       
-      // 一時的にローカル回答モード（サーバー認証問題解決中）
-      if (_isServerOnline) {
-        print('🌐 オンラインモード: サーバーに送信');
-      } else {
-        print('🔄 オフラインモード: ローカル回答をチェック');
-        String? localResponse = _getLocalGymnasticsResponse(message);
-        print('📝 ローカル回答結果: ${localResponse != null ? "見つかった" : "見つからない"}');
-        
-        if (localResponse != null) {
-          print('✅ ローカル回答を使用します');
-          setState(() {
-            _chatMessages.add({
-              'role': 'assistant',
-              'content': localResponse,
-              'timestamp': DateTime.now(),
-            });
-          });
-          // ローカル回答も使用回数として記録
-          await ChatUsageTracker.recordChatUsage(_userSubscription);
-          return;
-        }
-        
-        print('🚀 ローカル回答なし');
-      }
-      
-      // サーバーの匿名ユーザー機能を利用（認証ヘッダーなし）
+      // Web版・モバイル版共通: まずサーバーを試行
       print('🔑 匿名ユーザーモードでサーバーに送信');
       
       // サーバーにメッセージを送信 (認証ヘッダーなし = 匿名ユーザー)
