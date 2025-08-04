@@ -106,9 +106,9 @@ body {
 
 .feature-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 40px;
-    max-width: 1000px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -118,6 +118,13 @@ body {
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: left;
+}
+
+.feature-card.featured {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 3px solid #ffd700;
 }
 
 .feature-card:hover {
@@ -128,17 +135,203 @@ body {
 .feature-icon {
     font-size: 3rem;
     margin-bottom: 20px;
+    text-align: center;
 }
 
 .feature-card h3 {
     font-size: 1.5rem;
     margin-bottom: 15px;
     color: #333;
+    text-align: center;
+}
+
+.feature-card.featured h3 {
+    color: white;
 }
 
 .feature-card p {
     color: #666;
     line-height: 1.6;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.feature-card.featured p {
+    color: rgba(255,255,255,0.9);
+}
+
+.feature-details {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.feature-details li {
+    padding: 8px 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.feature-card.featured .feature-details li {
+    color: rgba(255,255,255,0.9);
+}
+
+/* Why Choose Section */
+.why-choose {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 80px 0;
+    color: white;
+    text-align: center;
+}
+
+.why-choose h2 {
+    font-size: 2.5rem;
+    margin-bottom: 60px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.benefit-item {
+    text-align: center;
+    padding: 30px 20px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease;
+}
+
+.benefit-item:hover {
+    transform: translateY(-5px);
+}
+
+.benefit-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.benefit-item h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.benefit-item p {
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+}
+
+/* How to Use Section */
+.how-to-use {
+    background: white;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.how-to-use h2 {
+    font-size: 2.5rem;
+    margin-bottom: 60px;
+    color: #333;
+}
+
+.steps-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.step {
+    flex: 1;
+    min-width: 250px;
+    text-align: center;
+    position: relative;
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.step-content h3 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.step-content p {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Apparatus Section */
+.apparatus-section {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 80px 0;
+    text-align: center;
+}
+
+.apparatus-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 60px;
+    color: #333;
+}
+
+.apparatus-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.apparatus-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.apparatus-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.apparatus-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.apparatus-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.apparatus-card p {
+    color: #666;
+    line-height: 1.6;
+    font-size: 0.9rem;
 }
 
 /* Legal Section */
@@ -242,6 +435,19 @@ body {
         grid-template-columns: 1fr;
     }
     
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .steps-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .apparatus-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .legal-links {
         grid-template-columns: 1fr;
     }
@@ -281,13 +487,37 @@ body {
     
     .download-section,
     .features,
+    .why-choose,
+    .how-to-use,
+    .apparatus-section,
     .legal-section {
         padding: 60px 0;
     }
     
     .download-section h2,
     .features h2,
+    .why-choose h2,
+    .how-to-use h2,
+    .apparatus-section h2,
     .legal-section h2 {
         font-size: 2rem;
+    }
+    
+    .feature-card {
+        padding: 30px 20px;
+    }
+    
+    .benefit-item {
+        padding: 25px 15px;
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .apparatus-card {
+        padding: 30px 20px;
     }
 }

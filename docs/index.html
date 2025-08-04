@@ -3,10 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gymnastics AI - 体操競技D-Score計算アプリ</title>
-    <meta name="description" content="体操競技のD-Score計算アプリ「Gymnastics AI」の法的情報サイト。利用規約、プライバシーポリシーを掲載。">
+    <title>Gymnastics AI - 体操競技D-Score計算・AI分析アプリ</title>
+    <meta name="description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。体操競技の演技構成分析と改善提案で競技力向上をサポート。iOS・Android対応。">
     <!-- Last updated: 2025-01-28 -->
-    <meta name="keywords" content="体操競技, D-Score, 計算, アプリ, iOS, Android">
+    <meta name="keywords" content="体操競技, D-Score, 計算, アプリ, iOS, Android, FIG, 採点, AI, 技検索, 演技構成, 分析, 床運動, あん馬, つり輪, 跳馬, 平行棒, 鉄棒">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="Gymnastics AI - 体操競技D-Score計算・AI分析アプリ">
+    <meta property="og:description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。体操競技の演技構成分析アプリ。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://daito-iwa.github.io/gym/">
+    <meta property="og:site_name" content="Gymnastics AI">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Gymnastics AI - 体操競技D-Score計算・AI分析アプリ">
+    <meta name="twitter:description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      "name": "Gymnastics AI",
+      "description": "体操競技のD-Score計算、AI分析、技データベース検索アプリ",
+      "applicationCategory": "SportsApplication",
+      "operatingSystem": ["iOS", "Android"],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "岩崎大翔"
+      }
+    }
+    </script>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤸</text></svg>">
 </head>
@@ -41,20 +74,143 @@
         <section class="features">
             <h2>主な機能</h2>
             <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>正確なD-Score計算</h3>
-                    <p>最新の体操競技規則に基づいた精密なD-Score計算</p>
+                <div class="feature-card featured">
+                    <div class="feature-icon">🧮</div>
+                    <h3>高精度D-Score計算</h3>
+                    <p>FIG公式ルール（2025-2028）に完全準拠した正確なD-Score計算</p>
+                    <ul class="feature-details">
+                        <li>✅ 全6種目完全対応</li>
+                        <li>✅ グループボーナス自動計算</li>
+                        <li>✅ 連続技ボーナス判定</li>
+                        <li>✅ 難度点・構成要求の詳細分析</li>
+                    </ul>
+                </div>
+                <div class="feature-card featured">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AIアシスタント</h3>
+                    <p>体操ルールの質問応答と演技構成の改善提案</p>
+                    <ul class="feature-details">
+                        <li>✅ FIG規則の詳細解説</li>
+                        <li>✅ 技術的な質問に即答</li>
+                        <li>✅ 構成改善のアドバイス</li>
+                        <li>⚡ 1日10回、月50回まで利用可能</li>
+                    </ul>
+                </div>
+                <div class="feature-card featured">
+                    <div class="feature-icon">🔍</div>
+                    <h3>技データベース検索</h3>
+                    <p>全種目の技を難度・グループ別に詳細検索</p>
+                    <ul class="feature-details">
+                        <li>✅ 1000+ 技データベース</li>
+                        <li>✅ 難度A〜J対応</li>
+                        <li>✅ グループ別フィルター</li>
+                        <li>✅ 日本語・英語表記対応</li>
+                    </ul>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
+                    <div class="feature-icon">📈</div>
                     <h3>演技構成分析</h3>
-                    <p>詳細な分析結果と改善提案で競技力向上をサポート</p>
+                    <p>詳細な統計分析と最適化提案</p>
+                    <ul class="feature-details">
+                        <li>🎯 不足グループの特定</li>
+                        <li>📊 難度分布の可視化</li>
+                        <li>⚖️ 構成バランスの評価</li>
+                    </ul>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🏆</div>
-                    <h3>全種目対応</h3>
-                    <p>床・あん馬・つり輪・跳馬・平行棒・鉄棒すべてに対応</p>
+            </div>
+        </section>
+
+        <section class="why-choose">
+            <div class="container">
+                <h2>なぜGymnastics AIを選ぶのか？</h2>
+                <div class="benefits-grid">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🎯</div>
+                        <h3>FIG公式ルール準拠</h3>
+                        <p>2025-2028年版の最新規則に完全対応。正確な採点基準で計算します。</p>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">⚡</div>
+                        <h3>瞬間計算</h3>
+                        <p>複雑なD-Score計算も数秒で完了。練習時間を無駄にしません。</p>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🎓</div>
+                        <h3>学習サポート</h3>
+                        <p>AIが規則や技術について詳しく解説。初心者から上級者まで対応。</p>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">📱</div>
+                        <h3>いつでもどこでも</h3>
+                        <p>スマートフォンがあればすぐに利用可能。オフライン機能も搭載。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-to-use">
+            <div class="container">
+                <h2>使い方はとても簡単</h2>
+                <div class="steps-container">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>種目を選択</h3>
+                            <p>床・あん馬・つり輪・跳馬・平行棒・鉄棒から種目を選択</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>技を追加</h3>
+                            <p>演技構成に含める技を検索・追加。連続技も設定可能</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>結果を確認</h3>
+                            <p>D-Scoreと詳細分析を確認。改善点をAIに相談も可能</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="apparatus-section">
+            <div class="container">
+                <h2>対応種目</h2>
+                <div class="apparatus-grid">
+                    <div class="apparatus-card">
+                        <div class="apparatus-icon">🤸‍♀️</div>
+                        <h3>床運動 (FX)</h3>
+                        <p>4グループ要求、70秒制限、連続技ボーナス対応</p>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-icon">🐎</div>
+                        <h3>あん馬 (PH)</h3>
+                        <p>5グループ要求、旋回技の連続性重視</p>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-icon">💍</div>
+                        <h3>つり輪 (SR)</h3>
+                        <p>4グループ要求、力技と振動技のバランス</p>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-icon">🏃‍♂️</div>
+                        <h3>跳馬 (VT)</h3>
+                        <p>1技構成、1.2〜5.6点の幅広い難度設定</p>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-icon">🤸‍♂️</div>
+                        <h3>平行棒 (PB)</h3>
+                        <p>5グループ要求、倒立・振動技の組み合わせ</p>
+                    </div>
+                    <div class="apparatus-card">
+                        <div class="apparatus-icon">🏋️‍♂️</div>
+                        <h3>鉄棒 (HB)</h3>
+                        <p>5グループ要求、離れ技の連続技ボーナス</p>
+                    </div>
                 </div>
             </div>
         </section>
