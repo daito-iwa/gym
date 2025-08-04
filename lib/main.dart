@@ -7259,7 +7259,9 @@ $expertAnswer
         timestamp: DateTime.now(),
         difficultyDistribution: stats['difficultyDistribution'] as Map<String, int>? ?? {},
         groupDistribution: groupDistribution.map((key, value) => MapEntry(key, value)),
-        connectionBonusRatio: (_dScoreResult?.connectionBonus ?? 0.0) / 0.4, // 0.4が最大連続ボーナス
+        connectionBonusRatio: (_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
+            ? ((_dScoreResult?.connectionBonus ?? 0.0) / 0.4) // 0.4が最大連続ボーナス
+            : 0.0, // FXとHB以外は連続技ボーナスなし
         totalSkills: _routine.length,
         averageDifficulty: stats['averageDifficulty'] as double? ?? 0.0,
         completenessScore: completenessScore,
