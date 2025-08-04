@@ -5467,7 +5467,9 @@ $expertAnswer
                                     ),
                                     const SizedBox(width: 4),
                                     _buildCompactSkillBadge(
-                                      '${skill.valueLetter}(${skill.value.toStringAsFixed(1)})',
+                                      _selectedApparatus == 'VT' 
+                                          ? skill.valueLetter // 跳馬は valueLetter のみ表示
+                                          : '${skill.valueLetter}(${skill.value.toStringAsFixed(1)})',
                                       _getDifficultyColor(skill.valueLetter),
                                       isMobile
                                     ),
@@ -9821,7 +9823,9 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    'D値: ${skill.valueLetter} (${skill.value.toStringAsFixed(1)})',
+                                    _selectedApparatus == 'VT' 
+                                        ? 'D値: ${skill.valueLetter}' // 跳馬は valueLetter のみ表示
+                                        : 'D値: ${skill.valueLetter} (${skill.value.toStringAsFixed(1)})',
                                     style: const TextStyle(fontSize: 12, color: Colors.white),
                                   ),
                                 ),
