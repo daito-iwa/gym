@@ -233,6 +233,43 @@
             transform: translateY(-3px);
         }
 
+        .store-badge {
+            height: 60px;
+            width: auto;
+            display: block;
+        }
+
+        .download-btn.app-store,
+        .download-btn.google-play {
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            box-shadow: none;
+        }
+
+        .download-btn.app-store:hover,
+        .download-btn.google-play:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .development-status {
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
         /* App Screenshot */
         .app-showcase {
             margin-top: 2rem;
@@ -595,7 +632,7 @@
             </div>
             
             <div class="development-status">
-                <span class="status-badge">🚧 開発中</span>
+                <span class="status-badge">🚧 モバイルアプリ開発中</span>
             </div>
             
             <div class="web-app-button">
@@ -717,7 +754,7 @@
                     </a>
                 </div>
                 <div class="development-status">
-                    <span class="status-badge">🚧 開発中</span>
+                    <span class="status-badge">🚧 モバイルアプリ開発中</span>
                 </div>
             </div>
         </div>
