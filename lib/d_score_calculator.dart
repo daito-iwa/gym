@@ -192,27 +192,31 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   
   // グループボーナス計算（FIG公式ルール）
   double groupBonus = 0.0;
-  for (final entry in highestSkillPerGroup.entries) {
-    final group = entry.key;
-    final highestSkill = entry.value;
-    
-    if (group == 1) {
-      // グループ1: 無条件で0.5点
-      groupBonus += 0.5;
-    } else if (group == 2 || group == 3) {
-      // グループ2,3: D難度以上で0.5点、C難度以下で0.3点
-      groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
-    } else if (group == 4) {
-      if (apparatus == "FX") {
-        // 床運動: グループ4も通常ルール（D以上0.5、C以下0.3）※終末技概念なし
+  
+  // 跳馬はグループボーナスなし
+  if (apparatus != "VT") {
+    for (final entry in highestSkillPerGroup.entries) {
+      final group = entry.key;
+      final highestSkill = entry.value;
+      
+      if (group == 1) {
+        // グループ1: 無条件で0.5点
+        groupBonus += 0.5;
+      } else if (group == 2 || group == 3) {
+        // グループ2,3: D難度以上で0.5点、C難度以下で0.3点
         groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
-      } else {
-        // その他種目: グループ4は終末技、技の難度値をそのまま加算
-        groupBonus += highestSkill.value;
+      } else if (group == 4) {
+        if (apparatus == "FX") {
+          // 床運動: グループ4も通常ルール（D以上0.5、C以下0.3）※終末技概念なし
+          groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
+        } else {
+          // その他種目: グループ4は終末技、技の難度値をそのまま加算
+          groupBonus += highestSkill.value;
+        }
+      } else if (group == 5 && apparatus == "VT") {
+        // 跳馬のグループ5: D難度以上で0.5点、C難度以下で0.3点（跳馬のみ）
+        groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
       }
-    } else if (group == 5) {
-      // グループ5: D難度以上で0.5点、C難度以下で0.3点
-      groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
     }
   }
 
@@ -436,6 +440,11 @@ List<Skill> _selectOptimalSkillCombination(List<Skill> allSkills, int countLimit
 
 /// FIG公式ルールに基づくグループボーナス計算関数
 double _calculateFIGGroupBonus(List<Skill> skills, String apparatus) {
+  // 跳馬はグループボーナスなし
+  if (apparatus == "VT") {
+    return 0.0;
+  }
+  
   // グループごとの最高難度技を特定
   final Map<int, Skill> highestSkillPerGroup = {};
   for (final skill in skills) {
@@ -465,10 +474,8 @@ double _calculateFIGGroupBonus(List<Skill> skills, String apparatus) {
         // その他種目: グループ4は終末技、技の難度値をそのまま加算
         groupBonus += highestSkill.value;
       }
-    } else if (group == 5) {
-      // グループ5: D難度以上で0.5点、C難度以下で0.3点
-      groupBonus += highestSkill.value >= 0.4 ? 0.5 : 0.3;
     }
+    // グループ5は跳馬のみなので、ここでは処理しない（上でVTチェック済み）
   }
   
   return groupBonus;

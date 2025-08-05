@@ -7201,7 +7201,7 @@ $expertAnswer
       
       // 要求充足率の計算
       final List<String> missingGroups = [];
-      final totalRequiredGroups = 5; // 体操では通常5グループ
+      final totalRequiredGroups = _getMaxGroupsForApparatus(_selectedApparatus); // 種目ごとの正しいグループ数
       final completenessScore = groupDistribution.length / totalRequiredGroups;
       
       // 不足グループの特定

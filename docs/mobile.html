@@ -3,235 +3,718 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Gymnastics AI - 体操競技D-Score計算・AI分析アプリ</title>
-    <meta name="description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。体操競技の演技構成分析と改善提案で競技力向上をサポート。iOS・Android対応。">
-    <!-- Last updated: 2025-01-28 -->
-    <meta name="keywords" content="体操競技, D-Score, 計算, アプリ, iOS, Android, FIG, 採点, AI, 技検索, 演技構成, 分析, 床運動, あん馬, つり輪, 跳馬, 平行棒, 鉄棒">
+    <title>Gymnastics AI - 体操競技を次のレベルへ</title>
+    <meta name="description" content="体操競技のD-Score計算、AI演技分析、技データベース検索。高精度な計算とAIによる演技構成分析で競技力向上をサポート。iOS・Android対応。">
     
-    <!-- Open Graph Tags -->
-    <meta property="og:title" content="Gymnastics AI - 体操競技D-Score計算・AI分析アプリ">
-    <meta property="og:description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。体操競技の演技構成分析アプリ。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://daito-iwa.github.io/gym/">
-    <meta property="og:site_name" content="Gymnastics AI">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Gymnastics AI - 体操競技D-Score計算・AI分析アプリ">
-    <meta name="twitter:description" content="FIG公式ルール準拠の高精度D-Score計算、AIによる技術相談、1000+技データベース検索。">
-    
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "MobileApplication",
-      "name": "Gymnastics AI",
-      "description": "体操競技のD-Score計算、AI分析、技データベース検索アプリ",
-      "applicationCategory": "SportsApplication",
-      "operatingSystem": ["iOS", "Android"],
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "JPY"
-      },
-      "author": {
-        "@type": "Person",
-        "name": "岩崎大翔"
-      }
-    }
-    </script>
-    <link rel="stylesheet" href="mobile-styles.css">
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤸</text></svg>">
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8022160047771829"
+       crossorigin="anonymous"></script>
+    
+    <style>
+        /* Modern Mobile-First Gymnastics AI Design */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --hero-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%);
+            --text-gradient: linear-gradient(90deg, #4facfe 0%, #00f2fe 25%, #43e97b 50%, #f9ca24 75%, #f0932b 100%);
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(26, 26, 46, 0.8);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8cc;
+            --accent-blue: #4facfe;
+            --accent-green: #43e97b;
+            --shadow-primary: 0 20px 60px rgba(79, 172, 254, 0.3);
+            --shadow-glow: 0 0 40px rgba(79, 172, 254, 0.2);
+            --border-radius: 20px;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(ellipse at top left, rgba(79, 172, 254, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(67, 233, 123, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at center, rgba(118, 75, 162, 0.05) 0%, transparent 70%);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(79, 172, 254, 0.2);
+            z-index: 1000;
+            padding: 1rem 0;
+            transition: var(--transition);
+        }
+
+        .nav {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.5));
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 6rem 1.5rem 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(79, 172, 254, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(67, 233, 123, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            max-width: 400px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .app-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 2rem;
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 
+                var(--shadow-primary),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            position: relative;
+            transition: var(--transition);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .app-icon:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 30px 80px rgba(79, 172, 254, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 18px;
+        }
+
+        .hero-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: var(--text-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .download-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn.primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .download-btn.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 25px 70px rgba(79, 172, 254, 0.4);
+        }
+
+        .download-btn.secondary {
+            background: rgba(26, 26, 46, 0.8);
+            color: var(--text-primary);
+            border: 2px solid rgba(79, 172, 254, 0.3);
+            backdrop-filter: blur(20px);
+        }
+
+        .download-btn.secondary:hover {
+            background: rgba(79, 172, 254, 0.1);
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+        }
+
+        .store-badge {
+            height: 50px;
+            width: auto;
+            display: block;
+        }
+
+        .download-btn.app-store,
+        .download-btn.google-play {
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            box-shadow: none;
+        }
+
+        .download-btn.app-store:hover,
+        .download-btn.google-play:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .development-status {
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        /* App Screenshot */
+        .app-showcase {
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        .phone-mockup {
+            max-width: 250px;
+            margin: 0 auto;
+            position: relative;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 
+                0 30px 100px rgba(0, 0, 0, 0.5),
+                0 0 0 6px rgba(79, 172, 254, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .phone-mockup:hover {
+            transform: scale(1.05) rotateY(5deg);
+        }
+
+        .phone-mockup img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 1.5rem;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: var(--hero-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            backdrop-filter: blur(20px);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--hero-gradient);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 15px rgba(79, 172, 254, 0.5));
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 0.9rem;
+        }
+
+        /* Demo Section */
+        .demo-section {
+            padding: 4rem 1.5rem;
+            background: var(--bg-primary);
+            text-align: center;
+        }
+
+        .demo-card {
+            max-width: 350px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            overflow: hidden;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .demo-header {
+            padding: 1rem;
+            background: rgba(79, 172, 254, 0.1);
+            border-bottom: 1px solid rgba(79, 172, 254, 0.2);
+        }
+
+        .demo-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .demo-content {
+            padding: 1.5rem;
+        }
+
+        .score-display {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .score-item {
+            padding: 0.75rem;
+            background: rgba(79, 172, 254, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(79, 172, 254, 0.2);
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .score-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 4rem 1.5rem;
+            background: var(--primary-gradient);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .cta-subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 3rem 1.5rem 2rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid rgba(79, 172, 254, 0.2);
+        }
+
+        .footer-content {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-blue);
+        }
+
+        .copyright {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 1.5rem;
+            line-height: 1.4;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: var(--shadow-primary); }
+            50% { box-shadow: 0 20px 60px rgba(79, 172, 254, 0.5); }
+        }
+
+        .feature-card:hover .feature-icon {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        /* Desktop redirect notification */
+        .desktop-link {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 26, 46, 0.95);
+            color: var(--accent-blue);
+            padding: 0.75rem 1rem;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .desktop-link:hover {
+            background: rgba(79, 172, 254, 0.1);
+            transform: translateX(-50%) translateY(-2px);
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-content">
-            <div class="nav-logo">
-                <span class="logo-icon">🤸</span>
-                <span class="logo-text">Gymnastics AI</span>
-            </div>
-            <button class="nav-toggle" onclick="toggleMenu()">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-        <div class="nav-menu" id="navMenu">
-            <a href="#features" class="nav-link">機能</a>
-            <a href="#download" class="nav-link">ダウンロード</a>
-            <a href="#support" class="nav-link">サポート</a>
-        </div>
-    </nav>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo">
+                <span class="logo-icon">🤸‍♂️</span>
+                <span>Gymnastics AI</span>
+            </a>
+        </nav>
+    </header>
 
     <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-background"></div>
+    <section class="hero">
         <div class="hero-content">
-            <div class="hero-app-icon">
-                <img src="app_icon_new.png" alt="Gymnastics AI" class="app-icon-image">
+            <div class="app-icon">
+                <img src="app_icon.png" alt="Gymnastics AI アプリアイコン">
             </div>
-            <h1 class="hero-title">
-                <span class="title-line">体操競技を</span>
-                <span class="title-line gradient-text">次のレベルへ</span>
-            </h1>
-            <div class="hero-image">
-                <div class="device-frame">
-                    <img src="app_screenshot.png" alt="Gymnastics AI Screenshot" class="app-screenshot">
-                </div>
-            </div>
+            
+            <h1 class="hero-title">体操競技を<br>次のレベルへ</h1>
+            
             <p class="hero-subtitle">
-                高精度D-Score計算とAIによる演技構成分析で<br>
-                あなたの成長をサポート
+                D-Score計算、AI演技分析、技データベース検索<br>
+                すべてを一つのアプリで実現
             </p>
-            <div class="hero-cta">
-                <a href="webapp/" class="cta-button primary">🌐 ウェブ版を試す</a>
-                <a href="#download" class="cta-button secondary">📱 アプリをダウンロード</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Key Features Quick -->
-    <section class="features-quick">
-        <div class="features-container">
-            <div class="feature-card">
-                <div class="feature-icon">🧮</div>
-                <h3>高精度D-Score計算</h3>
-                <p>FIG公式ルール準拠の正確な計算</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🤖</div>
-                <h3>AI技術相談</h3>
-                <p>24時間対応の技術サポート</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔍</div>
-                <h3>技データベース</h3>
-                <p>1000以上の技を収録</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Download Section -->
-    <section id="download" class="download-section">
-        <div class="download-content">
-            <h2 class="download-title">今すぐ始めよう</h2>
-            <div class="download-app-icon">
-                <img src="app_icon_new.png" alt="Gymnastics AI" class="download-icon-image">
-            </div>
-            <p class="download-subtitle">
-                無料でダウンロードして、体操競技の新しい世界を体験
-            </p>
+            
             <div class="download-buttons">
-                <a href="webapp/" class="cta-button primary main-cta">
-                    🌐 ウェブ版で今すぐ試す
+                <a href="#" class="download-btn app-store">
+                    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
                 </a>
-                <div class="store-buttons">
-                    <a href="#" class="store-button">
-                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
-                             alt="Download on the App Store" class="store-badge">
-                    </a>
-                    <a href="#" class="store-button">
-                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" 
-                             alt="Google Play で手に入れよう" class="store-badge">
-                    </a>
-                </div>
-                <div class="development-status">
-                    <span class="status-badge">🚧 モバイルアプリ開発中</span>
-                </div>
+                <a href="#" class="download-btn google-play">
+                    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
+                </a>
             </div>
-            <div class="download-info">
-                <div class="info-item">
-                    <span class="info-icon">✓</span>
-                    <span>基本機能は無料</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-icon">✓</span>
-                    <span>登録不要ですぐ使える</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-icon">✓</span>
-                    <span>広告なしのプレミアム版あり</span>
+            
+            <div class="development-status">
+                <span class="status-badge">🚧 モバイルアプリ開発中</span>
+            </div>
+            
+            <div class="web-app-button">
+                <a href="https://app.gymnastics-ai.com" class="download-btn secondary">
+                    <span>🌐</span>
+                    <span>Web版を試す</span>
+                </a>
+            </div>
+            
+            <div class="app-showcase">
+                <div class="phone-mockup">
+                    <img src="app_screenshot.png" alt="Gymnastics AI アプリスクリーンショット">
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="features-section">
-        <div class="section-header">
-            <h2 class="section-title">革新的な機能</h2>
-            <p class="section-subtitle">体操競技のあらゆるニーズに対応</p>
-        </div>
-
-        <div class="features-grid">
-            <div class="feature-item highlight">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🧮</span>
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">主な機能</h2>
+            <p class="section-subtitle">体操競技のパフォーマンス向上をサポートする革新的な機能</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧮</div>
+                    <h3 class="feature-title">D-Score計算機</h3>
+                    <p class="feature-description">
+                        FIG公式ルールに基づく正確なD-Score計算。技の選択から難度、要求グループ、接続ボーナスまで自動計算します。
+                    </p>
                 </div>
-                <h3 class="feature-title">高精度D-Score計算</h3>
-                <p class="feature-description">
-                    最新ルールに対応した正確な計算。複雑な演技構成も瞬時に分析。
-                </p>
-                <ul class="feature-list">
-                    <li>全6種目対応</li>
-                    <li>グループボーナス自動計算</li>
-                    <li>連続技ボーナス判定</li>
-                </ul>
-            </div>
-
-            <div class="feature-item highlight">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">🤖</span>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AIコーチ</h3>
+                    <p class="feature-description">
+                        最新のAI技術を活用した演技構成の分析と改善提案。あなたの演技を次のレベルへ導きます。
+                    </p>
                 </div>
-                <h3 class="feature-title">AI技術相談</h3>
-                <p class="feature-description">
-                    最新のAI技術で、あなたの疑問に即座に回答。技術向上をサポート。
-                </p>
-                <ul class="feature-list">
-                    <li>24時間対応</li>
-                    <li>詳細な技術解説</li>
-                    <li>構成改善提案</li>
-                </ul>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">📊</span>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <h3 class="feature-title">技データベース</h3>
+                    <p class="feature-description">
+                        最新の採点規則に基づく完全な技データベース。全種目・全技を網羅した検索システム。
+                    </p>
                 </div>
-                <h3 class="feature-title">演技分析</h3>
-                <p class="feature-description">
-                    演技構成の詳細分析で、改善点を明確化。
-                </p>
-            </div>
-
-            <div class="feature-item">
-                <div class="feature-icon-wrapper">
-                    <span class="feature-icon">💾</span>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">マルチプラットフォーム</h3>
+                    <p class="feature-description">
+                        iOS、Android、Webすべてのプラットフォームで利用可能。いつでもどこでもアクセス。
+                    </p>
                 </div>
-                <h3 class="feature-title">オフライン対応</h3>
-                <p class="feature-description">
-                    インターネット接続なしでも主要機能が利用可能。
-                </p>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3 class="feature-title">ルールブックAI</h3>
+                    <p class="feature-description">
+                        採点規則について質問できるAIチャット。複雑なルールも分かりやすく説明します。
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">リアルタイム更新</h3>
+                    <p class="feature-description">
+                        FIGの最新ルール変更に即座に対応。常に最新の情報で計算・分析を実行。
+                    </p>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Support Section -->
-    <section id="support" class="support-section">
-        <div class="support-content">
-            <h2 class="support-title">サポート</h2>
-            <div class="support-grid">
-                <a href="privacy.html" class="support-card">
-                    <div class="support-icon">🔒</div>
-                    <h3>プライバシーポリシー</h3>
-                    <p>お客様の個人情報の取り扱いについて</p>
-                </a>
-                <a href="terms.html" class="support-card">
-                    <div class="support-icon">📋</div>
-                    <h3>利用規約</h3>
-                    <p>アプリケーションの利用条件について</p>
-                </a>
+    <!-- Demo Section -->
+    <section class="demo-section">
+        <div class="container">
+            <h2 class="section-title">D-Score計算デモ</h2>
+            <div class="demo-card">
+                <div class="demo-header">
+                    <div class="demo-title">D-Score Calculator</div>
+                </div>
+                <div class="demo-content">
+                    <div class="score-display">5.700</div>
+                    <div class="score-label">Total D-Score</div>
+                    
+                    <div class="score-breakdown">
+                        <div class="score-item">
+                            <div class="score-label">難度点</div>
+                            <div class="score-value">3.500</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">グループ要求</div>
+                            <div class="score-value">2.000</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">連続ボーナス</div>
+                            <div class="score-value">0.200</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">体操競技の新時代を体験</h2>
+                <p class="cta-subtitle">最新のAI技術で、あなたの演技を次のレベルへ</p>
+                <div class="download-buttons">
+                    <a href="#" class="download-btn app-store">
+                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
+                    </a>
+                    <a href="#" class="download-btn google-play">
+                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
+                    </a>
+                </div>
+                <div class="development-status">
+                    <span class="status-badge">🚧 モバイルアプリ開発中</span>
+                </div>
             </div>
         </div>
     </section>
@@ -239,20 +722,24 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <div class="footer-brand">
-                <span class="footer-logo">🤸</span>
-                <span class="footer-name">Gymnastics AI</span>
+            <div class="footer-links">
+                <a href="privacy.html">プライバシーポリシー</a>
+                <a href="terms.html">利用規約</a>
+                <a href="https://www.instagram.com/daito_iwasaki?igsh=ejF1bGRlbXl2bWNk&utm_source=qr" target="_blank" rel="noopener">📷 Instagram</a>
             </div>
-            <div class="footer-info">
-                <p>&copy; 2025 Gymnastics AI. All rights reserved.</p>
-                <p><a href="https://instagram.com/iwasakihiroto" target="_blank" rel="noopener">📷 Instagram</a></p>
-            </div>
-            <div class="footer-link">
-                <a href="index.html?desktop=1" class="desktop-link">デスクトップ版を見る</a>
+            <div class="copyright">
+                © 2025 Gymnastics AI. All rights reserved.
             </div>
         </div>
     </footer>
 
+    <a href="index.html?desktop=1" class="desktop-link">デスクトップ版を見る</a>
+
+    <!-- Google AdSense -->
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+    
     <script>
         // Desktop detection and redirect
         function detectDesktop() {
@@ -266,38 +753,6 @@
         if (detectDesktop() && !window.location.search.includes('mobile=1')) {
             window.location.href = 'index.html';
         }
-
-        // Mobile menu toggle
-        function toggleMenu() {
-            const navMenu = document.getElementById('navMenu');
-            navMenu.classList.toggle('active');
-        }
-
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                    // Close mobile menu if open
-                    document.getElementById('navMenu').classList.remove('active');
-                }
-            });
-        });
-
-        // Navbar background on scroll
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
 
         // Intersection Observer for animations
         const observerOptions = {
@@ -314,7 +769,7 @@
         }, observerOptions);
 
         // Observe all animatable elements
-        document.querySelectorAll('.feature-item, .feature-card, .support-card').forEach(el => {
+        document.querySelectorAll('.feature-card').forEach(el => {
             observer.observe(el);
         });
     </script>
