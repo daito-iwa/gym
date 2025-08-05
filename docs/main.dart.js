@@ -90089,7 +90089,7 @@ nK(a){return this.adW(a)},
 adW(a){var s=0,r=A.D(t.H),q,p=2,o=[],n=this,m,l,k,j,i,h,g,f,e
 var $async$nK=A.z(function(b,c){if(b===1){o.push(c)
 s=p}while(true)switch(s){case 0:h=n.dy==="\u65e5\u672c\u8a9e"?"ja":"en"
-g=a+"_"+h
+g=a+"_"+h+"_debug_v2"
 f=n.k2
 if(f.an(0,g)){A.t("Using cached skills for "+a+" ("+h+")")
 n.M(new A.asO(n,g))
