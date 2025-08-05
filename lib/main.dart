@@ -1874,7 +1874,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isAnalyzing = false;
 
   // Dスコア計算用
-  String? _selectedApparatus;
+  String? _selectedApparatus = 'FX'; // 初期値として床を設定
   final Map<String, Map<String, String>> _apparatusData = {
     "FX": {"ja": "床", "en": "Floor Exercise"},
     "PH": {"ja": "あん馬", "en": "Pommel Horse"},
@@ -2448,6 +2448,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _loadSkillDataCache();
     _loadCurrentRoutineState(); // 演技構成状態を復元
     _loadCurrentViewMode(); // 画面状態を復元
+    
+    // 初期種目の技データを読み込み
+    if (_selectedApparatus != null) {
+      _ensureSkillsLoaded(_selectedApparatus!);
+    }
   }
 
   // アプリの初期化を非同期で実行（認証不要版）
@@ -2892,8 +2897,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final lang = _currentLang == '日本語' ? 'ja' : 'en';
     final cacheKey = '${apparatus}_$lang';
     
+    print('DEBUG: _ensureSkillsLoaded called for $apparatus ($lang)');
+    
     // Return immediately if already cached
     if (_skillDataCache.containsKey(cacheKey)) {
+      print('DEBUG: Using cached skills for $cacheKey (${_skillDataCache[cacheKey]!.length} skills)');
       setState(() {
         _skillList = _skillDataCache[cacheKey]!;
         _isSkillLoading = false;
@@ -2901,8 +2909,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       return;
     }
     
+    print('DEBUG: Loading skills for $apparatus...');
     // Load skills for this apparatus
     await _loadSkills(apparatus);
+    print('DEBUG: Skills loaded for $apparatus (${_skillList.length} skills)');
   }
   
   // 課金システム初期化
@@ -4076,8 +4086,9 @@ $expertAnswer
 
     final path = 'data/skills_$lang.csv';
     try {
-      print('Loading skills from: $path for apparatus: $apparatus');
+      print('🔍 Loading skills from: $path for apparatus: [$apparatus]');
       final rawCsv = await rootBundle.loadString(path);
+      print('✅ CSV file loaded successfully, length: ${rawCsv.length} characters');
       
       // Use compute for heavy CSV parsing to avoid blocking UI
       final skills = await _parseSkillsCsv(rawCsv, apparatus);
@@ -4097,10 +4108,12 @@ $expertAnswer
         });
       }
     } catch (e) {
-      print('Error loading skills: $e');
+      print('❌ Error loading skills: $e');
+      print('❌ Attempted to load from: $path for apparatus: $apparatus');
       if (mounted) {
         setState(() {
           _isSkillLoading = false;
+          _skillList = []; // 明示的に空リストに設定
         });
       }
     }
@@ -4110,7 +4123,11 @@ $expertAnswer
   Future<List<Skill>> _parseSkillsCsv(String rawCsv, String apparatus) async {
     final List<List<dynamic>> listData = const CsvToListConverter().convert(rawCsv);
     
-    if (listData.isEmpty) return [];
+    print('DEBUG: CSV parsed, total rows: ${listData.length}');
+    if (listData.isEmpty) {
+      print('❌ CSV data is empty');
+      return [];
+    }
     
     // 新しい形式: apparatus,name,group,value_letter
     final skills = <Skill>[];
@@ -4132,6 +4149,12 @@ $expertAnswer
           skills.add(skill);
         }
       }
+    }
+    
+    print('DEBUG: Found ${skills.length} skills for apparatus: $apparatus');
+    if (skills.isEmpty) {
+      print('❌ No skills found for apparatus: $apparatus');
+      print('❌ Available apparatus in CSV: ${listData.skip(1).map((row) => row[0]).toSet()}');
     }
     
     skills.sort((a, b) => a.name.compareTo(b.name));
@@ -4984,9 +5007,10 @@ $expertAnswer
                               _selectedSkill = null;
                               _selectedSkillIndex = null;
                               _resetSkillPagination(); // 種目変更時にページをリセット
+                              _isSkillLoading = true; // ローディング状態に設定
                             });
                             _saveCurrentRoutineState(); // 種目切り替えを自動保存
-                            _ensureSkillsLoaded(newValue);
+                            _ensureSkillsLoaded(newValue); // 非同期で技データ読み込み
                           }
                         },
                         items: _apparatusData.keys.map<DropdownMenuItem<String>>((String key) {
@@ -5455,15 +5479,29 @@ $expertAnswer
         
         const SizedBox(height: 12),
         
-        // 技選択カード表示（常時表示）
-        if (_getFilteredSkillList().isNotEmpty)
-          Container(
-            height: isMobile ? 150 : 180,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListView.builder(
+        // 技選択カード表示（ローディング状態も考慮）
+        Container(
+          height: isMobile ? 150 : 180,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: _isSkillLoading ? 
+            const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('技データを読み込み中...', style: TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ) :
+            _getFilteredSkillList().isEmpty ? 
+              const Center(
+                child: Text('技が見つかりません', style: TextStyle(color: Colors.grey)),
+              ) :
+              ListView.builder(
               itemCount: _getPaginatedSkillList().length,
               itemBuilder: (context, index) {
                 final skill = _getPaginatedSkillList()[index];
@@ -5560,29 +5598,7 @@ $expertAnswer
                 );
               },
             ),
-          )
-        else if (_getFilteredSkillList().isEmpty)
-          Container(
-            height: 80,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey[50],
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.search_off, color: Colors.grey, size: 32),
-                  SizedBox(height: 8),
-                  Text(
-                    '該当する技が見つかりません',
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        ),
           
         // ページネーション コントロール
         if (_getFilteredSkillList().isNotEmpty && _getTotalPages() > 1)
