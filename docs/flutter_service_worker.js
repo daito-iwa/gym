@@ -1,9 +1,9 @@
 'use strict';
 const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
-const CACHE_NAME = 'flutter-app-cache-v20250805225242-FINAL-FIX';
+const CACHE_NAME = 'flutter-app-cache-20250805_230011';
 
-const RESOURCES = {"flutter_bootstrap.js": "1027cca5f973cd8fa4861cc57cfb153a",
+const RESOURCES = {"flutter_bootstrap.js": "71b4a708fbbcca8e92fdf360afdbe28e",
 "version.json": "b5d52a3eae84d49b4b5b74717cd65ed8",
 "index.html": "417442171b7965a0d729e87f593ef352",
 "/": "417442171b7965a0d729e87f593ef352",
@@ -43,7 +43,6 @@ const RESOURCES = {"flutter_bootstrap.js": "1027cca5f973cd8fa4861cc57cfb153a",
 "assets/data/skills_difficulty_tables.md": "5cca84edf4ffd4db60908f7324ebab8d",
 "assets/data/skills_pb.json": "348d97396187486e1e85fb053feeb0c1",
 "assets/assets/logo.png": "ce2c8eb2a96e8d526b9826ca0716770d",
-"server.log": "efbf42e996f202aa7c12c12b555cc5e8",
 "canvaskit/skwasm.js": "ea559890a088fe28b4ddf70e17e60052",
 "canvaskit/skwasm.js.symbols": "e72c79950c8a8483d826a7f0560573a1",
 "canvaskit/canvaskit.js.symbols": "bdcd3835edf8586b6d6edfce8749fb77",
