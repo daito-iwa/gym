@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Gymnastics AI - 体操競技を次のレベルへ - v2.2</title>
+    <title>Gymnastics AI - 体操競技を次のレベルへ - v2.3 BADGE FIX</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- Updated: 2025-08-05 13:40 -->
+    <meta name="cache-bust" content="v2.3-badge-fix-202508051343">
+    <!-- Updated: 2025-08-05 13:43 BADGE SIZE UNIFIED -->
     <meta name="description" content="体操競技のD-Score計算、AI演技分析、技データベース検索。高精度な計算とAIによる演技構成分析で競技力向上をサポート。iOS・Android対応。">
     
     <!-- Favicon -->
@@ -18,7 +19,7 @@
        crossorigin="anonymous"></script>
     
     <style>
-        /* Modern Mobile-First Gymnastics AI Design - Version 2.0 - Updated 2025-08-05 */
+        /* Modern Mobile-First Gymnastics AI Design - Version 2.3 BADGE FIX - Updated 2025-08-05 13:43 */
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --hero-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%);
@@ -222,17 +223,28 @@
         }
 
         .store-badge {
-            height: 60px;
-            width: 195px;
-            display: block;
-            object-fit: contain;
+            height: 60px !important;
+            width: 195px !important;
+            display: block !important;
+            object-fit: contain !important;
+            max-width: 195px !important;
+            min-width: 195px !important;
         }
 
-        .download-btn.app-store .store-badge,
+        .download-btn.app-store .store-badge {
+            height: 60px !important;
+            width: 195px !important;
+            object-fit: contain !important;
+            max-width: 195px !important;
+            min-width: 195px !important;
+        }
+
         .download-btn.google-play .store-badge {
-            height: 60px;
-            width: 195px;
-            object-fit: contain;
+            height: 60px !important;
+            width: 195px !important;
+            object-fit: contain !important;
+            max-width: 195px !important;
+            min-width: 195px !important;
         }
 
         .download-btn.app-store,
