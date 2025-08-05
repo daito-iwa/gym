@@ -2440,6 +2440,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     
     // 定期的なサブスクリプション状態チェックを開始
     _startPeriodicSubscriptionCheck();
+    
+    // データ永続化の読み込み
+    _loadChatMessages();
+    _loadDScoreResults();
+    _loadSkillDataCache();
   }
 
   // アプリの初期化を非同期で実行（認証不要版）
@@ -4075,6 +4080,9 @@ $expertAnswer
 
       // Cache the results
       _skillDataCache[cacheKey] = skills;
+      
+      // 永続化キャッシュに保存
+      _saveSkillDataCache();
 
       if (mounted) {
         setState(() {
@@ -4292,6 +4300,9 @@ $expertAnswer
     setState(() {
       _dScoreResult = result;
     });
+    
+    // D-スコア計算結果を自動保存
+    _saveDScoreResults();
     
     // 無料ユーザーの場合、計算完了後にインタースティシャル広告を表示（審査通過まで無効化）
     /*
@@ -5114,11 +5125,18 @@ $expertAnswer
                               style: TextStyle(color: Colors.grey),
                             ),
                           )
-                        : SingleChildScrollView(
-                            child: Column(
-                              children: _buildRoutineDisplay(),
+                        : _routine.isEmpty 
+                          ? const Center(
+                              child: Text(
+                                '技を選択して追加してください',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            )
+                          : ReorderableListView(
+                              shrinkWrap: true,
+                              onReorder: _onReorderSkills,
+                              children: _buildReorderableRoutineDisplay(),
                             ),
-                          ),
                   ),
                   const SizedBox(height: 12.0),
                   if (_isEditingSkill) 
@@ -5247,6 +5265,9 @@ $expertAnswer
                                 
                                 // 計算完了後に全種目と分析タブにデータを自動共有
                                 _shareCalculationDataToOtherTabs();
+                                
+                                // D-スコア計算結果を自動保存
+                                _saveDScoreResults();
                               }
                             : null,
                           icon: const Icon(Icons.calculate),
@@ -6749,6 +6770,9 @@ $expertAnswer
       setState(() {
         _isSendingMessage = false;
       });
+      
+      // チャット履歴を保存
+      _saveChatMessages();
     }
   }
 
@@ -6930,6 +6954,183 @@ $expertAnswer
 
   
   // 演技構成を表示するWidgetリストを構築
+  // 技の並び替え処理
+  void _onReorderSkills(int oldIndex, int newIndex) {
+    setState(() {
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      
+      // 技をリストから取り出して新しい位置に挿入
+      final skill = _routine.removeAt(oldIndex);
+      final connectionGroup = _connectionGroups.removeAt(oldIndex);
+      
+      _routine.insert(newIndex, skill);
+      _connectionGroups.insert(newIndex, connectionGroup);
+      
+      // D-Score結果をリセット（順序が変わったため再計算が必要）
+      _dScoreResult = null;
+    });
+  }
+
+  // ReorderableListView用の技表示リスト作成
+  List<Widget> _buildReorderableRoutineDisplay() {
+    List<Widget> widgets = [];
+    
+    for (int i = 0; i < _routine.length; i++) {
+      final skill = _routine[i];
+      final connectionGroupId = _connectionGroups[i];
+      final isSelected = _selectedSkillIndex == i;
+      final isConnected = connectionGroupId != 0;
+      final isBeingEdited = _isEditingSkill && _selectedSkillIndex == i;
+      
+      // ReorderableListViewでは各アイテムにuniqueなkeyが必要
+      widgets.add(
+        Container(
+          key: Key('skill_$i'), // 一意のキーを設定
+          margin: const EdgeInsets.symmetric(vertical: 2.0),
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              
+              showDialog(
+                context: context,
+                barrierDismissible: true,
+                builder: (BuildContext dialogContext) {
+                  return _SkillSelectionDialog(
+                    currentSkill: skill,
+                    skillList: _skillList,
+                    currentLang: _currentLang,
+                    apparatus: _selectedApparatus,
+                    onSkillSelected: (Skill selectedSkill) {
+                      Navigator.of(dialogContext).pop();
+                      setState(() {
+                        _routine[i] = selectedSkill;
+                        _dScoreResult = null;
+                        _selectedSkillIndex = null;
+                      });
+                    },
+                  );
+                },
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 1.0),
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: _getSkillBackgroundColor(isSelected, isBeingEdited, isConnected),
+                borderRadius: BorderRadius.circular(8.0),
+                border: isSelected 
+                  ? Border.all(color: Colors.blue, width: 2.0)
+                  : isConnected 
+                    ? Border.all(color: Colors.green.shade300, width: 1.5)
+                    : Border.all(color: Colors.grey.shade300, width: 1.0),
+              ),
+              child: Row(
+                children: [
+                  // ドラッグハンドル
+                  Icon(
+                    Icons.drag_handle,
+                    color: Colors.grey.shade600,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  
+                  // 技情報
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${i + 1}. ${skill.name}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  color: isSelected ? Colors.blue.shade800 : Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            // 削除ボタン
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _routine.removeAt(i);
+                                  _connectionGroups.removeAt(i);
+                                  _dScoreResult = null;
+                                });
+                              },
+                              child: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            _buildCompactSkillBadge('${skill.valueLetter}難度', _getDifficultyColor(skill.valueLetter), true),
+                            const SizedBox(width: 6),
+                            _buildCompactSkillBadge('グループ${skill.group}', Colors.teal, true),
+                            if (isConnected) ...[
+                              const SizedBox(width: 6),
+                              _buildCompactSkillBadge('連続', Colors.orange, true),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 連続技の線を追加（次の技と連続している場合）
+      if (i < _routine.length - 1 && 
+          connectionGroupId != 0 && 
+          _connectionGroups[i + 1] == connectionGroupId) {
+        widgets.add(
+          Container(
+            key: Key('connection_$i'), // 連続技の線にも一意のキーを設定
+            padding: const EdgeInsets.only(left: 30.0),
+            child: Container(
+              width: 2,
+              height: 20,
+              decoration: BoxDecoration(
+                color: Colors.green.shade300,
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    
+    return widgets;
+  }
+
+  // 背景色を取得するヘルパーメソッド
+  Color _getSkillBackgroundColor(bool isSelected, bool isBeingEdited, bool isConnected) {
+    if (isBeingEdited) {
+      return Colors.blue.shade50;
+    } else if (isSelected) {
+      return Colors.blue.shade100;
+    } else if (isConnected) {
+      return Colors.green.shade100;
+    } else {
+      return Colors.grey.shade50;
+    }
+  }
+
+  // 従来の_buildRoutineDisplayメソッドは下位互換性のため保持
   List<Widget> _buildRoutineDisplay() {
     List<Widget> widgets = [];
     
@@ -7473,6 +7674,137 @@ $expertAnswer
       }
     } catch (e) {
       print('Error loading saved routines: $e');
+    }
+  }
+
+  // AIチャット履歴を読み込み
+  Future<void> _loadChatMessages() async {
+    try {
+      final chatData = await _storage.read(key: 'chat_messages');
+      if (chatData != null) {
+        final List<dynamic> decoded = json.decode(chatData);
+        setState(() {
+          _chatMessages = decoded.map((message) => Map<String, dynamic>.from(message)).toList();
+        });
+        print('Loaded ${_chatMessages.length} chat messages');
+      }
+    } catch (e) {
+      print('Error loading chat messages: $e');
+    }
+  }
+
+  // AIチャット履歴を保存
+  Future<void> _saveChatMessages() async {
+    try {
+      await _storage.write(
+        key: 'chat_messages',
+        value: json.encode(_chatMessages),
+      );
+      print('Saved ${_chatMessages.length} chat messages');
+    } catch (e) {
+      print('Error saving chat messages: $e');
+    }
+  }
+
+  // D-スコア計算結果を読み込み
+  Future<void> _loadDScoreResults() async {
+    try {
+      final dScoreData = await _storage.read(key: 'dscore_results');
+      if (dScoreData != null) {
+        final Map<String, dynamic> decoded = json.decode(dScoreData);
+        setState(() {
+          _allDScoreResults.clear();
+          decoded.forEach((key, value) {
+            final Map<String, dynamic> resultMap = Map<String, dynamic>.from(value);
+            _allDScoreResults[key] = DScoreResult(
+              totalDScore: (resultMap['totalDScore'] as num?)?.toDouble() ?? 0.0,
+              difficultyValue: (resultMap['difficultyValue'] as num?)?.toDouble() ?? 0.0,
+              groupBonus: (resultMap['groupBonus'] as num?)?.toDouble() ?? 0.0,
+              connectionBonus: (resultMap['connectionBonus'] as num?)?.toDouble() ?? 0.0,
+              fulfilledGroups: (resultMap['fulfilledGroups'] as int?) ?? 0,
+              requiredGroups: (resultMap['requiredGroups'] as int?) ?? 0,
+              totalSkills: (resultMap['totalSkills'] as int?) ?? 0,
+            );
+          });
+        });
+        print('Loaded D-Score results for ${_allDScoreResults.length} apparatus');
+      }
+    } catch (e) {
+      print('Error loading D-Score results: $e');
+    }
+  }
+
+  // D-スコア計算結果を保存
+  Future<void> _saveDScoreResults() async {
+    try {
+      final resultsToSave = <String, dynamic>{};
+      _allDScoreResults.forEach((key, result) {
+        if (result != null) {
+          resultsToSave[key] = {
+            'totalDScore': result.totalDScore,
+            'difficultyValue': result.difficultyValue,
+            'groupBonus': result.groupBonus,
+            'connectionBonus': result.connectionBonus,
+            'fulfilledGroups': result.fulfilledGroups,
+            'requiredGroups': result.requiredGroups,
+            'totalSkills': result.totalSkills,
+          };
+        }
+      });
+      
+      await _storage.write(
+        key: 'dscore_results',
+        value: json.encode(resultsToSave),
+      );
+      print('Saved D-Score results for ${resultsToSave.length} apparatus');
+    } catch (e) {
+      print('Error saving D-Score results: $e');
+    }
+  }
+
+  // 技データキャッシュを読み込み
+  Future<void> _loadSkillDataCache() async {
+    try {
+      final skillCacheData = await _storage.read(key: 'skill_data_cache');
+      if (skillCacheData != null) {
+        final Map<String, dynamic> decoded = json.decode(skillCacheData);
+        setState(() {
+          _skillDataCache.clear();
+          decoded.forEach((key, value) {
+            final List<dynamic> skillList = value;
+            _skillDataCache[key] = skillList.map((skill) => Skill.fromMap(Map<String, dynamic>.from(skill))).toList();
+          });
+        });
+        print('Loaded skill data cache for ${_skillDataCache.length} apparatus/language combinations');
+      }
+    } catch (e) {
+      print('Error loading skill data cache: $e');
+    }
+  }
+
+  // 技データキャッシュを保存
+  Future<void> _saveSkillDataCache() async {
+    try {
+      final cacheToSave = <String, dynamic>{};
+      _skillDataCache.forEach((key, skillList) {
+        cacheToSave[key] = skillList.map((skill) => {
+          'id': skill.id,
+          'name': skill.name,
+          'group': skill.group,
+          'valueLetter': skill.valueLetter,
+          'description': skill.description,
+          'apparatus': skill.apparatus,
+          'value': skill.value,
+        }).toList();
+      });
+      
+      await _storage.write(
+        key: 'skill_data_cache',
+        value: json.encode(cacheToSave),
+      );
+      print('Saved skill data cache for ${_skillDataCache.length} apparatus/language combinations');
+    } catch (e) {
+      print('Error saving skill data cache: $e');
     }
   }
   
@@ -9041,7 +9373,7 @@ ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missin
   Widget _buildCompactSkillBadge(String text, MaterialColor color, bool isMobile) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 4 : 5, 
+        horizontal: isMobile ? 6 : 7, 
         vertical: 1
       ),
       decoration: BoxDecoration(
@@ -9052,7 +9384,7 @@ ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missin
       child: Text(
         text,
         style: TextStyle(
-          fontSize: isMobile ? 9 : 10,
+          fontSize: isMobile ? 11 : 12,
           fontWeight: FontWeight.w500,
           color: color[600],
         ),
