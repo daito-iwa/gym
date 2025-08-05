@@ -25805,14 +25805,22 @@ RL:function RL(a){this.a=a},
 a7R:function a7R(){},
 a7S:function a7S(){},
 a7T:function a7T(){},
-aZN(a){var s
-if(a==null||a.length===0)return 0
-s=A.a0(["\u2160",1,"I",1,"\u2161",2,"II",2,"\u2162",3,"III",3,"\u2163",4,"IV",4,"\u2164",5,"V",5],t.N,t.S).h(0,B.c.hS(a))
-return s==null?0:s},
-aZO(a){var s
-if(a.length===0)return 0
-s=A.a0(["A",0.1,"B",0.2,"C",0.3,"D",0.4,"E",0.5,"F",0.6,"G",0.7,"H",0.8,"I",0.9,"J",1],t.N,t.i).h(0,B.c.hS(a).toUpperCase())
-return s==null?0:s},
+aZN(a){var s,r,q
+if(a==null||a.length===0){A.t("\ud83d\udd27 \u30ed\u30fc\u30de\u6570\u5b57\u5909\u63db: null/empty -> 0")
+return 0}s=A.a0(["\u2160",1,"I",1,"\u2161",2,"II",2,"\u2162",3,"III",3,"\u2163",4,"IV",4,"\u2164",5,"V",5],t.N,t.S)
+r=B.c.hS(a)
+q=s.h(0,r)
+if(q==null)q=0
+A.t('\ud83d\udd27 \u30ed\u30fc\u30de\u6570\u5b57\u5909\u63db: "'+a+'" (trimmed: "'+r+'") -> '+q)
+return q},
+aZO(a){var s,r,q
+if(a.length===0){A.t("\ud83d\udd27 \u96e3\u5ea6\u30ec\u30bf\u30fc\u5909\u63db: null/empty -> 0.0")
+return 0}s=A.a0(["A",0.1,"B",0.2,"C",0.3,"D",0.4,"E",0.5,"F",0.6,"G",0.7,"H",0.8,"I",0.9,"J",1],t.N,t.i)
+r=B.c.hS(a).toUpperCase()
+q=s.h(0,r)
+if(q==null)q=0
+A.t('\ud83d\udd27 \u96e3\u5ea6\u30ec\u30bf\u30fc\u5909\u63db: "'+a+'" (trimmed: "'+r+'") -> '+A.k(q))
+return q},
 ajZ(a){var s,r,q,p,o,n,m,l,k,j=null,i='", \u30c7\u30d5\u30a9\u30eb\u30c8\u5024=1.0\u3092\u4f7f\u7528',h=a.h(0,"name"),g=h==null?j:J.cx(h),f=g==null?"":g
 h=a.h(0,"apparatus")
 q=h==null?j:J.cx(h)
