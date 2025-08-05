@@ -1142,6 +1142,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     setState(() {
       _currentMode = targetMode;
     });
+    _saveCurrentViewMode(); // タブ切り替えを自動保存
     
     // 特殊処理
     if (targetMode == AppMode.admin) {
@@ -2445,6 +2446,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _loadChatMessages();
     _loadDScoreResults();
     _loadSkillDataCache();
+    _loadCurrentRoutineState(); // 演技構成状態を復元
+    _loadCurrentViewMode(); // 画面状態を復元
   }
 
   // アプリの初期化を非同期で実行（認証不要版）
@@ -2993,7 +2996,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
-        // アプリがバックグラウンドに移行時は特に何もしない
+        // アプリがバックグラウンドに移行時はデータを保存
+        _saveCurrentRoutineState();
+        _saveCurrentViewMode();
         break;
     }
   }
@@ -3650,6 +3655,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _selectedSkillIndex = null;
         _dScoreResult = null;
       });
+      _saveCurrentRoutineState(); // 演技構成変更を自動保存
     }
   }
   
@@ -4979,6 +4985,7 @@ $expertAnswer
                               _selectedSkillIndex = null;
                               _resetSkillPagination(); // 種目変更時にページをリセット
                             });
+                            _saveCurrentRoutineState(); // 種目切り替えを自動保存
                             _ensureSkillsLoaded(newValue);
                           }
                         },
@@ -5294,15 +5301,7 @@ $expertAnswer
                             ),
                           ),
                           const SizedBox(height: 8),
-                          OutlinedButton.icon(
-                            onPressed: () => _showQuickScoreExplanation(),
-                            icon: Icon(Icons.help_outline, color: Colors.blue.shade300),
-                            label: Text('なぜこの点数？', style: TextStyle(color: Colors.blue.shade300)),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.blue.shade300),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            ),
-                          ),
+                          // なぜこの点数？ボタンを削除（AIチャットで直接質問する方式に変更）
                         ],
                       ],
                     ),
@@ -5766,6 +5765,7 @@ $expertAnswer
                           _selectedSkillIndex = null;
                           _dScoreResult = null;
                         });
+                        _saveCurrentRoutineState(); // 演技構成変更を自動保存
                       } else {
                         // 制限に達した場合の警告
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -6091,22 +6091,7 @@ $expertAnswer
             // チャットに送信ボタン
             if (_currentMode == 'ai_chat') ...[
               const SizedBox(height: 24),
-              // なぜその点数？ボタン
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    _sendScoreExplanationToChat(result);
-                  },
-                  icon: Icon(Icons.help_outline, size: 18),
-                  label: Text('なぜその点数？'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange[600],
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
+              // なぜその点数？ボタンを削除（AIチャットで直接質問する方式に変更）
               const SizedBox(height: 12),
               // 改善提案ボタン
               SizedBox(
@@ -7158,6 +7143,7 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
       // D-Score結果をリセット（順序が変わったため再計算が必要）
       _dScoreResult = null;
     });
+    _saveCurrentRoutineState(); // 並び替え変更を自動保存
   }
 
   // ReorderableListView用の技表示リスト作成
@@ -7996,6 +7982,157 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
       print('Saved skill data cache for ${_skillDataCache.length} apparatus/language combinations');
     } catch (e) {
       print('Error saving skill data cache: $e');
+    }
+  }
+  
+  // 現在の演技構成状態を自動保存（リロード対策）
+  Future<void> _saveCurrentRoutineState() async {
+    try {
+      final routineState = {
+        'selectedApparatus': _selectedApparatus,
+        'routine': _routine.map((skill) => {
+          'id': skill.id,
+          'name': skill.name,
+          'group': skill.group,
+          'valueLetter': skill.valueLetter,
+          'description': skill.description,
+          'apparatus': skill.apparatus,
+          'value': skill.value,
+        }).toList(),
+        'connectionGroups': _connectionGroups,
+        'nextConnectionGroupId': _nextConnectionGroupId,
+        'allRoutines': _allRoutines.map((apparatus, skills) => MapEntry(
+          apparatus,
+          skills.map((skill) => {
+            'id': skill.id,
+            'name': skill.name,
+            'group': skill.group,
+            'valueLetter': skill.valueLetter,
+            'description': skill.description,
+            'apparatus': skill.apparatus,
+            'value': skill.value,
+          }).toList(),
+        )),
+        'allConnectionGroups': _allConnectionGroups,
+        'allNextConnectionGroupIds': _allNextConnectionGroupIds,
+        'lastSavedAt': DateTime.now().toIso8601String(),
+      };
+      
+      await _storage.write(
+        key: 'current_routine_state',
+        value: json.encode(routineState),
+      );
+      print('Auto-saved current routine state');
+    } catch (e) {
+      print('Error auto-saving routine state: $e');
+    }
+  }
+
+  // 保存された演技構成状態を読み込み
+  Future<void> _loadCurrentRoutineState() async {
+    try {
+      final stateData = await _storage.read(key: 'current_routine_state');
+      if (stateData != null) {
+        final Map<String, dynamic> state = json.decode(stateData);
+        
+        setState(() {
+          // 選択された種目を復元
+          if (state['selectedApparatus'] != null) {
+            _selectedApparatus = state['selectedApparatus'];
+          }
+          
+          // 現在の演技構成を復元
+          if (state['routine'] != null) {
+            final List<dynamic> routineData = state['routine'];
+            _routine = routineData.map((skillData) => Skill.fromMap(Map<String, dynamic>.from(skillData))).toList();
+          }
+          
+          if (state['connectionGroups'] != null) {
+            _connectionGroups = List<int>.from(state['connectionGroups']);
+          }
+          
+          if (state['nextConnectionGroupId'] != null) {
+            _nextConnectionGroupId = state['nextConnectionGroupId'];
+          }
+          
+          // 全種目の演技構成を復元
+          if (state['allRoutines'] != null) {
+            final Map<String, dynamic> allRoutinesData = state['allRoutines'];
+            _allRoutines.clear();
+            allRoutinesData.forEach((apparatus, skillsData) {
+              final List<dynamic> skillList = skillsData;
+              _allRoutines[apparatus] = skillList.map((skillData) => Skill.fromMap(Map<String, dynamic>.from(skillData))).toList();
+            });
+          }
+          
+          if (state['allConnectionGroups'] != null) {
+            final Map<String, dynamic> allConnectionGroupsData = state['allConnectionGroups'];
+            _allConnectionGroups.clear();
+            allConnectionGroupsData.forEach((key, value) {
+              _allConnectionGroups[key] = List<int>.from(value);
+            });
+          }
+          
+          if (state['allNextConnectionGroupIds'] != null) {
+            final Map<String, dynamic> allNextConnectionGroupIdsData = state['allNextConnectionGroupIds'];
+            _allNextConnectionGroupIds.clear();
+            allNextConnectionGroupIdsData.forEach((key, value) {
+              _allNextConnectionGroupIds[key] = value;
+            });
+          }
+        });
+        
+        print('Loaded current routine state - apparatus: $_selectedApparatus, skills: ${_routine.length}');
+      }
+    } catch (e) {
+      print('Error loading routine state: $e');
+    }
+  }
+  
+  // 現在の画面状態（タブ）を自動保存
+  Future<void> _saveCurrentViewMode() async {
+    try {
+      await _storage.write(
+        key: 'current_view_mode',
+        value: _currentMode.toString(),
+      );
+      print('Auto-saved current view mode: $_currentMode');
+    } catch (e) {
+      print('Error auto-saving view mode: $e');
+    }
+  }
+
+  // 保存された画面状態（タブ）を読み込み
+  Future<void> _loadCurrentViewMode() async {
+    try {
+      final modeData = await _storage.read(key: 'current_view_mode');
+      if (modeData != null) {
+        setState(() {
+          // 文字列から AppMode に変換
+          switch (modeData) {
+            case 'AppMode.chat':
+              _currentMode = AppMode.chat;
+              break;
+            case 'AppMode.dScore':
+              _currentMode = AppMode.dScore;
+              break;
+            case 'AppMode.allApparatus':
+              _currentMode = AppMode.allApparatus;
+              break;
+            case 'AppMode.analytics':
+              _currentMode = AppMode.analytics;
+              break;
+            case 'AppMode.admin':
+              _currentMode = AppMode.admin;
+              break;
+            default:
+              _currentMode = AppMode.chat; // デフォルト
+          }
+        });
+        print('Loaded current view mode: $_currentMode');
+      }
+    } catch (e) {
+      print('Error loading view mode: $e');
     }
   }
   
