@@ -5278,6 +5278,32 @@ $expertAnswer
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                           ),
                         ),
+                        
+                        // 🌟 新機能: 最強AIコーチによる演技分析ボタン
+                        if (_dScoreResult != null) ...[
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () => _showWorldClassAIAnalysis(),
+                            icon: const Icon(Icons.psychology, color: Colors.white),
+                            label: const Text('🤖 AIで詳細分析', style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple.shade600,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              side: BorderSide(color: Colors.purple.shade300, width: 1),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: () => _showQuickScoreExplanation(),
+                            icon: Icon(Icons.help_outline, color: Colors.blue.shade300),
+                            label: Text('なぜこの点数？', style: TextStyle(color: Colors.blue.shade300)),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.blue.shade300),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     
@@ -6012,6 +6038,56 @@ $expertAnswer
               ),
             ],
             
+            // ND減点表示（減点がある場合のみ）
+            if (result.neutralDeductions > 0) ...[
+              const SizedBox(height: 12),
+              _buildCleanScoreRow(
+                'ND減点',
+                -result.neutralDeductions,  // マイナス値として表示
+                Colors.red[100]!,
+                Colors.red[700]!,
+                isMobile
+              ),
+              // 減点内訳の詳細表示
+              if (result.deductionBreakdown.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '減点内訳:',
+                        style: TextStyle(
+                          fontSize: isMobile ? 12 : 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[700],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      ...result.deductionBreakdown.entries.map((entry) => 
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '• ${entry.key}: -${entry.value.toStringAsFixed(1)}点',
+                            style: TextStyle(
+                              fontSize: isMobile ? 11 : 12,
+                              color: Colors.red[600],
+                            ),
+                          ),
+                        ),
+                      ).toList(),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+            
             // チャットに送信ボタン
             if (_currentMode == 'ai_chat') ...[
               const SizedBox(height: 24),
@@ -6606,13 +6682,19 @@ $expertAnswer
           : '') +
       ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
           ? '\n- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点' 
+          : '') +
+      (result.neutralDeductions > 0 
+          ? '\n⚠️ ND減点: -${result.neutralDeductions.toStringAsFixed(1)}点' 
+          : '') +
+      (result.deductionBreakdown.isNotEmpty 
+          ? '\n  減点内訳: ${result.deductionBreakdown.entries.map((e) => '${e.key} -${e.value.toStringAsFixed(1)}点').join(', ')}' 
           : '') + '''
 
 📝 基本情報:
 - 種目: $_selectedApparatus
 - 技数: ${_routine.length}技
 
-この構成について改善提案をお願いします。''';
+この構成について改善提案をお願いします。特にND減点がある場合は、その解決方法を教えてください。''';
     }
     
     // チャットに送信
@@ -7721,6 +7803,8 @@ $expertAnswer
               difficultyValue: (resultMap['difficultyValue'] as num?)?.toDouble() ?? 0.0,
               groupBonus: (resultMap['groupBonus'] as num?)?.toDouble() ?? 0.0,
               connectionBonus: (resultMap['connectionBonus'] as num?)?.toDouble() ?? 0.0,
+              neutralDeductions: (resultMap['neutralDeductions'] as num?)?.toDouble() ?? 0.0,
+              deductionBreakdown: Map<String, double>.from(resultMap['deductionBreakdown'] ?? {}),
               fulfilledGroups: (resultMap['fulfilledGroups'] as int?) ?? 0,
               requiredGroups: (resultMap['requiredGroups'] as int?) ?? 0,
               totalSkills: (resultMap['totalSkills'] as int?) ?? 0,
@@ -7745,6 +7829,8 @@ $expertAnswer
             'difficultyValue': result.difficultyValue,
             'groupBonus': result.groupBonus,
             'connectionBonus': result.connectionBonus,
+            'neutralDeductions': result.neutralDeductions,
+            'deductionBreakdown': result.deductionBreakdown,
             'fulfilledGroups': result.fulfilledGroups,
             'requiredGroups': result.requiredGroups,
             'totalSkills': result.totalSkills,
@@ -8532,6 +8618,9 @@ $expertAnswer
 - グループ分布: ${analysis.groupDistribution.entries.map((e) => 'G${e.key}:${e.value}技').join(', ')}''' + 
     ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
         ? '\n- 連続技ボーナス率: ${(analysis.connectionBonusRatio * 100).toStringAsFixed(1)}%' 
+        : '') +
+    (_dScoreResult?.neutralDeductions != null && _dScoreResult!.neutralDeductions > 0 
+        ? '\n⚠️ ND減点: -${_dScoreResult!.neutralDeductions.toStringAsFixed(1)}点 (${_dScoreResult!.deductionBreakdown.keys.join(', ')})' 
         : '') + '''
 
 ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missingGroups.join(', ')}' : '✅ 全グループ要求を満たしています'}
@@ -8541,7 +8630,10 @@ ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missin
 2. 難度アップの可能性''' + 
     ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
         ? '\n3. 連続技ボーナスの最適化\n4. リスク管理' 
-        : '\n3. リスク管理');
+        : '\n3. リスク管理') +
+    (_dScoreResult?.neutralDeductions != null && _dScoreResult!.neutralDeductions > 0 
+        ? '\n5. ND減点の解決方法' 
+        : '');
     
     // チャットに送信
     await _sendMessage(analysisText);
@@ -9757,6 +9849,197 @@ ${analysis.missingGroups.isNotEmpty ? '❌ 不足グループ: ${analysis.missin
     }
     */
     print('========================');
+  }
+
+  // 🌟 世界クラスAIコーチによる詳細演技分析
+  void _showWorldClassAIAnalysis() async {
+    if (_dScoreResult == null || _selectedApparatus == null) {
+      _showErrorDialog('エラー', 'まずD-Score計算を実行してください。');
+      return;
+    }
+
+    // ローディングダイアログを表示
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Colors.purple.shade600),
+            const SizedBox(height: 16),
+            const Text('🤖 世界クラスAIコーチが分析中...', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      // 演技データを準備
+      final routineData = _routine.map((skill) => {
+        'name': skill.name,
+        'valueLetter': skill.valueLetter,
+        'group': skill.group,
+        'value': skill.value,
+      }).toList();
+
+      // AI分析APIを呼び出し
+      final response = await http.post(
+        Uri.parse('${Config.apiBaseUrl}/analyze_routine'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'routine_data': routineData,
+          'apparatus': _selectedApparatus,
+          'total_score': _dScoreResult!.totalDScore,
+          'difficulty_score': _dScoreResult!.difficultyValue,
+          'group_bonus': _dScoreResult!.groupBonus,
+          'connection_bonus': _dScoreResult!.connectionBonus,
+          'message': '演技構成の詳細分析と改善提案をお願いします。',
+        }),
+      ).timeout(const Duration(seconds: 30));
+
+      Navigator.of(context).pop(); // ローディングダイアログを閉じる
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final analysis = data['analysis'] as String;
+        
+        // 分析結果ダイアログを表示
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.psychology, color: Colors.purple.shade600, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '🤖 世界クラスAI分析結果',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.purple.shade600),
+                  ),
+                ),
+              ],
+            ),
+            content: Container(
+              width: double.maxFinite,
+              constraints: const BoxConstraints(maxHeight: 500),
+              child: SingleChildScrollView(
+                child: Text(
+                  analysis,
+                  style: const TextStyle(fontSize: 14, height: 1.5),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('閉じる', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        throw Exception('AI分析サーバーエラー: ${response.statusCode}');
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // ローディングダイアログを閉じる
+      _showErrorDialog('AI分析エラー', 'AI分析に失敗しました。ネットワーク接続を確認してください。\n\nエラー詳細: $e');
+    }
+  }
+
+  // 🔍 なぜこの点数？ - クイック説明機能
+  void _showQuickScoreExplanation() async {
+    if (_dScoreResult == null || _selectedApparatus == null) {
+      _showErrorDialog('エラー', 'まずD-Score計算を実행してください。');
+      return;
+    }
+
+    // ローディングダイアログを表示
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Colors.blue.shade600),
+            const SizedBox(height: 16),
+            const Text('🤔 点数の根拠を解析中...', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      // 演技データを準備
+      final routineData = _routine.map((skill) => {
+        'name': skill.name,
+        'valueLetter': skill.valueLetter,
+        'group': skill.group,
+        'value': skill.value,
+      }).toList();
+
+      // クイック分析APIを呼び出し
+      final response = await http.post(
+        Uri.parse('${Config.apiBaseUrl}/quick_analysis'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'routine_data': routineData,
+          'apparatus': _selectedApparatus,
+          'total_score': _dScoreResult!.totalDScore,
+          'difficulty_score': _dScoreResult!.difficultyValue,
+          'group_bonus': _dScoreResult!.groupBonus,
+          'connection_bonus': _dScoreResult!.connectionBonus,
+        }),
+      ).timeout(const Duration(seconds: 20));
+
+      Navigator.of(context).pop(); // ローディングダイアログを閉じる
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final explanation = data['explanation'] as String;
+        
+        // 説明結果ダイアログを表示
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.help_outline, color: Colors.blue.shade600, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '🤔 なぜこの点数？',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade600),
+                  ),
+                ),
+              ],
+            ),
+            content: Container(
+              width: double.maxFinite,
+              constraints: const BoxConstraints(maxHeight: 400),
+              child: SingleChildScrollView(
+                child: Text(
+                  explanation,
+                  style: const TextStyle(fontSize: 14, height: 1.5),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('閉じる', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        throw Exception('クイック分析サーバーエラー: ${response.statusCode}');
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // ローディングダイアログを閉じる
+      _showErrorDialog('点数説明エラー', '点数の説明に失敗しました。ネットワーク接続を確認してください。\n\nエラー詳細: $e');
+    }
   }
 
   @override

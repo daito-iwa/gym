@@ -29,6 +29,15 @@ class ChatMessage(BaseModel):
     message: str
     conversation_id: Optional[str] = None
 
+class RoutineAnalysisRequest(BaseModel):
+    routine_data: List[Dict]
+    apparatus: str
+    total_score: float
+    difficulty_score: float
+    group_bonus: float
+    connection_bonus: float
+    message: Optional[str] = None
+
 # 知識ベースを読み込み
 KNOWLEDGE_BASE = {}
 DATA_FILES = [
@@ -93,48 +102,97 @@ def search_knowledge(query: str) -> str:
     
     return '\n\n'.join(relevant_info[:3])  # 最大3段落
 
-async def get_ai_response(message: str, knowledge_context: str) -> str:
-    """OpenAI APIを使用してAI応答を生成"""
+def create_expert_system_prompt(apparatus: str, routine_data: Optional[List[Dict]] = None) -> str:
+    """世界最高レベルの体操競技専門家としてのシステムプロンプトを生成"""
+    
+    base_prompt = f"""あなたは世界トップクラスの体操競技専門AIコーチです。
+
+【あなたの専門性】
+- FIG公式採点規則のエキスパート（最新2022-2024版完全習得）
+- D-Score計算の権威（難度・グループ要求・接続ボーナス全て精通）
+- 体操技術分析のスペシャリスト
+- 演技構成最適化の専門家
+- 国際大会レベルの指導経験
+
+【現在分析中の種目】
+{apparatus} ({get_apparatus_name(apparatus)})
+
+【あなたの回答スタイル】
+✅ 具体的で実用的なアドバイス
+✅ 計算根拠を詳細に説明
+✅ 改善案を具体的に提示
+✅ FIG規則を正確に引用
+✅ 競技レベルに応じた指導
+
+【絶対に避けること】
+❌ 曖昧な回答
+❌ 一般論だけの説明
+❌ 計算ミス
+❌ 古いルールの引用"""
+
+    if routine_data:
+        routine_info = f"""
+【現在の演技構成データ】
+演技技数: {len(routine_data)}技
+技リスト: {[skill.get('name', 'Unknown') for skill in routine_data]}
+難度構成: {[skill.get('valueLetter', 'Unknown') for skill in routine_data]}
+グループ構成: {[skill.get('group', 'Unknown') for skill in routine_data]}
+
+【分析指針】
+この演技構成を基に、具体的で実践的なアドバイスを提供してください。
+- なぜその点数になるのか詳細説明
+- どう改善すればより高得点が狙えるか
+- リスクとメリットの分析
+- 代替技の提案"""
+        
+        base_prompt += routine_info
+    
+    return base_prompt
+
+def get_apparatus_name(apparatus_code: str) -> str:
+    """種目コードから日本語名を取得"""
+    apparatus_names = {
+        'FX': '床運動',
+        'PH': 'あん馬', 
+        'SR': 'つり輪',
+        'VT': '跳馬',
+        'PB': '平行棒',
+        'HB': '鉄棒'
+    }
+    return apparatus_names.get(apparatus_code, apparatus_code)
+
+async def get_ai_response(message: str, knowledge_context: str, routine_data: Optional[List[Dict]] = None, apparatus: str = "FX") -> str:
+    """OpenAI APIを使用して世界最高レベルのAI応答を生成"""
     if not openai_client:
         # デモモード：基本的なルールベース応答
         return generate_demo_response(message, knowledge_context)
     
     try:
-        # 体操競技専門AIコーチとしてのシステムプロンプト
-        system_prompt = f"""あなたは世界トップクラスの体操競技専門AIコーチです。
-
-【あなたの専門性】
-- FIG公式採点規則のエキスパート
-- D-Score計算の権威
-- 体操技術分析のスペシャリスト  
-- 男子体操6種目（床・あん馬・つり輪・跳馬・平行棒・鉄棒）の専門家
-- 世界レベルの競技指導経験を持つ
-
-【応答スタイル】
-- 正確で具体的な技術指導
-- FIG規則に完全準拠
-- 実践的で分かりやすい説明
-- 日本語で自然な会話
-- 必要に応じて具体的な数値や技名を使用
+        # 最強の体操競技専門AIコーチシステムプロンプトを使用
+        system_prompt = create_expert_system_prompt(apparatus, routine_data)
+        
+        # 知識ベースを含む完全なプロンプト
+        full_system_prompt = f"""{system_prompt}
 
 【利用可能な知識ベース】
 {knowledge_context}
 
-【重要】
-- 常に最新のFIG規則に基づいて回答
-- 不正確な情報は絶対に提供しない
-- 分からない場合は正直に「確認が必要」と回答
-- ユーザーの技術レベルに合わせて説明の詳しさを調整"""
+【現在の状況に基づく回答指針】
+- 質問内容を正確に理解し、専門家として最適な回答を提供
+- 計算結果があれば、その根拠を詳細に説明
+- 改善提案は具体的で実践可能なものを提示
+- FIG規則を正確に引用し、最新ルールに準拠
+- ユーザーの技術レベルに関係なく、理解しやすい説明を心がける"""
 
         response = openai_client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": full_system_prompt},
                 {"role": "user", "content": message}
             ],
-            max_tokens=800,
-            temperature=0.7,
-            presence_penalty=0.1,
+            max_tokens=1200,  # より詳細な回答のため増量
+            temperature=0.3,  # より正確な回答のため低め
+            presence_penalty=0.2,
             frequency_penalty=0.1
         )
         
@@ -289,6 +347,121 @@ async def chat(data: ChatMessage):
     except Exception as e:
         print(f"チャット処理エラー: {e}")
         raise HTTPException(status_code=500, detail="サーバー内部エラーが発生しました")
+
+@app.post("/analyze_routine")
+async def analyze_routine_endpoint(request: RoutineAnalysisRequest):
+    """演技構成の詳細分析エンドポイント - 最強AIコーチの真骨頂"""
+    try:
+        # 演技構成データから知識ベースを構築
+        apparatus_name = get_apparatus_name(request.apparatus)
+        knowledge_context = search_knowledge(f"{apparatus_name} 演技構成 分析")
+        
+        # 詳細な演技分析プロンプトを構築
+        analysis_message = f"""演技構成の詳細分析をお願いします。
+
+【演技データ】
+種目: {apparatus_name} ({request.apparatus})
+総得点: {request.total_score}点
+難度点: {request.difficulty_score}点
+グループボーナス: {request.group_bonus}点
+連続技ボーナス: {request.connection_bonus}点
+
+【技構成】
+{format_routine_data(request.routine_data)}
+
+【分析希望項目】
+1. 現在の点数の詳細な内訳説明
+2. グループ要求の充足状況
+3. 連続技ボーナスの詳細
+4. さらなる高得点化の具体的提案
+5. リスク分析と代替案
+
+{request.message or '上記の演技構成について、詳細で実践的なアドバイスをください。'}"""
+
+        # 最強AIコーチによる分析
+        response = await get_ai_response(
+            analysis_message, 
+            knowledge_context, 
+            request.routine_data, 
+            request.apparatus
+        )
+        
+        return {
+            "analysis": response,
+            "routine_summary": {
+                "skill_count": len(request.routine_data),
+                "apparatus": apparatus_name,
+                "total_score": request.total_score,
+                "breakdown": {
+                    "difficulty": request.difficulty_score,
+                    "group_bonus": request.group_bonus,
+                    "connection_bonus": request.connection_bonus
+                }
+            }
+        }
+        
+    except Exception as e:
+        print(f"演技分析エラー: {e}")
+        raise HTTPException(status_code=500, detail=f"演技分析エラー: {str(e)}")
+
+def format_routine_data(routine_data: List[Dict]) -> str:
+    """演技データを読みやすい形式でフォーマット"""
+    formatted_skills = []
+    for i, skill in enumerate(routine_data, 1):
+        skill_name = skill.get('name', 'Unknown')
+        value_letter = skill.get('valueLetter', 'Unknown')
+        group = skill.get('group', 'Unknown')
+        value = skill.get('value', 0.0)
+        
+        formatted_skills.append(
+            f"{i}. {skill_name} (難度:{value_letter}/{value}点/グループ{group})"
+        )
+    
+    return '\n'.join(formatted_skills)
+
+@app.post("/quick_analysis")
+async def quick_analysis_endpoint(request: RoutineAnalysisRequest):
+    """ワンクリック分析 - 「なぜこの点数？」に即答"""
+    try:
+        apparatus_name = get_apparatus_name(request.apparatus)
+        
+        # ワンクリック質問用の簡潔なプロンプト
+        quick_message = f"""「なぜこの点数になったのか？」を詳しく説明してください。
+
+【計算結果】
+総得点: {request.total_score}点
+内訳:
+- 難度点: {request.difficulty_score}点
+- グループボーナス: {request.group_bonus}点  
+- 連続技ボーナス: {request.connection_bonus}点
+
+【種目】{apparatus_name}
+
+この点数の根拠を、初心者にも分かりやすく、しかし詳細に説明してください。
+計算式も含めて具体的にお答えください。"""
+
+        knowledge_context = search_knowledge(f"{apparatus_name} 点数計算")
+        
+        response = await get_ai_response(
+            quick_message,
+            knowledge_context,
+            request.routine_data,
+            request.apparatus
+        )
+        
+        return {
+            "explanation": response,
+            "score_breakdown": {
+                "total": request.total_score,
+                "difficulty": request.difficulty_score,
+                "group_bonus": request.group_bonus,
+                "connection_bonus": request.connection_bonus
+            }
+        }
+        
+    except Exception as e:
+        print(f"クイック分析エラー: {e}")
+        raise HTTPException(status_code=500, detail=f"クイック分析エラー: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

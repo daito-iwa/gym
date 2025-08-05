@@ -155,12 +155,13 @@ class BannerSize {
 /// MobileAdWidget - for backward compatibility
 class MobileAdWidget extends AdSenseWidget {
   final dynamic adManager; // AdManagerインスタンス
+  final BannerSize size;
   
   const MobileAdWidget({
     Key? key,
     required this.adManager,
     required String adUnitId,
-    required BannerSize size,
+    required this.size,
     Widget? adWidget,
   }) : super(
           key: key,

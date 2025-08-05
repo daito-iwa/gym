@@ -57,13 +57,13 @@ class WebAdsManager {
       html.document.body?.append(testAd);
       
       // AdBlockがある場合、要素が削除される
-      html.window.setTimeout(() {
+      Future.delayed(const Duration(milliseconds: 100), () {
         if (testAd.offsetHeight == 0) {
           _adBlockDetected = true;
           print('AdBlock detected');
         }
         testAd.remove();
-      }, 100);
+      });
     } catch (e) {
       print('AdBlock detection failed: $e');
     }

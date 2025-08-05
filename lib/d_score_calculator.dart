@@ -125,6 +125,8 @@ class DScoreResult {
   final double difficultyValue;
   final double groupBonus;
   final double connectionBonus;
+  final double neutralDeductions;
+  final Map<String, double> deductionBreakdown;
   final int fulfilledGroups;
   final int requiredGroups;
   final int totalSkills;
@@ -134,6 +136,8 @@ class DScoreResult {
     this.difficultyValue = 0.0,
     this.groupBonus = 0.0,
     this.connectionBonus = 0.0,
+    this.neutralDeductions = 0.0,
+    this.deductionBreakdown = const {},
     this.fulfilledGroups = 0,
     this.requiredGroups = 0,
     this.totalSkills = 0,
@@ -149,6 +153,31 @@ const Map<String, Map<String, dynamic>> APPARATUS_RULES = {
     "PB": {"count_limit": 8, "groups_required": 4, "bonus_per_group": 0.5},
     "HB": {"count_limit": 8, "groups_required": 4, "bonus_per_group": 0.5},
 };
+
+// ニュートラルディダクション（技数不足による減点）ルール
+// ルールブック6-3条「短い演技に対して」より
+const Map<int, double> SKILL_COUNT_DEDUCTIONS = {
+  8: 0.0,
+  7: 0.0,
+  6: 0.0,
+  5: 3.0,
+  4: 4.0,
+  3: 5.0,
+  2: 6.0,
+  1: 7.0,
+  0: 10.0,
+};
+
+/// 技数不足によるニュートラルディダクション（ND減点）を計算
+double calculateNeutralDeductions(String apparatus, int skillCount) {
+  // 跳馬はND減点の対象外
+  if (apparatus == "VT") {
+    return 0.0;
+  }
+  
+  // 技数に応じた減点を取得
+  return SKILL_COUNT_DEDUCTIONS[skillCount] ?? 10.0; // 0技の場合は10.0点減点
+}
 
 DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   print('DEBUG_CALC: calculateDScore開始');
@@ -336,14 +365,25 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   // 連続技ボーナスの上限制限（FIG規則：最大0.4点まで）
   connectionBonus = connectionBonus > 0.4 ? 0.4 : connectionBonus;
 
-  // 4. 最終Dスコア
-  final totalDScore = difficultyValue + groupBonus + connectionBonus;
+  // 4. ニュートラルディダクション（ND）減点の計算
+  final neutralDeductions = calculateNeutralDeductions(apparatus, allSkills.length);
+  final deductionBreakdown = <String, double>{};
+  
+  if (neutralDeductions > 0.0) {
+    deductionBreakdown['技数不足'] = neutralDeductions;
+  }
+
+  // 5. 最終Dスコア（ND減点適用後）
+  final baseDScore = difficultyValue + groupBonus + connectionBonus;
+  final totalDScore = baseDScore - neutralDeductions;
 
   return DScoreResult(
     totalDScore: totalDScore,
     difficultyValue: difficultyValue,
     groupBonus: groupBonus,
     connectionBonus: connectionBonus,
+    neutralDeductions: neutralDeductions,
+    deductionBreakdown: deductionBreakdown,
     fulfilledGroups: numFulfilledGroups,
     requiredGroups: rules["groups_required"] as int,
     totalSkills: allSkills.length,
