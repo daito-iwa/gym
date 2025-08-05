@@ -5142,6 +5142,8 @@ $expertAnswer
                           : ReorderableListView(
                               shrinkWrap: true,
                               onReorder: _onReorderSkills,
+                              physics: const NeverScrollableScrollPhysics(), // スクロール競合を防ぐ
+                              buildDefaultDragHandles: false, // カスタムドラッグハンドルを使用
                               children: _buildReorderableRoutineDisplay(),
                             ),
                   ),
@@ -5289,18 +5291,7 @@ $expertAnswer
                         // 🌟 新機能: 最強AIコーチによる演技分析ボタン
                         if (_dScoreResult != null) ...[
                           const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: () => _showWorldClassAIAnalysis(),
-                            icon: const Icon(Icons.psychology, color: Colors.white),
-                            label: const Text('🤖 AIで詳細分析', style: TextStyle(fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple.shade600,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              side: BorderSide(color: Colors.purple.shade300, width: 1),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          // AIで詳細分析ボタンを削除（AIチャットで直接質問する方式に変更）
                           // なぜこの点数？ボタンを削除（AIチャットで直接質問する方式に変更）
                         ],
                       ],
@@ -7201,11 +7192,17 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
               ),
               child: Row(
                 children: [
-                  // ドラッグハンドル
-                  Icon(
-                    Icons.drag_handle,
-                    color: Colors.grey.shade600,
-                    size: 20,
+                  // ドラッグハンドル（カスタム実装）
+                  ReorderableDragStartListener(
+                    index: i,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.drag_handle,
+                        color: Colors.grey.shade600,
+                        size: 20,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   
@@ -8082,7 +8079,11 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
           }
         });
         
-        print('Loaded current routine state - apparatus: $_selectedApparatus, skills: ${_routine.length}');
+        print('✅ Successfully loaded routine state:');
+        print('  - Selected apparatus: $_selectedApparatus');
+        print('  - Current routine skills: ${_routine.length}');
+        print('  - All routines: ${_allRoutines.keys.toList()}');
+        print('  - Connection groups: ${_connectionGroups.length}');
       }
     } catch (e) {
       print('Error loading routine state: $e');
@@ -8106,6 +8107,7 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
   Future<void> _loadCurrentViewMode() async {
     try {
       final modeData = await _storage.read(key: 'current_view_mode');
+      print('DEBUG: Reading view mode data: $modeData');
       if (modeData != null) {
         setState(() {
           // 文字列から AppMode に変換
@@ -8126,10 +8128,13 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
               _currentMode = AppMode.admin;
               break;
             default:
+              print('DEBUG: Unknown mode data: $modeData, using default chat');
               _currentMode = AppMode.chat; // デフォルト
           }
         });
-        print('Loaded current view mode: $_currentMode');
+        print('✅ Successfully loaded view mode: $_currentMode from: $modeData');
+      } else {
+        print('DEBUG: No saved view mode found, using default chat');
       }
     } catch (e) {
       print('Error loading view mode: $e');
