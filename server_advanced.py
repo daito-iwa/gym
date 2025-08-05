@@ -105,16 +105,49 @@ async def root():
 async def health_check():
     return {"status": "healthy", "loaded_files": list(KNOWLEDGE_BASE.keys())}
 
-async def get_ai_response(message: str, knowledge_context: str) -> str:
+async def get_ai_response(message: str, knowledge_context: str, context_data: dict = None) -> str:
     """OpenAI APIを使用してAI応答を生成"""
     if not openai_client:
         # デモモード：基本的なルールベース応答
-        return generate_demo_response(message, knowledge_context)
+        return generate_demo_response(message, knowledge_context, context_data)
     
     try:
+        # 演技構成データがある場合のコンテキスト情報を構築
+        context_info = ""
+        if context_data:
+            user_profile = context_data.get('user_profile', {})
+            current_routine = context_data.get('current_routine', {})
+            calculation_result = context_data.get('calculation_result', {})
+            
+            if current_routine and current_routine.get('skills'):
+                context_info += f"""
+【現在の演技構成情報】
+種目: {current_routine.get('apparatus', 'N/A')}
+技数: {current_routine.get('total_skills', 0)}
+技構成:"""
+                for i, skill in enumerate(current_routine['skills'], 1):
+                    context_info += f"""
+  {i}. {skill.get('name', 'N/A')} - {skill.get('difficulty_letter', 'N/A')}難度 ({skill.get('difficulty_value', 0)}点) - グループ{skill.get('group', 'N/A')}"""
+                
+                if calculation_result:
+                    context_info += f"""
+
+【計算結果】
+- 総D-Score: {calculation_result.get('total_d_score', 0)}点
+- 技の価値: {calculation_result.get('difficulty_value', 0)}点
+- グループボーナス: {calculation_result.get('group_bonus', 0)}点
+- 連続技ボーナス: {calculation_result.get('connection_bonus', 0)}点
+- ND減点: {calculation_result.get('neutral_deductions', 0)}点
+- 充足グループ: {calculation_result.get('fulfilled_groups', [])}
+- 必要グループ: {calculation_result.get('required_groups', [])}"""
+                    
+                    if calculation_result.get('deduction_breakdown'):
+                        context_info += f"""
+- 減点詳細: {calculation_result['deduction_breakdown']}"""
+
         # 体操競技専門AIコーチとしてのシステムプロンプト
         system_prompt = f"""あなたは世界トップクラスの体操競技専門AIコーチです。
-        
+
 【あなたの専門性】
 - FIG公式採点規則のエキスパート
 - D-Score計算の権威
@@ -128,12 +161,19 @@ async def get_ai_response(message: str, knowledge_context: str) -> str:
 - 実践的で分かりやすい説明
 - 日本語で自然な会話
 - 必要に応じて具体的な数値や技名を使用
+- D-Score計算の根拠を詳細に説明
+- 演技構成の改善提案を具体的に行う
 
 【利用可能な知識ベース】
 {knowledge_context}
 
-【重要】
+{context_info}
+
+【重要な指導方針】
 - 常に最新のFIG規則に基づいて回答
+- D-Score計算時は具体的な根拠を示す
+- 演技構成の改善点を技術的に説明
+- 「なぜその点数？」の質問には計算過程を詳細に説明
 - 不正確な情報は絶対に提供しない
 - 分からない場合は正直に「確認が必要」と回答
 - ユーザーの技術レベルに合わせて説明の詳しさを調整"""
@@ -156,7 +196,7 @@ async def get_ai_response(message: str, knowledge_context: str) -> str:
         print(f"OpenAI API エラー: {e}")
         return generate_demo_response(message, knowledge_context)
 
-def generate_demo_response(message: str, knowledge_context: str) -> str:
+def generate_demo_response(message: str, knowledge_context: str, context_data: dict = None) -> str:
     """デモモード用の応答生成"""
     message_lower = message.lower()
     
@@ -233,11 +273,26 @@ def generate_demo_response(message: str, knowledge_context: str) -> str:
 @app.post("/chat/message")
 async def chat(data: ChatMessage):
     message = data.message
+    context_data = data.context
     
     # 知識ベースから関連情報を検索
     knowledge_context = search_knowledge(message)
     
-    # 基本的な回答パターン
+    # OpenAI APIを使用して応答を生成
+    if openai_client:
+        try:
+            response_text = await get_ai_response(message, knowledge_context, context_data)
+            return {
+                "response": response_text,
+                "conversation_id": data.conversation_id or "adv_001",
+                "usage_count": 1,
+                "remaining_count": -1
+            }
+        except Exception as e:
+            print(f"OpenAI API呼び出しエラー: {e}")
+            # フォールバックとしてデモモードを使用
+    
+    # デモモード：基本的な回答パターン
     response_patterns = {
         "連続技": f"""連続技について説明します。
 
@@ -331,6 +386,6 @@ FIG公式ルール：
     }
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))
+    port = int(os.getenv("PORT", 8891))
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=port)

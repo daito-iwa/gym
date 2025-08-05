@@ -6091,6 +6091,24 @@ $expertAnswer
             // チャットに送信ボタン
             if (_currentMode == 'ai_chat') ...[
               const SizedBox(height: 24),
+              // なぜその点数？ボタン
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _sendScoreExplanationToChat(result);
+                  },
+                  icon: Icon(Icons.help_outline, size: 18),
+                  label: Text('なぜその点数？'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange[600],
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // 改善提案ボタン
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -6756,7 +6774,7 @@ $expertAnswer
         body: json.encode({
           'message': message,
           'conversation_id': null,
-          'context': null,
+          'context': _buildContextData(),
         }),
       );
       
@@ -6856,6 +6874,93 @@ $expertAnswer
       // チャット履歴を保存
       _saveChatMessages();
     }
+  }
+
+  // D-スコア計算の詳細説明をAIチャットに送信
+  Future<void> _sendScoreExplanationToChat(DScoreResult result) async {
+    if (_selectedApparatus == null) return;
+    
+    final explanationText = '''🤔 **D-スコア計算の詳細説明をお願いします**
+
+🏅 **計算結果**：
+- **総合D-スコア**: ${result.totalDScore.toStringAsFixed(3)}点
+
+📊 **内訳**：
+- 難度点: ${result.difficultyValue.toStringAsFixed(3)}点''' + 
+    ((_selectedApparatus != 'VT') 
+        ? '\n- グループ要求 (${result.fulfilledGroups}/${result.requiredGroups}): ${result.groupBonus.toStringAsFixed(3)}点' 
+        : '') +
+    ((_selectedApparatus == 'FX' || _selectedApparatus == 'HB') 
+        ? '\n- 連続技ボーナス: ${result.connectionBonus.toStringAsFixed(3)}点' 
+        : '') +
+    (result.neutralDeductions > 0 
+        ? '\n⚠️ ND減点: -${result.neutralDeductions.toStringAsFixed(1)}点' 
+        : '') +
+    (result.deductionBreakdown.isNotEmpty 
+        ? '\n  減点内訳: ${result.deductionBreakdown.entries.map((e) => '${e.key} -${e.value.toStringAsFixed(1)}点').join(', ')}' 
+        : '') + '''
+
+💡 **質問**：
+なぜこの点数になったのか、計算過程を詳しく教えてください。特に以下を知りたいです：
+
+1. **難度点${result.difficultyValue.toStringAsFixed(3)}点の内訳** - どの技が選ばれて、なぜこの合計になったのか？
+2. **グループ要求${result.groupBonus.toStringAsFixed(3)}点の計算根拠** - 各グループのボーナス点の詳細
+${(_selectedApparatus == 'FX' || _selectedApparatus == 'HB') ? '3. **連続技ボーナス${result.connectionBonus.toStringAsFixed(3)}点の詳細** - どの技の組み合わせでボーナスが発生したか？' : ''}
+${result.neutralDeductions > 0 ? '4. **ND減点の詳細** - なぜこの減点が適用されたか？' : ''}
+
+📋 **演技情報**：
+- 種目: $_selectedApparatus
+- 技数: ${_routine.length}技
+- 現在の技構成: ${_routine.map((skill) => '${skill.name}(${skill.valueLetter}難度・G${skill.group})').join(', ')}
+
+FIG公式ルールに基づいて、計算過程を分かりやすく説明してください。''';
+    
+    await _sendMessage(explanationText);
+  }
+
+  // AIに送信するコンテキストデータを構築
+  Map<String, dynamic> _buildContextData() {
+    return {
+      'user_profile': {
+        'current_apparatus': _selectedApparatus,
+        'skill_level': 'intermediate', // 今後ユーザーレベル判定機能を追加予定
+        'language': _currentLang,
+      },
+      'current_routine': {
+        'apparatus': _selectedApparatus,
+        'skills': _routine.map((skill) => {
+          'name': skill.name,
+          'group': skill.group,
+          'difficulty_letter': skill.valueLetter,
+          'difficulty_value': skill.value,
+          'description': skill.description,
+        }).toList(),
+        'connection_groups': _connectionGroups,
+        'total_skills': _routine.length,
+      },
+      'calculation_result': _dScoreResult != null ? {
+        'total_d_score': _dScoreResult!.totalDScore,
+        'difficulty_value': _dScoreResult!.difficultyValue,
+        'group_bonus': _dScoreResult!.groupBonus,
+        'connection_bonus': _dScoreResult!.connectionBonus,
+        'neutral_deductions': _dScoreResult!.neutralDeductions,
+        'deduction_breakdown': _dScoreResult!.deductionBreakdown,
+        'fulfilled_groups': _dScoreResult!.fulfilledGroups,
+        'required_groups': _dScoreResult!.requiredGroups,
+        'total_skills': _dScoreResult!.totalSkills,
+      } : null,
+      'apparatus_rules': _selectedApparatus != null ? {
+        'apparatus': _selectedApparatus,
+        'group_requirements': _selectedApparatus != 'VT' ? 4 : 0,
+        'skill_limit': _selectedApparatus != 'VT' ? 8 : 1,
+        'supports_connections': _selectedApparatus == 'FX' || _selectedApparatus == 'HB',
+      } : null,
+      'knowledge_base': {
+        'rulebook_version': '2025-2028',
+        'scoring_system': 'FIG_official',
+        'language': _currentLang,
+      }
+    };
   }
 
   // ローカル体操データベースから回答を生成
