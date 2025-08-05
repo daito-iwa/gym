@@ -8,6 +8,9 @@ class WebAdsManager {
   static bool _adSenseLoaded = false;
   static bool _adBlockDetected = false;
   
+  // 実際のAdSense Publisher ID（承認後に使用）
+  static const String publisherId = 'ca-pub-8022160047771829';
+  
   /// 広告システムの初期化
   static Future<void> initialize() async {
     if (!kIsWeb || _initialized) return;
@@ -32,7 +35,7 @@ class WebAdsManager {
     
     // AdSense用のscriptタグを作成
     final script = html.ScriptElement()
-      ..src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID'
+      ..src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=$publisherId'
       ..async = true
       ..crossOrigin = 'anonymous';
     
@@ -77,29 +80,34 @@ class WebAdsManager {
     if (!kIsWeb || !_initialized) return;
     
     try {
-      // 広告コンテナを取得
-      final container = html.document.getElementById(containerId);
-      if (container == null) {
-        print('Ad container not found: $containerId');
-        return;
-      }
+      // HTMLに直接広告コンテナを挿入
+      final container = html.DivElement()
+        ..id = containerId
+        ..style.width = '100%'
+        ..style.height = 'auto'
+        ..style.textAlign = 'center'
+        ..style.margin = '10px 0';
       
       // 広告要素を作成
       final adElement = html.Element.tag('ins')
         ..className = 'adsbygoogle'
         ..style.display = 'block'
-        ..attributes['data-ad-client'] = 'ca-pub-YOUR_PUBLISHER_ID'
+        ..attributes['data-ad-client'] = publisherId
         ..attributes['data-ad-slot'] = adSlot
         ..attributes['data-ad-format'] = adFormat;
       
       if (isResponsive) {
         adElement.attributes['data-full-width-responsive'] = 'true';
       } else {
-        adElement.style.width = adSize.split('x')[0] + 'px';
-        adElement.style.height = adSize.split('x')[1] + 'px';
+        final sizeParts = adSize.split('x');
+        if (sizeParts.length == 2) {
+          adElement.style.width = '${sizeParts[0]}px';
+          adElement.style.height = '${sizeParts[1]}px';
+        }
       }
       
       container.append(adElement);
+      html.document.body?.append(container);
       
       // AdSense広告を初期化
       js.context.callMethod('eval', ['(adsbygoogle = window.adsbygoogle || []).push({});']);
@@ -143,46 +151,6 @@ class WebAdsManager {
   
   /// 初期化状態の確認
   static bool get isInitialized => _initialized;
-  
-  /// Media.net広告の初期化
-  static void initializeMediaNet() {
-    if (!kIsWeb) return;
-    
-    try {
-      // Media.net スクリプトの読み込み
-      final script = html.ScriptElement()
-        ..src = 'https://contextual.media.net/dmedianet.js?cid=8CU2W25JH'
-        ..async = true;
-      
-      html.document.head?.append(script);
-    } catch (e) {
-      print('Failed to initialize Media.net: $e');
-    }
-  }
-  
-  /// Adsterra広告の初期化
-  static void initializeAdsterra() {
-    if (!kIsWeb) return;
-    
-    try {
-      // Adsterraの設定
-      js.context['atstOptions'] = js.JsObject.jsify({
-        'key': 'YOUR_ADSTERRA_KEY',
-        'format': 'iframe',
-        'height': 250,
-        'width': 300,
-        'params': {}
-      });
-      
-      final script = html.ScriptElement()
-        ..src = '//www.topcreativeformat.com/YOUR_ADSTERRA_KEY/invoke.js'
-        ..async = true;
-      
-      html.document.head?.append(script);
-    } catch (e) {
-      print('Failed to initialize Adsterra: $e');
-    }
-  }
   
   /// 広告収益の追跡
   static void trackRevenue({

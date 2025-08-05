@@ -1,14 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 /// Web版の使用制限と広告インセンティブを管理するクラス
 class WebUsageManager {
   static const String _dailyChatCountKey = 'daily_chat_count';
   static const String _lastResetDateKey = 'last_reset_date';
   static const String _adViewCountKey = 'ad_view_count';
-  static const String _premiumStatusKey = 'premium_status';
   
   // 制限値
   static const int _baseDailyChatLimit = 10;
@@ -122,20 +120,6 @@ class WebUsageManager {
       'adsUntilNextBonus': adsUntilBonus,
       'totalEarnedBonus': (adViewCount ~/ _adViewsPerBonus) * _adBonusChatLimit,
     };
-  }
-  
-  /// プレミアムステータス（将来の機能拡張用）
-  static Future<bool> isPremiumUser() async {
-    if (_prefs == null) await initialize();
-    return _prefs!.getBool(_premiumStatusKey) ?? false;
-  }
-  
-  /// 使用状況をリセット（デバッグ用）
-  static Future<void> resetUsage() async {
-    if (_prefs == null) await initialize();
-    await _prefs!.remove(_dailyChatCountKey);
-    await _prefs!.remove(_lastResetDateKey);
-    await _prefs!.remove(_adViewCountKey);
   }
 }
 

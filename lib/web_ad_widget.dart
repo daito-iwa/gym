@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
-import 'dart:math' as math;
 import 'web_ads_manager.dart';
 
 /// Flutter Web専用の広告表示ウィジェット
@@ -122,7 +120,8 @@ class _WebAdWidgetState extends State<WebAdWidget> {
   }
   
   String _getDefaultAdSlot() {
-    // 配置位置に応じたデフォルトの広告スロット
+    // AdSense承認後に実際のスロットIDに変更する
+    // 現在はデモ用のプレースホルダー
     switch (widget.placement) {
       case AdPlacement.header:
         return '1234567890'; // ヘッダー用スロット
@@ -196,26 +195,24 @@ class _WebAdWidgetState extends State<WebAdWidget> {
   }
   
   Widget _buildAdContainer() {
-    if (kIsWeb) {
-      // HTMLエレメントのコンテナとして使用
-      return Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[200]!),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: const Center(
-          child: Text(
-            'Advertisement',
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 12,
-            ),
+    // Web版では実際の広告はHTML側で表示される
+    // ここではプレースホルダーを表示
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(4),
+        color: Colors.grey[50],
+      ),
+      child: const Center(
+        child: Text(
+          'Advertisement',
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 12,
           ),
         ),
-      );
-    } else {
-      return _buildFallbackWidget();
-    }
+      ),
+    );
   }
   
   Widget _buildLoadingIndicator() {
@@ -272,25 +269,6 @@ class _WebAdWidgetState extends State<WebAdWidget> {
     );
   }
   
-  Widget _buildFallbackWidget() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Center(
-        child: Text(
-          '広告',
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-          ),
-        ),
-      ),
-    );
-  }
-  
   @override
   Widget build(BuildContext context) {
     if (!kIsWeb) {
@@ -300,198 +278,6 @@ class _WebAdWidgetState extends State<WebAdWidget> {
     return Container(
       margin: widget.margin,
       child: _getAdSizeContainer(),
-    );
-  }
-  
-  @override
-  void dispose() {
-    // クリーンアップ
-    if (kIsWeb) {
-      try {
-        html.document.getElementById(_adId)?.remove();
-      } catch (e) {
-        print('Failed to cleanup ad element: $e');
-      }
-    }
-    super.dispose();
-  }
-}
-
-/// 戦略的広告配置のヘルパーウィジェット
-class StrategicAdPlacement extends StatelessWidget {
-  final Widget content;
-  final AdPlacement placement;
-  final bool showAd;
-  
-  const StrategicAdPlacement({
-    Key? key,
-    required this.content,
-    required this.placement,
-    this.showAd = true,
-  }) : super(key: key);
-  
-  @override
-  Widget build(BuildContext context) {
-    if (!showAd || !kIsWeb) {
-      return content;
-    }
-    
-    switch (placement) {
-      case AdPlacement.header:
-        return Column(
-          children: [
-            const WebAdWidget(
-              adType: WebAdType.leaderboard,
-              placement: AdPlacement.header,
-            ),
-            content,
-          ],
-        );
-        
-      case AdPlacement.sidebar:
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: content),
-            const SizedBox(width: 16),
-            const Column(
-              children: [
-                WebAdWidget(
-                  adType: WebAdType.rectangle,
-                  placement: AdPlacement.sidebar,
-                ),
-                SizedBox(height: 16),
-                WebAdWidget(
-                  adType: WebAdType.rectangle,
-                  placement: AdPlacement.sidebar,
-                  customId: 'sidebar-2',
-                ),
-              ],
-            ),
-          ],
-        );
-        
-      case AdPlacement.footer:
-        return Column(
-          children: [
-            content,
-            const WebAdWidget(
-              adType: WebAdType.banner,
-              placement: AdPlacement.footer,
-            ),
-          ],
-        );
-        
-      default:
-        return content;
-    }
-  }
-}
-
-/// レスポンシブ広告レイアウト
-class ResponsiveAdLayout extends StatelessWidget {
-  final Widget child;
-  final bool showAds;
-  
-  const ResponsiveAdLayout({
-    Key? key,
-    required this.child,
-    this.showAds = true,
-  }) : super(key: key);
-  
-  @override
-  Widget build(BuildContext context) {
-    if (!showAds || !kIsWeb) {
-      return child;
-    }
-    
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth > 1200;
-    final isTablet = screenWidth > 768 && screenWidth <= 1200;
-    final isMobile = screenWidth <= 768;
-    
-    if (isDesktop) {
-      return _buildDesktopLayout();
-    } else if (isTablet) {
-      return _buildTabletLayout();
-    } else {
-      return _buildMobileLayout();
-    }
-  }
-  
-  Widget _buildDesktopLayout() {
-    return Column(
-      children: [
-        // ヘッダー広告
-        const WebAdWidget(
-          adType: WebAdType.leaderboard,
-          placement: AdPlacement.header,
-        ),
-        // メインコンテンツ + サイドバー広告
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 3, child: child),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 1,
-                child: Column(
-                  children: [
-                    const WebAdWidget(
-                      adType: WebAdType.rectangle,
-                      placement: AdPlacement.sidebar,
-                    ),
-                    const SizedBox(height: 16),
-                    const WebAdWidget(
-                      adType: WebAdType.skyscraper,
-                      placement: AdPlacement.sidebar,
-                      customId: 'sidebar-skyscraper',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        // フッター広告
-        const WebAdWidget(
-          adType: WebAdType.banner,
-          placement: AdPlacement.footer,
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildTabletLayout() {
-    return Column(
-      children: [
-        const WebAdWidget(
-          adType: WebAdType.banner,
-          placement: AdPlacement.header,
-        ),
-        Expanded(child: child),
-        const WebAdWidget(
-          adType: WebAdType.rectangle,
-          placement: AdPlacement.footer,
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildMobileLayout() {
-    return Column(
-      children: [
-        const WebAdWidget(
-          adType: WebAdType.mobile,
-          placement: AdPlacement.header,
-        ),
-        Expanded(child: child),
-        const WebAdWidget(
-          adType: WebAdType.mobile,
-          placement: AdPlacement.footer,
-        ),
-      ],
     );
   }
 }
