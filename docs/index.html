@@ -2,57 +2,69 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gymnastics AI - 体操競技D-Score計算・AI分析アプリ</title>
-    <meta name="description" content="体操競技のD-Score計算、AI演技分析、技データベース検索を提供する革新的なアプリ。FIG公式ルールに基づく正確な計算と、AIによる演技構成の最適化をサポート。">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Gymnastics AI - 体操競技を次のレベルへ</title>
+    <meta name="description" content="体操競技のD-Score計算、AI演技分析、技データベース検索。高精度な計算とAIによる演技構成分析で競技力向上をサポート。iOS・Android対応。">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png"/>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤸</text></svg>">
     
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8022160047771829"
        crossorigin="anonymous"></script>
     
     <style>
+        /* Modern Gymnastics AI Design */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --hero-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%);
+            --text-gradient: linear-gradient(90deg, #4facfe 0%, #00f2fe 25%, #43e97b 50%, #f9ca24 75%, #f0932b 100%);
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(26, 26, 46, 0.8);
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8cc;
+            --accent-blue: #4facfe;
+            --accent-green: #43e97b;
+            --shadow-primary: 0 20px 60px rgba(79, 172, 254, 0.3);
+            --shadow-glow: 0 0 40px rgba(79, 172, 254, 0.2);
+            --border-radius: 20px;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
-        :root {
-            --bg-primary: #000000;
-            --bg-secondary: #111111;
-            --bg-card: rgba(255, 255, 255, 0.05);
-            --text-primary: #f5f5f7;
-            --text-secondary: #86868b;
-            --accent-primary: #007aff;
-            --accent-secondary: #5856d6;
-            --gradient-primary: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
-            --gradient-hero: linear-gradient(180deg, rgba(0,122,255,0.1) 0%, rgba(88,86,214,0.05) 50%, transparent 100%);
-        }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
+            background-image: 
+                radial-gradient(ellipse at top left, rgba(79, 172, 254, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(67, 233, 123, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at center, rgba(118, 75, 162, 0.05) 0%, transparent 70%);
+            min-height: 100vh;
         }
-        
+
         /* Header */
         .header {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(10, 10, 15, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(79, 172, 254, 0.2);
             z-index: 1000;
             padding: 1rem 0;
+            transition: var(--transition);
         }
-        
+
         .nav {
             max-width: 1200px;
             margin: 0 auto;
@@ -61,45 +73,37 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .nav-links {
             display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-        
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .nav-links a:hover {
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--text-primary);
-        }
-        
-        .cta-button {
-            background: var(--gradient-primary);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 980px;
             text-decoration: none;
-            font-weight: 500;
-            transition: transform 0.3s;
         }
-        
-        .cta-button:hover {
-            transform: scale(1.05);
+
+        .logo-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.5));
         }
-        
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 4px;
+        }
+
+        .nav-toggle span {
+            width: 25px;
+            height: 3px;
+            background: var(--text-primary);
+            border-radius: 2px;
+            transition: var(--transition);
+        }
+
         /* Hero Section */
         .hero {
             min-height: 100vh;
@@ -107,187 +111,362 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 6rem 2rem 4rem;
-            background: var(--gradient-hero);
+            padding: 8rem 2rem 4rem;
             position: relative;
+            overflow: hidden;
         }
-        
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(79, 172, 254, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(67, 233, 123, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
         .hero-content {
-            max-width: 800px;
+            max-width: 900px;
+            position: relative;
+            z-index: 2;
         }
-        
-        .hero h1 {
+
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 3rem;
+            background: var(--bg-secondary);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 4rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            background: var(--gradient-primary);
+            box-shadow: 
+                var(--shadow-primary),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .app-icon:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 
+                0 30px 80px rgba(79, 172, 254, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 22px;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            background: var(--text-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
         }
-        
+
         .hero-subtitle {
             font-size: 1.5rem;
             color: var(--text-secondary);
             margin-bottom: 3rem;
-            line-height: 1.5;
+            font-weight: 500;
+            line-height: 1.4;
         }
-        
-        .hero-buttons {
+
+        .download-buttons {
             display: flex;
             gap: 1.5rem;
             justify-content: center;
             flex-wrap: wrap;
-        }
-        
-        .primary-button {
-            background: var(--gradient-primary);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 980px;
-            text-decoration: none;
-            font-size: 1.1rem;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .primary-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 122, 255, 0.3);
-        }
-        
-        .secondary-button {
-            background: transparent;
-            color: var(--text-primary);
-            padding: 1rem 2rem;
-            border-radius: 980px;
-            text-decoration: none;
-            font-size: 1.1rem;
-            font-weight: 500;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s;
-        }
-        
-        .secondary-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-        
-        /* Features Section */
-        .features {
-            padding: 6rem 2rem;
-            background: var(--bg-secondary);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .section-title {
-            font-size: 3rem;
-            font-weight: 700;
-            text-align: center;
             margin-bottom: 4rem;
         }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        
-        .feature-card {
-            background: var(--bg-card);
-            padding: 2.5rem;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent-primary);
-            box-shadow: 0 20px 40px rgba(0, 122, 255, 0.1);
-        }
-        
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .feature-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        .feature-description {
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-        
-        /* Screenshot Section */
-        .screenshots {
-            padding: 6rem 2rem;
-            background: var(--bg-primary);
-        }
-        
-        .screenshot-container {
-            display: flex;
-            justify-content: center;
+
+        .download-btn {
+            display: inline-flex;
             align-items: center;
-            gap: 3rem;
-            flex-wrap: wrap;
-        }
-        
-        .screenshot {
-            max-width: 300px;
-            border-radius: 20px;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            position: relative;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            transition: transform 0.3s;
         }
-        
-        .screenshot:hover {
-            transform: scale(1.05);
+
+        .download-btn.primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-primary);
         }
-        
-        .screenshot img {
+
+        .download-btn.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 25px 70px rgba(79, 172, 254, 0.4);
+        }
+
+        .download-btn.secondary {
+            background: rgba(26, 26, 46, 0.8);
+            color: var(--text-primary);
+            border: 2px solid rgba(79, 172, 254, 0.3);
+            backdrop-filter: blur(20px);
+        }
+
+        .download-btn.secondary:hover {
+            background: rgba(79, 172, 254, 0.1);
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+        }
+
+        /* App Screenshot */
+        .app-showcase {
+            margin-top: 2rem;
+            position: relative;
+        }
+
+        .phone-mockup {
+            max-width: 300px;
+            margin: 0 auto;
+            position: relative;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 
+                0 30px 100px rgba(0, 0, 0, 0.5),
+                0 0 0 8px rgba(79, 172, 254, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .phone-mockup:hover {
+            transform: scale(1.05) rotateY(5deg);
+        }
+
+        .phone-mockup img {
             width: 100%;
             height: auto;
             display: block;
         }
-        
-        /* CTA Section */
-        .cta-section {
-            padding: 6rem 2rem;
-            background: var(--gradient-primary);
+
+        /* Features Section */
+        .features {
+            padding: 8rem 2rem;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: var(--hero-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 3rem 2.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            backdrop-filter: blur(20px);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--hero-gradient);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .feature-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 0 15px rgba(79, 172, 254, 0.5));
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* Demo Section */
+        .demo-section {
+            padding: 8rem 2rem;
+            background: var(--bg-primary);
             text-align: center;
         }
-        
-        .cta-section h2 {
-            font-size: 2.5rem;
+
+        .demo-card {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            overflow: hidden;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .demo-header {
+            padding: 1.5rem;
+            background: rgba(79, 172, 254, 0.1);
+            border-bottom: 1px solid rgba(79, 172, 254, 0.2);
+        }
+
+        .demo-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .demo-content {
+            padding: 2rem;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .score-item {
+            padding: 1rem;
+            background: rgba(79, 172, 254, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(79, 172, 254, 0.2);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .score-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 8rem 2rem;
+            background: var(--primary-gradient);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-title {
+            font-size: 3rem;
+            font-weight: 800;
             margin-bottom: 1.5rem;
             color: white;
         }
-        
-        .cta-section p {
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
+
+        .cta-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
             color: rgba(255, 255, 255, 0.9);
         }
-        
+
         /* Footer */
         .footer {
-            padding: 3rem 2rem;
+            padding: 4rem 2rem 2rem;
             background: var(--bg-secondary);
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(79, 172, 254, 0.2);
         }
-        
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
         .footer-links {
             display: flex;
             justify-content: center;
@@ -295,35 +474,27 @@
             margin-bottom: 2rem;
             flex-wrap: wrap;
         }
-        
+
         .footer-links a {
             color: var(--text-secondary);
             text-decoration: none;
             transition: color 0.3s;
+            padding: 0.5rem;
         }
-        
+
         .footer-links a:hover {
-            color: var(--text-primary);
+            color: var(--accent-blue);
         }
-        
+
         .copyright {
             color: var(--text-secondary);
             font-size: 0.9rem;
+            margin-top: 2rem;
         }
-        
-        /* Ad Placements */
-        .ad-container {
-            margin: 2rem auto;
-            text-align: center;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            max-width: 728px;
-        }
-        
-        /* Responsive */
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .hero h1 {
+            .hero-title {
                 font-size: 2.5rem;
             }
             
@@ -331,23 +502,56 @@
                 font-size: 1.2rem;
             }
             
-            .nav-links {
-                display: none;
+            .app-icon {
+                width: 100px;
+                height: 100px;
+                font-size: 3rem;
+            }
+            
+            .download-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .download-btn {
+                width: 100%;
+                max-width: 300px;
             }
             
             .features-grid {
                 grid-template-columns: 1fr;
             }
             
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
+            .nav-toggle {
+                display: flex;
             }
             
-            .primary-button, .secondary-button {
-                width: 100%;
-                max-width: 300px;
+            .section-title {
+                font-size: 2.2rem;
             }
+            
+            .cta-title {
+                font-size: 2.2rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: var(--shadow-primary); }
+            50% { box-shadow: 0 20px 60px rgba(79, 172, 254, 0.5); }
+        }
+
+        .app-icon {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .feature-card:hover .feature-icon {
+            animation: glow 2s ease-in-out infinite;
         }
     </style>
 </head>
@@ -355,51 +559,57 @@
     <!-- Header -->
     <header class="header">
         <nav class="nav">
-            <div class="logo">Gymnastics AI</div>
-            <ul class="nav-links">
-                <li><a href="#features">機能</a></li>
-                <li><a href="#screenshots">スクリーンショット</a></li>
-                <li><a href="#pricing">料金</a></li>
-            </ul>
-            <a href="https://app.gymnastics-ai.com" class="cta-button">アプリを開く</a>
+            <a href="#" class="logo">
+                <span class="logo-icon">🤸‍♂️</span>
+                <span>Gymnastics AI</span>
+            </a>
+            <div class="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </nav>
     </header>
-    
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Gymnastics AI</h1>
+            <div class="app-icon">
+                <img src="app_icon.png" alt="Gymnastics AI アプリアイコン">
+            </div>
+            
+            <h1 class="hero-title">体操競技を<br>次のレベルへ</h1>
+            
             <p class="hero-subtitle">
-                体操競技のD-Score計算、AI演技分析、技データベース検索<br>
-                すべてを一つのアプリで
+                D-Score計算、AI演技分析、技データベース検索<br>
+                すべてを一つのアプリで実現
             </p>
-            <div class="hero-buttons">
-                <a href="https://app.gymnastics-ai.com" class="primary-button">
-                    <span>無料で始める</span>
-                    <span>→</span>
+            
+            <div class="download-buttons">
+                <a href="#" class="download-btn primary">
+                    <span>📱</span>
+                    <span>Coming Soon</span>
                 </a>
-                <a href="#features" class="secondary-button">詳しく見る</a>
+                <a href="https://app.gymnastics-ai.com" class="download-btn secondary">
+                    <span>🌐</span>
+                    <span>Web版を試す</span>
+                </a>
+            </div>
+            
+            <div class="app-showcase">
+                <div class="phone-mockup">
+                    <img src="app_screenshot.png" alt="Gymnastics AI アプリスクリーンショット">
+                </div>
             </div>
         </div>
     </section>
-    
-    <!-- Ad Placement -->
-    <div class="ad-container">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-8022160047771829"
-             data-ad-slot="1234567890"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-    </div>
-    
+
     <!-- Features Section -->
-    <section class="features" id="features">
+    <section class="features">
         <div class="container">
             <h2 class="section-title">主な機能</h2>
+            <p class="section-subtitle">体操競技のパフォーマンス向上をサポートする革新的な機能</p>
+            
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">🧮</div>
@@ -408,6 +618,7 @@
                         FIG公式ルールに基づく正確なD-Score計算。技の選択から難度、要求グループ、接続ボーナスまで自動計算します。
                     </p>
                 </div>
+                
                 <div class="feature-card">
                     <div class="feature-icon">🤖</div>
                     <h3 class="feature-title">AIコーチ</h3>
@@ -415,82 +626,110 @@
                         最新のAI技術を活用した演技構成の分析と改善提案。あなたの演技を次のレベルへ導きます。
                     </p>
                 </div>
+                
                 <div class="feature-card">
                     <div class="feature-icon">📚</div>
                     <h3 class="feature-title">技データベース</h3>
                     <p class="feature-description">
-                        最新の採点規則に基づく完全な技データベース。すべての種目、すべての技を網羅しています。
+                        最新の採点規則に基づく完全な技データベース。全種目・全技を網羅した検索システム。
                     </p>
                 </div>
+                
                 <div class="feature-card">
                     <div class="feature-icon">📱</div>
-                    <h3 class="feature-title">モバイル対応</h3>
+                    <h3 class="feature-title">マルチプラットフォーム</h3>
                     <p class="feature-description">
-                        iOS、Android、Webすべてのプラットフォームで利用可能。いつでもどこでもアクセスできます。
+                        iOS、Android、Webすべてのプラットフォームで利用可能。いつでもどこでもアクセス。
                     </p>
                 </div>
+                
                 <div class="feature-card">
                     <div class="feature-icon">💬</div>
-                    <h3 class="feature-title">ルールブックチャット</h3>
+                    <h3 class="feature-title">ルールブックAI</h3>
                     <p class="feature-description">
-                        採点規則について質問できるAIチャット機能。複雑なルールも分かりやすく説明します。
+                        採点規則について質問できるAIチャット。複雑なルールも分かりやすく説明します。
                     </p>
                 </div>
+                
                 <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
+                    <div class="feature-icon">⚡</div>
                     <h3 class="feature-title">リアルタイム更新</h3>
                     <p class="feature-description">
-                        FIGの最新ルール変更に即座に対応。常に最新の情報で計算・分析を行います。
+                        FIGの最新ルール変更に即座に対応。常に最新の情報で計算・分析を実行。
                     </p>
                 </div>
             </div>
         </div>
     </section>
-    
-    <!-- Screenshot Section -->
-    <section class="screenshots" id="screenshots">
+
+    <!-- Demo Section -->
+    <section class="demo-section">
         <div class="container">
-            <h2 class="section-title">アプリの画面</h2>
-            <div class="screenshot-container">
-                <div class="screenshot">
-                    <img src="app_screenshot.png" alt="Gymnastics AI スクリーンショット">
+            <h2 class="section-title">D-Score計算デモ</h2>
+            <div class="demo-card">
+                <div class="demo-header">
+                    <div class="demo-title">D-Score Calculator</div>
+                </div>
+                <div class="demo-content">
+                    <div class="score-display">5.700</div>
+                    <div class="score-label">Total D-Score</div>
+                    
+                    <div class="score-breakdown">
+                        <div class="score-item">
+                            <div class="score-label">難度点</div>
+                            <div class="score-value">3.500</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">グループ要求</div>
+                            <div class="score-value">2.000</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">連続ボーナス</div>
+                            <div class="score-value">0.200</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
-    
-    <!-- Ad Placement -->
-    <div class="ad-container">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-8022160047771829"
-             data-ad-slot="0987654321"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-    </div>
-    
+
     <!-- CTA Section -->
     <section class="cta-section">
         <div class="container">
-            <h2>今すぐ始めましょう</h2>
-            <p>無料で全機能をお試しいただけます</p>
-            <a href="https://app.gymnastics-ai.com" class="primary-button" style="font-size: 1.25rem; padding: 1.25rem 2.5rem;">
-                アプリを開く →
-            </a>
+            <div class="cta-content">
+                <h2 class="cta-title">体操競技の新時代を体験</h2>
+                <p class="cta-subtitle">最新のAI技術で、あなたの演技を次のレベルへ</p>
+                <div class="download-buttons">
+                    <a href="#" class="download-btn primary">
+                        <span>📱</span>
+                        <span>App Store - Coming Soon</span>
+                    </a>
+                    <a href="#" class="download-btn primary">
+                        <span>📱</span>
+                        <span>Google Play - Coming Soon</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
-    
+
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-links">
-            <a href="privacy.html">プライバシーポリシー</a>
-            <a href="terms.html">利用規約</a>
-            <a href="mailto:support@gymnastics-ai.com">お問い合わせ</a>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="privacy.html">プライバシーポリシー</a>
+                <a href="terms.html">利用規約</a>
+                <a href="mailto:support@gymnastics-ai.com">お問い合わせ</a>
+            </div>
+            <div class="copyright">
+                © 2025 Gymnastics AI. All rights reserved.
+            </div>
         </div>
-        <p class="copyright">© 2025 Gymnastics AI. All rights reserved.</p>
     </footer>
+
+    <!-- Google AdSense -->
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
 </body>
 </html>
