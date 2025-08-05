@@ -1,13 +1,13 @@
 'use strict';
 const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
-const CACHE_NAME = 'flutter-app-cache-20250805_234948';
+const CACHE_NAME = 'flutter-app-cache-20250806_001156';
 
-const RESOURCES = {"flutter_bootstrap.js": "bcb73e145759ae38a62c365d1e4aed98",
+const RESOURCES = {"flutter_bootstrap.js": "e1aaced70ed554099e3fc5bcba15ccb9",
 "version.json": "b5d52a3eae84d49b4b5b74717cd65ed8",
 "index.html": "417442171b7965a0d729e87f593ef352",
 "/": "417442171b7965a0d729e87f593ef352",
-"main.dart.js": "333cebaa7ec61dbbef926f25620a1f00",
+"main.dart.js": "cd6f9381001d0099d9cb80118a6d19c4",
 "flutter.js": "83d881c1dbb6d6bcd6b42e274605b69c",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
@@ -22,7 +22,7 @@ const RESOURCES = {"flutter_bootstrap.js": "bcb73e145759ae38a62c365d1e4aed98",
 "assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": "33b7d9392238c04c131b6ce224e13711",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
 "assets/AssetManifest.bin": "d82c224a6c220489bec5e37a1e183b77",
-"assets/fonts/MaterialIcons-Regular.otf": "7a024b81937aea18f5efedbb3ba39638",
+"assets/fonts/MaterialIcons-Regular.otf": "1ba2cf4859836b699861e2f146975a1f",
 "assets/data/skills_sr.json": "ff102c60bff4773c3c2e37ce8d699c21",
 "assets/data/debug_page_19.txt": "98c512ada4c0a7d90b8bfa60c4d16fbd",
 "assets/data/rulebook_en.pdf": "386c5d9acd199ce11327b0119f369a3a",
@@ -36,7 +36,7 @@ const RESOURCES = {"flutter_bootstrap.js": "bcb73e145759ae38a62c365d1e4aed98",
 "assets/data/difficulty_calculation_system.md": "11354eeca0f8b31d7a2c3a6dde2e22b5",
 "assets/data/skills_hb.json": "95bb929215cd357240b08a470c95c97b",
 "assets/data/skills_en.csv": "c19de33e8f9ebf21d17c5148d1c1b3c6",
-"assets/data/skills_ja.csv": "5cd2354bac160f6cad644d3264dcbde6",
+"assets/data/skills_ja.csv": "5046adc0a254d61c9b3e4d14562f7eb7",
 "assets/data/rulebook_ja_full.txt": "c9e72ebbe2e6890f08119587893bf721",
 "assets/data/apparatus_details.md": "13e4ac05fcf8f13907ba6be494aeed06",
 "assets/data/comprehensive_rulebook_analysis.md": "73fa30eb4031a8c49f2b021f432111f1",

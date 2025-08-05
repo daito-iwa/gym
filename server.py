@@ -516,19 +516,44 @@ def read_root():
 def health():
     return {"status": "ok"}
 
+def load_knowledge_base():
+    """知識ベースファイルを動的に読み込み"""
+    knowledge = {}
+    knowledge_files = [
+        "data/d_score_master_knowledge.md",
+        "data/rulebook_ja_summary.md", 
+        "data/apparatus_details.md",
+        "data/difficulty_calculation_system.md"
+    ]
+    
+    for file_path in knowledge_files:
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    knowledge[file_path] = f.read()
+        except Exception as e:
+            print(f"Warning: Could not load {file_path}: {e}")
+    
+    return knowledge
+
 def analyze_routine_and_suggest_improvements(message):
-    """演技構成分析を受けて改善提案を生成"""
+    """演技構成分析を受けて改善提案を生成 - 高度版"""
+    
+    # 知識ベースを読み込み
+    knowledge_base = load_knowledge_base()
     
     # メッセージから数値データを抽出
     import re
     
-    # Dスコア、難度点、グループ要求、連続技ボーナス、技数を抽出
+    # より詳細なデータ抽出
     d_score_match = re.search(r'Dスコア:\s*([\d.]+)', message)
     difficulty_match = re.search(r'難度点:\s*([\d.]+)', message)
     group_match = re.search(r'グループ要求.*?(\d+)/(\d+)', message)
     connection_match = re.search(r'連続技ボーナス:\s*([\d.]+)', message)
     skill_count_match = re.search(r'技数:\s*(\d+)', message)
     apparatus_match = re.search(r'- 種目:\s*([A-Z]{2})', message)
+    nd_match = re.search(r'ND減点:\s*(-?[\d.]+)', message)
+    missing_groups_match = re.search(r'不足グループ:\s*(.+)', message)
     
     # 抽出したデータ
     d_score = float(d_score_match.group(1)) if d_score_match else 0.0
@@ -538,6 +563,8 @@ def analyze_routine_and_suggest_improvements(message):
     connection_bonus = float(connection_match.group(1)) if connection_match else 0.0
     skill_count = int(skill_count_match.group(1)) if skill_count_match else 0
     apparatus = apparatus_match.group(1) if apparatus_match else None
+    nd_deduction = float(nd_match.group(1)) if nd_match else 0.0
+    missing_groups_text = missing_groups_match.group(1) if missing_groups_match else ""
     
     # 種目が検出できない場合のエラーハンドリング
     if not apparatus:
@@ -554,62 +581,273 @@ def analyze_routine_and_suggest_improvements(message):
             "conversation_id": "error_002"
         }
     
-    # 跳馬の特別処理
-    if apparatus == "VT":
-        if skill_count == 0:
-            response = "**跳馬技を選択してください**\n\n何かご質問があればお答えします。"
-        else:
-            # 跳馬はvalue_letterカラムにDスコアが直接記載されている
-            # d_scoreは既に正しい値が入っているはず
-            response = f"""**跳馬のDスコア: {d_score:.1f}点**
-
-何かご質問があればお答えします。"""
-        return {
-            "response": response,
-            "conversation_id": "analysis_001"
-        }
+    # 高度な構成分析の実施
+    analysis_result = perform_advanced_analysis(
+        apparatus, d_score, difficulty_value, fulfilled_groups, required_groups,
+        connection_bonus, skill_count, nd_deduction, missing_groups_text, knowledge_base
+    )
     
-    # Dスコア向上のための具体的改善点を特定（跳馬以外）
-    improvements = []
-    
-    # 基本統計
-    avg_difficulty = difficulty_value / skill_count if skill_count > 0 else 0
-    
-    # 1. 技数不足チェック
-    if skill_count < 8:
-        improvements.append(f"技数不足: 現在{skill_count}技 → 8技まで追加可能")
-    
-    # 2. グループ要求不足
-    if fulfilled_groups < required_groups:
-        missing = required_groups - fulfilled_groups
-        improvements.append(f"グループ要求不足: {missing}グループが未達成")
-    
-    # 3. 連続技ボーナス不足（床と鉄棒のみ）
-    if apparatus in ["FX", "HB"] and connection_bonus < 0.2:
-        improvements.append(f"連続技ボーナス: 現在{connection_bonus:.1f}点 → 最大0.4点まで可能")
-    
-    # 4. 難度向上の余地
-    if avg_difficulty < 0.4:
-        improvements.append(f"平均難度向上: 現在{avg_difficulty:.2f} → D難度以上の技追加推奨")
-    
-    # 改善提案をまとめる
-    if improvements:
-        response = f"""**Dスコア向上ポイント:**
-{chr(10).join(['• ' + imp for imp in improvements])}
-
-何かご質問があればお答えします。"""
-    else:
-        response = f"""**構成良好**: 現在のDスコア{d_score:.1f}点は適切な構成です。
-
-何かご質問があればお答えします。"""
-
     return {
-        "response": response,
-        "conversation_id": "analysis_001"
+        "response": analysis_result,
+        "conversation_id": "advanced_analysis_001"
     }
 
+def perform_advanced_analysis(apparatus, d_score, difficulty_value, fulfilled_groups, 
+                            required_groups, connection_bonus, skill_count, nd_deduction,
+                            missing_groups_text, knowledge_base):
+    """高度な演技構成分析を実行"""
+    
+    # 跳馬の特別処理
+    if apparatus == "VT":
+        return generate_vault_analysis(d_score, skill_count)
+    
+    # 分析結果の構築
+    analysis_sections = []
+    
+    # 1. 現在の構成評価
+    current_status = generate_current_status_analysis(
+        apparatus, d_score, difficulty_value, skill_count, fulfilled_groups, required_groups
+    )
+    analysis_sections.append(current_status)
+    
+    # 2. 重要な問題点の特定
+    critical_issues = identify_critical_issues(
+        apparatus, fulfilled_groups, required_groups, nd_deduction, skill_count, connection_bonus
+    )
+    if critical_issues:
+        analysis_sections.append(f"🚨 **緊急改善ポイント**\n{critical_issues}")
+    
+    # 3. 種目別専門アドバイス
+    specialized_advice = generate_apparatus_specific_advice(
+        apparatus, fulfilled_groups, required_groups, connection_bonus, knowledge_base
+    )
+    analysis_sections.append(specialized_advice)
+    
+    # 4. ND減点の詳細説明
+    if nd_deduction > 0:
+        nd_explanation = explain_nd_deductions(nd_deduction, apparatus, knowledge_base)
+        analysis_sections.append(nd_explanation)
+    
+    # 5. 具体的改善戦略
+    improvement_strategy = generate_improvement_strategy(
+        apparatus, d_score, difficulty_value, skill_count, fulfilled_groups, 
+        required_groups, connection_bonus, knowledge_base
+    )
+    analysis_sections.append(improvement_strategy)
+    
+    # 6. 追加質問への対応
+    analysis_sections.append("💬 **さらに詳しく知りたい方へ**\n具体的な技の推奨、練習方法、ルール詳細などご質問ください！")
+    
+    return "\n\n".join(analysis_sections)
+
+def generate_vault_analysis(d_score, skill_count):
+    """跳馬専用分析"""
+    if skill_count == 0:
+        return "**跳馬技を選択してください**\n\n何かご質問があればお答えします。"
+    else:
+        return f"""**🤸‍♂️ 跳馬分析結果**
+
+**現在のDスコア: {d_score:.1f}点**
+
+跳馬では1本または2本の技でDスコアが決定されます。
+より高難度の技への挑戦で得点向上が可能です。
+
+何かご質問があればお答えします。"""
+
+def generate_current_status_analysis(apparatus, d_score, difficulty_value, skill_count, fulfilled_groups, required_groups):
+    """現在の構成状況分析"""
+    apparatus_names = {"FX": "床運動", "PH": "あん馬", "SR": "つり輪", "PB": "平行棒", "HB": "鉄棒"}
+    apparatus_name = apparatus_names.get(apparatus, apparatus)
+    
+    avg_difficulty = difficulty_value / skill_count if skill_count > 0 else 0
+    group_completion = (fulfilled_groups / required_groups) * 100 if required_groups > 0 else 100
+    
+    status_emoji = "✅" if group_completion >= 100 and skill_count >= 6 else "⚠️"
+    
+    return f"""**{status_emoji} {apparatus_name}構成分析結果**
+
+📊 **基本データ**
+• Dスコア: {d_score:.1f}点
+• 技数: {skill_count}技
+• 平均難度: {avg_difficulty:.2f}点
+• グループ達成度: {fulfilled_groups}/{required_groups} ({group_completion:.0f}%)"""
+
+def identify_critical_issues(apparatus, fulfilled_groups, required_groups, nd_deduction, skill_count, connection_bonus):
+    """重要な問題点を特定"""
+    issues = []
+    
+    # グループ要求不足の深刻度評価
+    if fulfilled_groups < required_groups:
+        missing = required_groups - fulfilled_groups
+        severity = "⛔ 極めて重要" if missing >= 2 else "🔴 重要"
+        issues.append(f"{severity}: {missing}グループが不足しています")
+    
+    # 技数不足チェック
+    if skill_count < 6:
+        issues.append("🔴 重要: 技数が極端に少ないです（最低6技推奨）")
+    
+    # ND減点の深刻度
+    if nd_deduction > 0.5:
+        issues.append(f"⛔ 極めて重要: ND減点が-{nd_deduction:.1f}点と高額です")
+    elif nd_deduction > 0:
+        issues.append(f"🔴 重要: ND減点-{nd_deduction:.1f}点が発生しています")
+    
+    # 連続技ボーナス未活用
+    if apparatus in ["FX", "HB"] and connection_bonus == 0:
+        issues.append("🟡 改善余地: 連続技ボーナスが未活用です")
+    
+    return "\n".join([f"• {issue}" for issue in issues]) if issues else ""
+
+def generate_apparatus_specific_advice(apparatus, fulfilled_groups, required_groups, connection_bonus, knowledge_base):
+    """種目別専門アドバイス（知識ベース活用版）"""
+    apparatus_names = {"FX": "床運動", "PH": "あん馬", "SR": "つり輪", "PB": "平行棒", "HB": "鉄棒"}
+    apparatus_name = apparatus_names.get(apparatus, apparatus)
+    
+    advice_sections = [f"🎯 **{apparatus_name}専門アドバイス**"]
+    
+    # 基本的な種目特性を知識ベースから抽出
+    if apparatus in APPARATUS_KNOWLEDGE:
+        apparatus_data = APPARATUS_KNOWLEDGE[apparatus]
+        advice_sections.append(apparatus_data["specific_advice"])
+        
+        # グループ要求の詳細説明
+        if fulfilled_groups < required_groups:
+            missing = required_groups - fulfilled_groups
+            advice_sections.append(f"""
+🚨 **グループ要求分析**
+• 不足: {missing}グループ
+• 各グループの特徴:""")
+            
+            for group, description in apparatus_data["groups"].items():
+                advice_sections.append(f"  • グループ{group}: {description}")
+    
+    # 知識ベースから高度なアドバイスを生成
+    advanced_advice = extract_advanced_apparatus_advice(apparatus, knowledge_base)
+    if advanced_advice:
+        advice_sections.append(advanced_advice)
+    
+    return "\n".join(advice_sections)
+
+def extract_advanced_apparatus_advice(apparatus, knowledge_base):
+    """知識ベースから高度なアドバイスを抽出"""
+    apparatus_keywords = {
+        "FX": ["床運動", "floor", "タンブリング", "連続技"],
+        "PH": ["あん馬", "pommel", "旋回", "シザース"],
+        "SR": ["つり輪", "rings", "静止技", "筋力"],
+        "PB": ["平行棒", "parallel", "支持", "振動"],
+        "HB": ["鉄棒", "horizontal", "手放し", "大車輪"]
+    }
+    
+    if apparatus not in apparatus_keywords:
+        return ""
+    
+    keywords = apparatus_keywords[apparatus]
+    advice_parts = []
+    
+    # 知識ベースから関連情報を検索
+    for file_path, content in knowledge_base.items():
+        if any(keyword in content for keyword in keywords):
+            # 種目関連の重要情報を抽出（簡易版）
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if any(keyword in line for keyword in keywords):
+                    # 関連セクションを数行取得
+                    section_lines = lines[max(0, i-1):i+3]
+                    relevant_text = '\n'.join(section_lines).strip()
+                    if len(relevant_text) > 20 and relevant_text not in advice_parts:
+                        advice_parts.append(relevant_text[:200] + "..." if len(relevant_text) > 200 else relevant_text)
+                        break  # 各ファイルから1つずつ
+    
+    if advice_parts:
+        return f"📚 **公式ルール準拠アドバイス**\n" + "\n\n".join(advice_parts[:2])  # 最大2つまで
+    
+    return ""
+
+def explain_nd_deductions(nd_deduction, apparatus, knowledge_base):
+    """ND減点の詳細説明"""
+    explanation = f"⚠️ **ND減点詳細分析 (-{nd_deduction:.1f}点)**\n"
+    
+    # 一般的なND減点要因
+    common_nd_causes = {
+        "FX": ["グループ要求不足", "終末技以外での着地", "時間超過・不足"],
+        "PH": ["グループ要求不足", "旋回停止", "下り技なし"],
+        "SR": ["グループ要求不足", "静止技不足", "下り技なし"],
+        "PB": ["グループ要求不足", "下り技なし"],
+        "HB": ["グループ要求不足", "手放し技不足", "下り技なし"]
+    }
+    
+    if apparatus in common_nd_causes:
+        explanation += "**主な減点要因の可能性:**\n"
+        for cause in common_nd_causes[apparatus]:
+            explanation += f"• {cause}\n"
+    
+    # 知識ベースからND減点ルールを検索
+    nd_rules = search_nd_rules_in_knowledge_base(apparatus, knowledge_base)
+    if nd_rules:
+        explanation += f"\n**公式ルール:**\n{nd_rules}"
+    
+    explanation += f"\n💡 **改善のヒント:** 構成を見直して上記要因を解消すれば{nd_deduction:.1f}点の回復が期待できます。"
+    
+    return explanation
+
+def search_nd_rules_in_knowledge_base(apparatus, knowledge_base):
+    """知識ベースからND減点ルールを検索"""
+    search_keywords = ["ND", "減点", "グループ要求", "終末技"]
+    
+    for file_path, content in knowledge_base.items():
+        if "nd" in file_path.lower() or "減点" in content:
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if any(keyword in line for keyword in search_keywords):
+                    # 関連する数行を抽出
+                    section = '\n'.join(lines[max(0, i-1):i+3]).strip()
+                    if len(section) > 10:
+                        return section[:300] + "..." if len(section) > 300 else section
+    
+    return ""
+
+def generate_improvement_strategy(apparatus, d_score, difficulty_value, skill_count, 
+                                fulfilled_groups, required_groups, connection_bonus, knowledge_base):
+    """具体的改善戦略の生成"""
+    strategy = "🚀 **改善戦略**\n"
+    
+    improvements = []
+    potential_gain = 0
+    
+    # 1. グループ要求改善
+    if fulfilled_groups < required_groups:
+        missing = required_groups - fulfilled_groups
+        potential_gain += missing * 0.5  # グループ要求ボーナス
+        improvements.append(f"✅ 優先度1: {missing}グループ追加 (+{missing * 0.5:.1f}点期待)")
+    
+    # 2. 技数追加
+    if skill_count < 8:
+        additional_skills = min(8 - skill_count, 2)  # 最大2技追加を推奨
+        potential_gain += additional_skills * 0.3  # 平均難度想定
+        improvements.append(f"✅ 優先度2: {additional_skills}技追加 (+{additional_skills * 0.3:.1f}点期待)")
+    
+    # 3. 連続技ボーナス
+    if apparatus in ["FX", "HB"] and connection_bonus < 0.2:
+        bonus_potential = 0.2 - connection_bonus
+        potential_gain += bonus_potential
+        improvements.append(f"✅ 優先度3: 連続技強化 (+{bonus_potential:.1f}点期待)")
+    
+    # 4. 難度向上
+    avg_difficulty = difficulty_value / skill_count if skill_count > 0 else 0
+    if avg_difficulty < 0.4:
+        improvements.append("✅ 長期目標: 技の難度向上 (+0.2～0.5点期待)")
+        potential_gain += 0.3
+    
+    if improvements:
+        strategy += "\n".join(improvements)
+        strategy += f"\n\n📈 **期待効果:** 最大 +{potential_gain:.1f}点 → 目標Dスコア {d_score + potential_gain:.1f}点"
+    else:
+        strategy += "🌟 現在の構成は既に最適化されています！\n更なる向上には高難度技への挑戦をご検討ください。"
+    
+    return strategy
+
 def get_apparatus_specific_advice(apparatus, fulfilled_groups, required_groups):
-    """種目別の特化アドバイス"""
+    """従来の種目別アドバイス（互換性維持）"""
     if apparatus not in APPARATUS_KNOWLEDGE:
         return ""
     

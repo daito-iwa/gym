@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>強制アップデート - Gymnastics AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>アプリを最新版に更新中...</h1>
+    <p>新機能が追加されました。数秒後に自動で最新版に更新されます。</p>
+    
+    <script>
+        // 全キャッシュを強制削除
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (let name of names) {
+                    console.log('キャッシュ削除:', name);
+                    caches.delete(name);
+                }
+            });
+        }
+        
+        // Service Worker を強制再登録
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    console.log('Service Worker削除:', registration);
+                    registration.unregister();
+                }
+                
+                // 3秒後にメインページへリダイレクト
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
+            });
+        } else {
+            // Service Worker非対応の場合も3秒後にリダイレクト
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

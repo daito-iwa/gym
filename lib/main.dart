@@ -4121,23 +4121,36 @@ $expertAnswer
   
   // Helper method for parsing CSV in isolate (if needed)
   Future<List<Skill>> _parseSkillsCsv(String rawCsv, String apparatus) async {
+    print('🔧 DEBUG: _parseSkillsCsv() 開始 - 種目: $apparatus');
+    print('🔧 DEBUG: CSVデータサイズ: ${rawCsv.length}文字');
+    
     final List<List<dynamic>> listData = const CsvToListConverter().convert(rawCsv);
     
-    print('DEBUG: CSV parsed, total rows: ${listData.length}');
+    print('🔧 DEBUG: CSV解析完了 - 総行数: ${listData.length}');
     if (listData.isEmpty) {
-      print('❌ CSV data is empty');
+      print('🔧 DEBUG: エラー - CSVデータが空です');
       return [];
+    }
+    
+    // ヘッダー行の確認
+    if (listData.length > 0) {
+      print('🔧 DEBUG: CSVヘッダー: ${listData[0]}');
     }
     
     // 新しい形式: apparatus,name,group,value_letter
     final skills = <Skill>[];
+    int matchingRows = 0;
+    int totalRows = 0;
     
     for (int i = 1; i < listData.length; i++) {
       final row = listData[i];
+      totalRows++;
+      
       if (row.length >= 4) {
         final skillApparatus = row[0].toString();
         
         if (skillApparatus == apparatus) {
+          matchingRows++;
           final skill = Skill.fromMap({
             'id': 'SKILL_${i.toString().padLeft(3, '0')}',
             'apparatus': skillApparatus,
@@ -4151,10 +4164,21 @@ $expertAnswer
       }
     }
     
-    print('DEBUG: Found ${skills.length} skills for apparatus: $apparatus');
+    print('🔧 DEBUG: 解析完了 - ${apparatus}用の技: ${skills.length}個 (総行数: $totalRows, マッチング行: $matchingRows)');
+    
     if (skills.isEmpty) {
-      print('❌ No skills found for apparatus: $apparatus');
-      print('❌ Available apparatus in CSV: ${listData.skip(1).map((row) => row[0]).toSet()}');
+      print('🔧 DEBUG: 警告 - ${apparatus}用の技が見つかりません');
+      final availableApparatus = listData.skip(1).where((row) => row.length >= 4).map((row) => row[0].toString()).toSet();
+      print('🔧 DEBUG: CSVで利用可能な種目: $availableApparatus');
+      print('🔧 DEBUG: 検索した種目: "$apparatus"');
+      
+      // 最初の5行のサンプルを表示
+      print('🔧 DEBUG: CSVサンプル（最初の5行）:');
+      for (int i = 1; i <= 5 && i < listData.length; i++) {
+        print('🔧 DEBUG: 行$i: ${listData[i]}');
+      }
+    } else {
+      print('🔧 DEBUG: 最初の3技: ${skills.take(3).map((s) => s.name).join(", ")}');
     }
     
     skills.sort((a, b) => a.name.compareTo(b.name));
@@ -7173,16 +7197,24 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
             onTap: () {
               HapticFeedback.lightImpact();
               
+              // デバッグ: 技選択ダイアログの呼び出し情報
+              print('🔧 DEBUG: 技選択ダイアログを開始');
+              print('🔧 DEBUG: 種目: $_selectedApparatus');
+              print('🔧 DEBUG: 技リスト数: ${_skillList.length}');
+              print('🔧 DEBUG: 現在の技: ${skill.name}');
+              
               showDialog(
                 context: context,
                 barrierDismissible: true,
                 builder: (BuildContext dialogContext) {
+                  print('🔧 DEBUG: ダイアログビルダー呼び出し');
                   return _SkillSelectionDialog(
                     currentSkill: skill,
                     skillList: _skillList,
                     currentLang: _currentLang,
                     apparatus: _selectedApparatus,
                     onSkillSelected: (Skill selectedSkill) {
+                      print('🔧 DEBUG: 技が選択されました: ${selectedSkill.name}');
                       Navigator.of(dialogContext).pop();
                       setState(() {
                         _routine[i] = selectedSkill;
@@ -10432,7 +10464,19 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
   @override
   void initState() {
     super.initState();
+    print('🔧 DEBUG: _SkillSelectionDialog initState()');
+    print('🔧 DEBUG: 初期技リスト数: ${widget.skillList.length}');
+    print('🔧 DEBUG: 種目: ${widget.apparatus}');
+    
     _filteredSkills = widget.skillList;
+    print('🔧 DEBUG: フィルタリング後の技数: ${_filteredSkills.length}');
+    
+    // 技データのサンプルを表示
+    if (_filteredSkills.isNotEmpty) {
+      print('🔧 DEBUG: 最初の技サンプル: ${_filteredSkills.first.name} (${_filteredSkills.first.valueLetter})');
+    } else {
+      print('🔧 DEBUG: 警告 - フィルタリング後の技が0個です');
+    }
   }
 
   void _filterSkills(String query) {
@@ -10443,6 +10487,12 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
   }
 
   void _applyFilters() {
+    print('🔧 DEBUG: _applyFilters() 開始');
+    print('🔧 DEBUG: 検索テキスト: "$_searchText"');
+    print('🔧 DEBUG: グループフィルター: $_selectedGroupFilter');
+    print('🔧 DEBUG: 難度フィルター: $_selectedDifficultyFilter');
+    print('🔧 DEBUG: 元の技リスト数: ${widget.skillList.length}');
+    
     _filteredSkills = widget.skillList.where((skill) {
       // テキスト検索フィルター
       bool textMatch = _searchText.isEmpty || _matchesSearchQuery(skill.name, _searchText);
@@ -10455,6 +10505,16 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
       
       return textMatch && groupMatch && difficultyMatch;
     }).toList();
+    
+    print('🔧 DEBUG: フィルタリング後の技数: ${_filteredSkills.length}');
+    if (_filteredSkills.isEmpty) {
+      print('🔧 DEBUG: 警告 - フィルタリング後に技が0個になりました');
+      print('🔧 DEBUG: 原因調査: 元データから最初の5技を確認');
+      for (int i = 0; i < widget.skillList.length && i < 5; i++) {
+        final skill = widget.skillList[i];
+        print('🔧 DEBUG: 技$i: ${skill.name} (G${skill.group}, ${skill.valueLetter})');
+      }
+    }
   }
   
   // ひらがな・カタカナ入力に対応した技検索（ダイアログ用）
@@ -10689,8 +10749,33 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔧 DEBUG: SkillSelectionDialog build() - フィルタリング済み技数: ${_filteredSkills.length}');
+    
     return AlertDialog(
-      title: Text('技を変更 (現在: ${widget.currentSkill.name})'),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('技を変更 (${widget.apparatus ?? "Unknown"})'),
+          Text(
+            '現在: ${widget.currentSkill.name}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+              color: Colors.grey[600],
+            ),
+          ),
+          if (_filteredSkills.isNotEmpty)
+            Text(
+              '${_filteredSkills.length}技が利用可能',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+                color: Colors.blue[600],
+              ),
+            ),
+        ],
+      ),
       content: SizedBox(
         width: double.maxFinite,
         height: 500,
@@ -10698,10 +10783,21 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
           children: [
             // 検索フィールド
             TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '技を検索...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
+                suffixIcon: _searchText.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchText = '';
+                            _applyFilters();
+                          });
+                        },
+                      )
+                    : null,
               ),
               onChanged: _filterSkills,
             ),
@@ -10748,9 +10844,59 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
                   border: Border.all(color: Colors.grey.withOpacity(0.3)),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: ListView.builder(
-                  itemCount: _filteredSkills.length,
-                  itemBuilder: (context, index) {
+                child: _filteredSkills.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              '技が見つかりません',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '検索条件を変更するか、\nフィルターをクリアしてください',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                print('🔧 DEBUG: フィルターリセットボタンが押されました');
+                                setState(() {
+                                  _searchText = '';
+                                  _selectedGroupFilter = null;
+                                  _selectedDifficultyFilter = null;
+                                  _applyFilters();
+                                });
+                                print('🔧 DEBUG: フィルターリセット後の技数: ${_filteredSkills.length}');
+                              },
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('フィルターをリセット'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue[600],
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _filteredSkills.length,
+                        itemBuilder: (context, index) {
                     final skill = _filteredSkills[index];
                     final isCurrentSkill = skill.name == widget.currentSkill.name &&
                         skill.group == widget.currentSkill.group &&
@@ -11052,13 +11198,22 @@ class GymnasticsKnowledgeBase {
   
   // 技データベースの読み込み
   static Future<void> loadSkillsDatabase() async {
-    if (_isSkillsLoaded) return;
+    if (_isSkillsLoaded) {
+      print('🔧 DEBUG: 技データベース既に読み込み済み');
+      return;
+    }
     
     try {
+      print('🔧 DEBUG: 技データベース読み込み開始');
       final String data = await rootBundle.loadString('data/skills_ja.csv');
+      print('🔧 DEBUG: CSVファイル読み込み完了。データサイズ: ${data.length}文字');
+      
       final List<List<dynamic>> csvData = const CsvToListConverter().convert(data);
+      print('🔧 DEBUG: CSV解析完了。行数: ${csvData.length}');
       
       _skillsDatabase.clear(); // 既存のデータをクリア
+      
+      Map<String, int> apparatusCount = {};
       
       for (int i = 1; i < csvData.length; i++) { // 1行目はヘッダーなのでスキップ
         if (csvData[i].length >= 4) {
@@ -11068,6 +11223,7 @@ class GymnasticsKnowledgeBase {
           final String valueLetter = csvData[i][3]?.toString().trim() ?? '';
           
           if (apparatus.isNotEmpty && name.isNotEmpty) {
+            apparatusCount[apparatus] = (apparatusCount[apparatus] ?? 0) + 1;
             _skillsDatabase.add({
               'id': '${apparatus}_${i}',
               'apparatus': apparatus,
@@ -11081,6 +11237,8 @@ class GymnasticsKnowledgeBase {
       }
       
       _isSkillsLoaded = true;
+      print('🔧 DEBUG: 技データベース読み込み完了: ${_skillsDatabase.length}技');
+      print('🔧 DEBUG: 種目別技数: $apparatusCount');
       print('技データベース読み込み完了: ${_skillsDatabase.length}技');
     } catch (e) {
       print('技データベース読み込みエラー: $e');
@@ -11090,13 +11248,26 @@ class GymnasticsKnowledgeBase {
   
   // 種目別技の検索
   static List<Map<String, dynamic>> getSkillsForApparatus(String apparatus) {
+    print('🔧 DEBUG: getSkillsForApparatus() 呼び出し - 種目: $apparatus');
+    
     if (!_isSkillsLoaded) {
-      print('技データベースが読み込まれていません');
+      print('🔧 DEBUG: エラー - 技データベースが読み込まれていません');
       return [];
     }
     
-    return _skillsDatabase.where((skill) => 
+    final result = _skillsDatabase.where((skill) => 
         skill['apparatus']?.toString().toLowerCase() == apparatus.toLowerCase()).toList();
+    
+    print('🔧 DEBUG: ${apparatus}用の技数: ${result.length}');
+    if (result.isEmpty) {
+      print('🔧 DEBUG: 警告 - ${apparatus}の技が見つかりません');
+      print('🔧 DEBUG: 全データベース: ${_skillsDatabase.length}技');
+      print('🔧 DEBUG: 使用可能な種目: ${_skillsDatabase.map((s) => s['apparatus']).toSet()}');
+    } else {
+      print('🔧 DEBUG: 最初の3技: ${result.take(3).map((s) => s['name']).join(", ")}');
+    }
+    
+    return result;
   }
   
   // 技名による検索
