@@ -461,6 +461,23 @@ body {
     font-weight: bold;
 }
 
+.development-status {
+    margin-top: 16px;
+    margin-bottom: 20px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255, 107, 53, 0.1);
+    color: var(--accent-color);
+    border: 1px solid rgba(255, 107, 53, 0.3);
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
 /* Features Section */
 .features-section {
     padding: 80px 0;
@@ -664,6 +681,17 @@ body {
     font-size: 12px;
     color: var(--text-muted);
     margin-bottom: 4px;
+}
+
+.footer-info a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer-info a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
 }
 
 .footer-link {
