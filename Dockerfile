@@ -5,6 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY server.py .
+COPY server_world_class_ai.py .
+COPY data/ data/
 
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "server_world_class_ai.py"]
