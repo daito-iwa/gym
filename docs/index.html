@@ -84,26 +84,6 @@
             text-decoration: none;
         }
 
-        .logo-icon {
-            font-size: 2rem;
-            filter: drop-shadow(0 0 10px rgba(79, 172, 254, 0.5));
-        }
-
-        .nav-toggle {
-            display: none;
-            flex-direction: column;
-            cursor: pointer;
-            gap: 4px;
-        }
-
-        .nav-toggle span {
-            width: 25px;
-            height: 3px;
-            background: var(--text-primary);
-            border-radius: 2px;
-            transition: var(--transition);
-        }
-
         /* Hero Section */
         .hero {
             min-height: 100vh;
@@ -237,6 +217,11 @@
             height: 60px;
             width: auto;
             display: block;
+        }
+
+        .download-btn.google-play .store-badge {
+            height: 60px;
+            width: auto;
         }
 
         .download-btn.app-store,
@@ -559,9 +544,6 @@
                 grid-template-columns: 1fr;
             }
             
-            .nav-toggle {
-                display: flex;
-            }
             
             .section-title {
                 font-size: 2.2rem;
@@ -597,14 +579,8 @@
     <header class="header">
         <nav class="nav">
             <a href="#" class="logo">
-                <span class="logo-icon">🤸‍♂️</span>
                 <span>Gymnastics AI</span>
             </a>
-            <div class="nav-toggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
         </nav>
     </header>
 
