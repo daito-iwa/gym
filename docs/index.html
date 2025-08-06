@@ -79,6 +79,14 @@
             align-items: center;
         }
 
+        /* Desktop responsive navigation */
+        @media (min-width: 768px) {
+            .nav {
+                max-width: 1200px;
+                padding: 0 2rem;
+            }
+        }
+
         .logo {
             display: flex;
             align-items: center;
@@ -118,6 +126,59 @@
             max-width: 400px;
             position: relative;
             z-index: 2;
+        }
+
+        /* Desktop layout - 2-column grid */
+        @media (min-width: 768px) {
+            .hero {
+                padding: 8rem 2rem 4rem;
+            }
+            
+            .hero-content {
+                max-width: 1200px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+                text-align: left;
+            }
+            
+            .hero-text {
+                order: 1;
+            }
+            
+            .hero-visual {
+                order: 2;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2rem;
+            }
+            
+            .hero-title {
+                font-size: 3.5rem;
+                margin-bottom: 2rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.3rem;
+                margin-bottom: 3rem;
+            }
+            
+            .download-buttons {
+                flex-direction: row;
+                gap: 1.5rem;
+                justify-content: flex-start;
+                margin-bottom: 3rem;
+            }
+            
+            .app-showcase {
+                margin-top: 0;
+            }
+            
+            .phone-mockup {
+                max-width: 300px;
+            }
         }
 
         .app-icon {
@@ -349,6 +410,19 @@
             margin: 0 auto;
         }
 
+        /* Desktop features grid */
+        @media (min-width: 768px) {
+            .features {
+                padding: 6rem 2rem;
+            }
+            
+            .features-grid {
+                max-width: 1200px;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 2rem;
+            }
+        }
+
         .feature-card {
             background: var(--bg-card);
             padding: 1.5rem;
@@ -406,6 +480,13 @@
             padding: 4rem 1.5rem;
             background: var(--bg-primary);
             text-align: center;
+        }
+
+        /* Desktop demo section */
+        @media (min-width: 768px) {
+            .demo-section {
+                padding: 6rem 2rem;
+            }
         }
 
         .demo-card {
@@ -476,6 +557,13 @@
             overflow: hidden;
         }
 
+        /* Desktop CTA section */
+        @media (min-width: 768px) {
+            .cta-section {
+                padding: 6rem 2rem;
+            }
+        }
+
         .cta-section::before {
             content: '';
             position: absolute;
@@ -518,6 +606,17 @@
             max-width: 400px;
             margin: 0 auto;
             text-align: center;
+        }
+
+        /* Desktop footer */
+        @media (min-width: 768px) {
+            .footer {
+                padding: 4rem 2rem 3rem;
+            }
+            
+            .footer-content {
+                max-width: 1200px;
+            }
         }
 
         .footer-links {
@@ -599,40 +698,44 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <div class="app-icon">
-                <img src="app_icon.png" alt="Gymnastics AI アプリアイコン">
+            <div class="hero-text">
+                <div class="app-icon">
+                    <img src="app_icon.png" alt="Gymnastics AI アプリアイコン">
+                </div>
+                
+                <h1 class="hero-title">体操競技を<br>次のレベルへ</h1>
+                
+                <p class="hero-subtitle">
+                    D-Score計算、AI演技分析、技データベース検索<br>
+                    すべてを一つのアプリで実現
+                </p>
+                
+                <div class="download-buttons">
+                    <a href="#" class="download-btn app-store">
+                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
+                    </a>
+                    <a href="#" class="download-btn google-play">
+                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
+                    </a>
+                </div>
+                
+                <div class="development-status">
+                    <span class="status-badge">🚧 モバイルアプリ開発中</span>
+                </div>
+                
+                <div class="web-app-button">
+                    <a href="app.html" class="download-btn secondary">
+                        <span>🌐</span>
+                        <span>Web版を試す</span>
+                    </a>
+                </div>
             </div>
             
-            <h1 class="hero-title">体操競技を<br>次のレベルへ</h1>
-            
-            <p class="hero-subtitle">
-                D-Score計算、AI演技分析、技データベース検索<br>
-                すべてを一つのアプリで実現
-            </p>
-            
-            <div class="download-buttons">
-                <a href="#" class="download-btn app-store">
-                    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
-                </a>
-                <a href="#" class="download-btn google-play">
-                    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
-                </a>
-            </div>
-            
-            <div class="development-status">
-                <span class="status-badge">🚧 モバイルアプリ開発中</span>
-            </div>
-            
-            <div class="web-app-button">
-                <a href="app.html" class="download-btn secondary">
-                    <span>🌐</span>
-                    <span>Web版を試す</span>
-                </a>
-            </div>
-            
-            <div class="app-showcase">
-                <div class="phone-mockup">
-                    <img src="app_screenshot.png" alt="Gymnastics AI アプリスクリーンショット">
+            <div class="hero-visual">
+                <div class="app-showcase">
+                    <div class="phone-mockup">
+                        <img src="app_screenshot.png" alt="Gymnastics AI アプリスクリーンショット">
+                    </div>
                 </div>
             </div>
         </div>
@@ -771,17 +874,12 @@
     </script>
     
     <script>
-        // Desktop detection and redirect
+        // Desktop detection - No redirect needed since this IS the desktop version now
         function detectDesktop() {
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
             const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
             const screenWidth = window.innerWidth > 768;
             return !isMobile && screenWidth;
-        }
-
-        // Auto-redirect to desktop version on desktop devices
-        if (detectDesktop() && !window.location.search.includes('mobile=1')) {
-            window.location.href = 'index.html';
         }
 
         // Intersection Observer for animations
