@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 
 // ローマ数字変換関数
 int _parseRomanNumeral(String? roman) {
-  if (roman == null || roman.isEmpty) return 0;
+  if (roman == null || roman.isEmpty) {
+    return 0;
+  }
   
   final romanToInt = {
     'Ⅰ': 1, 'I': 1,
@@ -13,12 +15,15 @@ int _parseRomanNumeral(String? roman) {
     'Ⅴ': 5, 'V': 5,
   };
   
-  return romanToInt[roman.trim()] ?? 0;
+  final trimmed = roman.trim();
+  return romanToInt[trimmed] ?? 0;
 }
 
 // 難度レター変換関数
 double _parseValueLetter(String? letter) {
-  if (letter == null || letter.isEmpty) return 0.0;
+  if (letter == null || letter.isEmpty) {
+    return 0.0;
+  }
   
   final letterToValue = {
     'A': 0.1,
@@ -60,9 +65,6 @@ class Skill {
     final skillName = map['name']?.toString() ?? '';
     final apparatus = map['apparatus']?.toString() ?? '';
     
-    // デバッグ情報
-    print('Skill.fromMap CSV Processing: name="$skillName", apparatus="$apparatus", raw_data=$map');
-    
     // CSVからグループを正しく解析（ローマ数字対応）
     int groupNumber = _parseRomanNumeral(map['group']?.toString());
     
@@ -77,9 +79,7 @@ class Skill {
       // 跳馬では value_letter が実際のD-score値（例: "1.8", "2.0"）
       try {
         value = double.parse(valueLetter);
-        print('跳馬D-score解析: "$valueLetter" -> $value');
       } catch (e) {
-        print('警告: 跳馬のD-score解析に失敗。技名="$skillName", 値="$valueLetter", デフォルト値=1.0を使用');
         value = 1.0; // 跳馬のデフォルト値
       }
     } else {
@@ -89,24 +89,18 @@ class Skill {
     
     // フォールバック値（CSVデータが不正な場合のみ）
     if (groupNumber <= 0) {
-      print('警告: グループが不正です。技名="$skillName", グループ="${map['group']}", デフォルト値=1を使用');
       groupNumber = 1;
     }
     
     if (value <= 0.0 || valueLetter.isEmpty) {
       if (apparatus == 'VT') {
-        print('警告: 跳馬のD-scoreが不正です。技名="$skillName", 値="$valueLetter", デフォルト値=1.0を使用');
         value = 1.0;
       } else {
-        print('警告: 難度が不正です。技名="$skillName", 難度レター="$valueLetter", デフォルト値=0.1を使用');
         value = 0.1;
       }
     }
     
     final finalValueLetter = valueLetter.isNotEmpty ? valueLetter : (apparatus == 'VT' ? '1.0' : 'A');
-    
-    // デバッグ情報
-    print('Skill.fromMap CSV Result: name="$skillName", apparatus="$apparatus", group=$groupNumber, value=$value, letter=$finalValueLetter');
 
     return Skill(
       id: map['id']?.toString() ?? '',
@@ -180,12 +174,7 @@ double calculateNeutralDeductions(String apparatus, int skillCount) {
 }
 
 DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
-  print('DEBUG_CALC: calculateDScore開始');
-  print('DEBUG_CALC: apparatus: $apparatus');
-  print('DEBUG_CALC: routine.length: ${routine.length}');
-  
   if (routine.isEmpty || !APPARATUS_RULES.containsKey(apparatus)) {
-    print('DEBUG_CALC: 早期終了 - routine空またはapparatus不正');
     return DScoreResult();
   }
 
@@ -292,43 +281,29 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
   }
   // 鉄棒の連続技ボーナス（FIG公式ルール準拠）
   else if (apparatus == "HB") {
-    print('DEBUG_CALC: 鉄棒連続技ボーナス計算開始');
-    print('DEBUG_CALC: routine.length: ${routine.length}');
     for (int groupIndex = 0; groupIndex < routine.length; groupIndex++) {
       final connectionGroup = routine[groupIndex];
-      print('DEBUG_CALC: グループ$groupIndex, スキル数: ${connectionGroup.length}');
       if (connectionGroup.length > 1) {
         for (int i = 0; i < connectionGroup.length - 1; i++) {
           final skill1 = connectionGroup[i];
           final skill2 = connectionGroup[i + 1];
           final v1 = skill1.value;
           final v2 = skill2.value;
-          print('DEBUG_CALC: ペア${i}-${i+1}: ${skill1.name}(G${skill1.group}, ${v1}) + ${skill2.name}(G${skill2.group}, ${v2})');
           double bonusForThisPair = 0.0;
 
           // 手放し技同士の連続（グループII同士）
           if (skill1.group == 2 && skill2.group == 2) {
-            print('DEBUG_HB: 鉄棒手放し技連続: ${skill1.name}(難度値:${v1}, レター:${skill1.valueLetter}) + ${skill2.name}(難度値:${v2}, レター:${skill2.valueLetter})');
-            print('DEBUG_HB: 条件チェック: v1(${v1}) >= 0.4? ${v1 >= 0.4}, v2(${v2}) >= 0.5? ${v2 >= 0.5}');
-            print('DEBUG_HB: 逆方向チェック: v1(${v1}) >= 0.5? ${v1 >= 0.5}, v2(${v2}) >= 0.4? ${v2 >= 0.4}');
-            
             // D難度以上 + E難度以上 = 0.20点（双方向）
             if ((v1 >= 0.4 && v2 >= 0.5) || (v1 >= 0.5 && v2 >= 0.4)) {
               bonusForThisPair = 0.2;
-              print('DEBUG_HB: → 0.2点: D以上+E以上の条件にマッチ');
             }
             // D難度 + D難度 = 0.10点
             else if (v1 >= 0.4 && v2 >= 0.4) {
               bonusForThisPair = 0.1;
-              print('DEBUG_HB: → 0.1点: D+Dの条件にマッチ');
             }
             // C難度 + D難度以上 = 0.10点（双方向）
             else if ((v1 == 0.3 && v2 >= 0.4) || (v1 >= 0.4 && v2 == 0.3)) {
               bonusForThisPair = 0.1;
-              print('DEBUG_HB: → 0.1点: C+D以上の条件にマッチ');
-            }
-            else {
-              print('DEBUG_HB: → 0.0点: 条件にマッチせず');
             }
           }
           // グループI/III技 + 手放し技（グループII）の連続
@@ -354,12 +329,10 @@ DScoreResult calculateDScore(String apparatus, List<List<Skill>> routine) {
             }
           }
           
-          print('DEBUG_CALC: ペアボーナス: ${bonusForThisPair}');
           connectionBonus += bonusForThisPair;
         }
       }
     }
-    print('DEBUG_CALC: 鉄棒連続技ボーナス合計: ${connectionBonus}');
   }
 
   // 連続技ボーナスの上限制限（FIG規則：最大0.4点まで）

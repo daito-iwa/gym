@@ -1874,7 +1874,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isAnalyzing = false;
 
   // Dスコア計算用
-  String? _selectedApparatus = 'FX'; // 初期値として床を設定
+  String? _selectedApparatus; // 初期値はnull、復元処理で設定される
   final Map<String, Map<String, String>> _apparatusData = {
     "FX": {"ja": "床", "en": "Floor Exercise"},
     "PH": {"ja": "あん馬", "en": "Pommel Horse"},
@@ -2442,16 +2442,59 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // 定期的なサブスクリプション状態チェックを開始
     _startPeriodicSubscriptionCheck();
     
-    // データ永続化の読み込み
+    // データ永続化の読み込み（種目復元を優先）
+    print('🔧 INIT: initState開始');
     _loadChatMessages();
     _loadDScoreResults();
     _loadSkillDataCache();
-    _loadCurrentRoutineState(); // 演技構成状態を復元
-    _loadCurrentViewMode(); // 画面状態を復元
-    
-    // 初期種目の技データを読み込み
-    if (_selectedApparatus != null) {
-      _ensureSkillsLoaded(_selectedApparatus!);
+    print('🔧 INIT: _initializeStateAndSkills呼び出し前');
+    _initializeStateAndSkills(); // 種目復元と技読み込みを適切な順序で実行
+    print('🔧 INIT: initState完了');
+  }
+
+  // 種目復元と技読み込みを適切な順序で実行
+  void _initializeStateAndSkills() async {
+    try {
+      print('🔧 DEBUG: _initializeStateAndSkills開始');
+      
+      // 演技構成状態を復元（種目選択を含む）
+      print('🔧 DEBUG: _loadCurrentRoutineState呼び出し前');
+      await _loadCurrentRoutineState();
+      print('🔧 DEBUG: _loadCurrentRoutineState完了後、_selectedApparatus = $_selectedApparatus');
+      
+      // 画面状態を復元
+      await _loadCurrentViewMode();
+      
+      // 種目復元後に正しい種目の技データを読み込み
+      if (_selectedApparatus != null) {
+        print('🔧 DEBUG: _ensureSkillsLoaded呼び出し（種目: $_selectedApparatus）');
+        
+        // 既存のスキルリストを強制的にクリア
+        setState(() {
+          _skillList = [];
+          _isSkillLoading = true;
+        });
+        print('🔧 DEBUG: 既存のスキルリストをクリア');
+        
+        // スキルキャッシュからも削除（強制的に再読み込み）
+        final lang = _currentLang == '日本語' ? 'ja' : 'en';
+        final wrongCacheKey = 'FX_$lang';
+        if (_skillDataCache.containsKey(wrongCacheKey)) {
+          _skillDataCache.remove(wrongCacheKey);
+          print('🔧 DEBUG: FXのキャッシュを削除');
+        }
+        
+        await _ensureSkillsLoaded(_selectedApparatus!);
+        print('🔧 DEBUG: _ensureSkillsLoaded完了');
+      } else {
+        print('🔧 DEBUG: _selectedApparatusがnullのため技読み込みをスキップ');
+      }
+    } catch (e) {
+      print('状態初期化エラー: $e');
+      // エラーの場合はデフォルト状態で続行
+      if (_selectedApparatus != null) {
+        _ensureSkillsLoaded(_selectedApparatus!);
+      }
     }
   }
 
@@ -2592,12 +2635,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         // }),
       ];
       
-      // Skills data loading deferred until needed
-      try {
-        _initializeSkillsDataLazily();
-      } catch (e) {
-        print('技データ初期化エラー: $e');
-      }
+      // Skills data loading deferred until needed - 一時的に無効化
+      // try {
+      //   _initializeSkillsDataLazily();
+      // } catch (e) {
+      //   print('技データ初期化エラー: $e');
+      // }
       
       // Wait for all background tasks with timeout
       await Future.wait(futures, eagerError: false)
@@ -2897,11 +2940,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final lang = _currentLang == '日本語' ? 'ja' : 'en';
     final cacheKey = '${apparatus}_$lang';
     
-    print('DEBUG: _ensureSkillsLoaded called for $apparatus ($lang)');
+    print('🔧 DEBUG: _ensureSkillsLoaded called for $apparatus ($lang)');
+    print('🔧 DEBUG: Current _selectedApparatus = $_selectedApparatus');
+    print('🔧 DEBUG: Cache keys available: ${_skillDataCache.keys.toList()}');
+    print('🔧 DEBUG: Current _skillList length: ${_skillList.length}');
+    if (_skillList.isNotEmpty) {
+      print('🔧 DEBUG: First skill apparatus: ${_skillList.first.apparatus}');
+    }
     
     // Return immediately if already cached
     if (_skillDataCache.containsKey(cacheKey)) {
-      print('DEBUG: Using cached skills for $cacheKey (${_skillDataCache[cacheKey]!.length} skills)');
+      print('🔧 DEBUG: Using cached skills for $cacheKey (${_skillDataCache[cacheKey]!.length} skills)');
       setState(() {
         _skillList = _skillDataCache[cacheKey]!;
         _isSkillLoading = false;
@@ -4071,7 +4120,6 @@ $expertAnswer
     
     // Check cache first - enable caching for better performance
     if (_skillDataCache.containsKey(cacheKey)) {
-      print('Using cached skills for $apparatus ($lang)');
       setState(() {
         _skillList = _skillDataCache[cacheKey]!;
         _isSkillLoading = false;
@@ -4106,6 +4154,7 @@ $expertAnswer
           _skillList = skills;
           _isSkillLoading = false;
         });
+        print('✅ 技データ読み込み完了: ${apparatus} - ${skills.length}技');
       }
     } catch (e) {
       print('❌ Error loading skills: $e');
@@ -4121,36 +4170,22 @@ $expertAnswer
   
   // Helper method for parsing CSV in isolate (if needed)
   Future<List<Skill>> _parseSkillsCsv(String rawCsv, String apparatus) async {
-    print('🔧 DEBUG: _parseSkillsCsv() 開始 - 種目: $apparatus');
-    print('🔧 DEBUG: CSVデータサイズ: ${rawCsv.length}文字');
-    
     final List<List<dynamic>> listData = const CsvToListConverter().convert(rawCsv);
     
-    print('🔧 DEBUG: CSV解析完了 - 総行数: ${listData.length}');
     if (listData.isEmpty) {
-      print('🔧 DEBUG: エラー - CSVデータが空です');
       return [];
-    }
-    
-    // ヘッダー行の確認
-    if (listData.length > 0) {
-      print('🔧 DEBUG: CSVヘッダー: ${listData[0]}');
     }
     
     // 新しい形式: apparatus,name,group,value_letter
     final skills = <Skill>[];
-    int matchingRows = 0;
-    int totalRows = 0;
     
     for (int i = 1; i < listData.length; i++) {
       final row = listData[i];
-      totalRows++;
       
       if (row.length >= 4) {
         final skillApparatus = row[0].toString();
         
         if (skillApparatus == apparatus) {
-          matchingRows++;
           final skill = Skill.fromMap({
             'id': 'SKILL_${i.toString().padLeft(3, '0')}',
             'apparatus': skillApparatus,
@@ -4164,21 +4199,8 @@ $expertAnswer
       }
     }
     
-    print('🔧 DEBUG: 解析完了 - ${apparatus}用の技: ${skills.length}個 (総行数: $totalRows, マッチング行: $matchingRows)');
-    
     if (skills.isEmpty) {
-      print('🔧 DEBUG: 警告 - ${apparatus}用の技が見つかりません');
-      final availableApparatus = listData.skip(1).where((row) => row.length >= 4).map((row) => row[0].toString()).toSet();
-      print('🔧 DEBUG: CSVで利用可能な種目: $availableApparatus');
-      print('🔧 DEBUG: 検索した種目: "$apparatus"');
-      
-      // 最初の5行のサンプルを表示
-      print('🔧 DEBUG: CSVサンプル（最初の5行）:');
-      for (int i = 1; i <= 5 && i < listData.length; i++) {
-        print('🔧 DEBUG: 行$i: ${listData[i]}');
-      }
-    } else {
-      print('🔧 DEBUG: 最初の3技: ${skills.take(3).map((s) => s.name).join(", ")}');
+      print('警告: ${apparatus}用の技が見つかりません');
     }
     
     skills.sort((a, b) => a.name.compareTo(b.name));
@@ -8060,6 +8082,32 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
         )),
         'allConnectionGroups': _allConnectionGroups,
         'allNextConnectionGroupIds': _allNextConnectionGroupIds,
+        // D-score結果を保存
+        'dScoreResult': _dScoreResult != null ? {
+          'totalDScore': _dScoreResult!.totalDScore,
+          'difficultyValue': _dScoreResult!.difficultyValue,
+          'groupBonus': _dScoreResult!.groupBonus,
+          'connectionBonus': _dScoreResult!.connectionBonus,
+          'neutralDeductions': _dScoreResult!.neutralDeductions,
+          'fulfilledGroups': _dScoreResult!.fulfilledGroups,
+          'requiredGroups': _dScoreResult!.requiredGroups,
+          'totalSkills': _dScoreResult!.totalSkills,
+          'deductionBreakdown': _dScoreResult!.deductionBreakdown,
+        } : null,
+        'allDScoreResults': _allDScoreResults.map((apparatus, result) => MapEntry(
+          apparatus,
+          result != null ? {
+            'totalDScore': result.totalDScore,
+            'difficultyValue': result.difficultyValue,
+            'groupBonus': result.groupBonus,
+            'connectionBonus': result.connectionBonus,
+            'neutralDeductions': result.neutralDeductions,
+            'fulfilledGroups': result.fulfilledGroups,
+            'requiredGroups': result.requiredGroups,
+            'totalSkills': result.totalSkills,
+            'deductionBreakdown': result.deductionBreakdown,
+          } : null,
+        )),
         'lastSavedAt': DateTime.now().toIso8601String(),
       };
       
@@ -8125,6 +8173,33 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
               _allNextConnectionGroupIds[key] = value;
             });
           }
+          
+          // D-score結果を復元
+          if (state['allDScoreResults'] != null) {
+            final Map<String, dynamic> allDScoreResultsData = state['allDScoreResults'];
+            _allDScoreResults.clear();
+            allDScoreResultsData.forEach((apparatus, resultData) {
+              if (resultData != null) {
+                final Map<String, dynamic> result = Map<String, dynamic>.from(resultData);
+                _allDScoreResults[apparatus] = DScoreResult(
+                  totalDScore: result['totalDScore']?.toDouble() ?? 0.0,
+                  difficultyValue: result['difficultyValue']?.toDouble() ?? 0.0,
+                  groupBonus: result['groupBonus']?.toDouble() ?? 0.0,
+                  connectionBonus: result['connectionBonus']?.toDouble() ?? 0.0,
+                  neutralDeductions: result['neutralDeductions']?.toDouble() ?? 0.0,
+                  fulfilledGroups: result['fulfilledGroups'] ?? 0,
+                  requiredGroups: result['requiredGroups'] ?? 0,
+                  totalSkills: result['totalSkills'] ?? 0,
+                  deductionBreakdown: Map<String, double>.from(result['deductionBreakdown'] ?? {}),
+                );
+              }
+            });
+          }
+          
+          // 現在の種目のD-score結果を復元
+          if (_selectedApparatus != null && _allDScoreResults.containsKey(_selectedApparatus)) {
+            _dScoreResult = _allDScoreResults[_selectedApparatus];
+          }
         });
         
         print('✅ Successfully loaded routine state:');
@@ -8132,9 +8207,20 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
         print('  - Current routine skills: ${_routine.length}');
         print('  - All routines: ${_allRoutines.keys.toList()}');
         print('  - Connection groups: ${_connectionGroups.length}');
+        print('  - D-score result restored: ${_dScoreResult != null ? _dScoreResult!.totalDScore : "null"}');
+      } else {
+        // 保存データがない場合はデフォルト値を設定
+        setState(() {
+          _selectedApparatus = 'FX';
+        });
+        print('No saved state found, using default apparatus: FX');
       }
     } catch (e) {
       print('Error loading routine state: $e');
+      // エラーの場合もデフォルト値を設定
+      setState(() {
+        _selectedApparatus = 'FX';
+      });
     }
   }
   
@@ -8685,7 +8771,15 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
                     onChanged: (value) {
                       setState(() {
                         _selectedApparatus = value;
+                        _skillList = []; // 技リストをクリア
+                        _isSkillLoading = true; // ローディング状態を設定
+                        _currentSkillPage = 1; // ページをリセット
+                        _selectedSkill = null; // 選択された技をクリア
+                        _selectedSkillIndex = null; // 選択されたインデックスをクリア
                       });
+                      if (value != null) {
+                        _ensureSkillsLoaded(value);
+                      }
                     },
                   ),
                   const SizedBox(height: 16),
