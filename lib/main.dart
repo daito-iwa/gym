@@ -2952,6 +2952,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       print('🔧 DEBUG: First skill apparatus: ${_skillList.first.apparatus}');
     }
     
+    // HBの場合は強制的にキャッシュを無視
+    if (apparatus == 'HB') {
+      print('🔧 HB DEBUG: HBキャッシュを強制的にクリアして再読み込み');
+      _skillDataCache.remove(cacheKey);
+    }
+    
     // Return immediately if already cached
     if (_skillDataCache.containsKey(cacheKey)) {
       print('🔧 DEBUG: Using cached skills for $cacheKey (${_skillDataCache[cacheKey]!.length} skills)');
