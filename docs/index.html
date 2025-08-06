@@ -131,17 +131,21 @@
         /* Desktop layout - 2-column grid */
         @media (min-width: 768px) {
             .hero {
-                padding: 8rem 2rem 4rem;
+                padding: 10rem 2rem 6rem;
                 text-align: left;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
             }
             
             .hero-content {
-                max-width: 1200px;
+                max-width: 1400px;
                 margin: 0 auto;
                 display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 4rem;
-                align-items: center;
+                grid-template-columns: 3fr 2fr;
+                gap: 6rem;
+                align-items: start;
+                width: 100%;
             }
             
             .hero-text {
@@ -149,7 +153,9 @@
             }
             
             .hero-text .app-icon {
-                margin: 0 0 2rem 0;
+                margin: 0 0 3rem 0;
+                width: 120px;
+                height: 120px;
             }
             
             .hero-visual {
@@ -157,32 +163,50 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                gap: 2rem;
+                justify-content: start;
+                gap: 3rem;
+                padding-top: 2rem;
             }
             
             .hero-title {
-                font-size: 3.5rem;
-                margin-bottom: 2rem;
+                font-size: 4.2rem;
+                margin-bottom: 2.5rem;
                 text-align: left;
+                line-height: 1.1;
+                letter-spacing: -0.03em;
+                font-weight: 900;
             }
             
             .hero-subtitle {
-                font-size: 1.3rem;
-                margin-bottom: 3rem;
+                font-size: 1.4rem;
+                margin-bottom: 4rem;
                 text-align: left;
+                line-height: 1.5;
+                color: var(--text-secondary);
+                opacity: 0.9;
             }
             
             .download-buttons {
                 flex-direction: row;
-                gap: 1.5rem;
+                gap: 2rem;
                 justify-content: flex-start;
-                align-items: flex-start;
-                margin-bottom: 3rem;
+                align-items: center;
+                margin-bottom: 4rem;
+                flex-wrap: wrap;
+            }
+            
+            .download-btn.app-store,
+            .download-btn.google-play {
+                transform: scale(0.9);
+            }
+            
+            .download-btn.app-store:hover,
+            .download-btn.google-play:hover {
+                transform: scale(0.95) translateY(-3px);
             }
             
             .development-status {
-                margin-bottom: 2rem;
+                margin-bottom: 3rem;
                 text-align: left;
             }
             
@@ -190,15 +214,52 @@
                 text-align: left;
             }
             
+            .web-app-button .download-btn {
+                background: var(--primary-gradient);
+                color: white;
+                box-shadow: var(--shadow-primary);
+                border: none;
+                font-size: 1.1rem;
+                padding: 1.2rem 2.5rem;
+                min-width: 200px;
+            }
+            
+            .web-app-button .download-btn:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 30px 80px rgba(79, 172, 254, 0.4);
+            }
+            
             .app-showcase {
                 margin-top: 0;
                 width: 100%;
                 display: flex;
                 justify-content: center;
+                position: relative;
             }
             
             .phone-mockup {
-                max-width: 350px;
+                max-width: 400px;
+                transform: perspective(1000px) rotateY(-5deg) rotateX(2deg);
+                transition: var(--transition);
+            }
+            
+            .phone-mockup:hover {
+                transform: perspective(1000px) rotateY(-2deg) rotateX(1deg) scale(1.02);
+            }
+            
+            .hero-visual::before {
+                content: '';
+                position: absolute;
+                top: -10%;
+                left: -10%;
+                right: -10%;
+                bottom: -10%;
+                background: 
+                    radial-gradient(ellipse at center, rgba(79, 172, 254, 0.1) 0%, transparent 70%),
+                    radial-gradient(ellipse at top right, rgba(67, 233, 123, 0.08) 0%, transparent 50%);
+                border-radius: 50%;
+                z-index: -1;
+                animation: float 8s ease-in-out infinite;
             }
         }
 
@@ -434,13 +495,34 @@
         /* Desktop features grid */
         @media (min-width: 768px) {
             .features {
-                padding: 6rem 2rem;
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(26, 26, 46, 0.95) 100%);
             }
             
             .features-grid {
-                max-width: 1200px;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 2rem;
+                max-width: 1400px;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 2.5rem;
+            }
+            
+            .section-title {
+                font-size: 3rem;
+                margin-bottom: 2rem;
+            }
+            
+            .section-subtitle {
+                font-size: 1.2rem;
+                margin-bottom: 4rem;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        /* Tablet responsive - 2 columns */
+        @media (min-width: 768px) and (max-width: 1200px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -506,7 +588,20 @@
         /* Desktop demo section */
         @media (min-width: 768px) {
             .demo-section {
-                padding: 6rem 2rem;
+                padding: 8rem 2rem;
+            }
+            
+            .demo-card {
+                max-width: 450px;
+                transform: scale(1.1);
+                box-shadow: 
+                    var(--shadow-primary),
+                    0 0 100px rgba(79, 172, 254, 0.15);
+            }
+            
+            .demo-card:hover {
+                transform: scale(1.12) translateY(-5px);
+                transition: var(--transition);
             }
         }
 
@@ -581,7 +676,39 @@
         /* Desktop CTA section */
         @media (min-width: 768px) {
             .cta-section {
-                padding: 6rem 2rem;
+                padding: 8rem 2rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6366f1 100%);
+            }
+            
+            .cta-content {
+                max-width: 800px;
+            }
+            
+            .cta-title {
+                font-size: 3.2rem;
+                margin-bottom: 2rem;
+                font-weight: 900;
+            }
+            
+            .cta-subtitle {
+                font-size: 1.4rem;
+                margin-bottom: 3rem;
+                opacity: 0.95;
+            }
+            
+            .cta-section .download-buttons {
+                justify-content: center;
+                gap: 2.5rem;
+            }
+            
+            .cta-section .download-btn.app-store,
+            .cta-section .download-btn.google-play {
+                transform: scale(1.1);
+            }
+            
+            .cta-section .download-btn.app-store:hover,
+            .cta-section .download-btn.google-play:hover {
+                transform: scale(1.15) translateY(-5px);
             }
         }
 
@@ -678,8 +805,53 @@
             50% { box-shadow: 0 20px 60px rgba(79, 172, 254, 0.5); }
         }
 
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
         .feature-card:hover .feature-icon {
             animation: glow 2s ease-in-out infinite;
+        }
+
+        .visible {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        /* Desktop-specific enhancements */
+        @media (min-width: 768px) {
+            .feature-card {
+                padding: 2rem;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .feature-card:hover {
+                transform: translateY(-8px) scale(1.02);
+                box-shadow: 
+                    var(--shadow-glow),
+                    0 20px 40px rgba(79, 172, 254, 0.2);
+            }
+            
+            .feature-icon {
+                font-size: 3rem;
+                transition: all 0.4s ease;
+            }
+            
+            .feature-card:hover .feature-icon {
+                transform: scale(1.1) rotateY(10deg);
+                animation: pulse 2s ease-in-out infinite;
+            }
         }
 
         /* Desktop redirect notification */
