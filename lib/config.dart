@@ -19,7 +19,7 @@ class AppConfig {
   static const Map<Environment, String> _urls = {
     Environment.development: 'http://127.0.0.1:8080',
     Environment.staging: 'https://staging-api.your-domain.com',
-    Environment.production: 'https://gymnastics-ai-server-96488789666.us-central1.run.app',
+    Environment.production: 'https://gymnastics-ai-server-kywkhw6quq-uc.a.run.app',
   };
   
   // モバイルアプリ版のみのサーバーURL

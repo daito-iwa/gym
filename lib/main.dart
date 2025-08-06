@@ -2449,12 +2449,50 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     
     // データ永続化の読み込み（種目復元を優先）
     print('🔧 INIT: initState開始');
+    _clearHBCacheIfNeeded(); // 鉄棒キャッシュ問題対策
     _loadChatMessages();
     _loadDScoreResults();
     _loadSkillDataCache();
     print('🔧 INIT: _initializeStateAndSkills呼び出し前');
     _initializeStateAndSkills(); // 種目復元と技読み込みを適切な順序で実行
     print('🔧 INIT: initState完了');
+  }
+
+  /// 鉄棒専用キャッシュクリア処理
+  Future<void> _clearHBCacheIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // 鉄棒の特別なキャッシュクリアフラグをチェック
+    final hbCacheCleared = prefs.getBool('hb_cache_cleared_v3') ?? false;
+    
+    if (!hbCacheCleared) {
+      print('🔧 DEBUG: HBキャッシュを強制クリア中...');
+      
+      // 鉄棒関連のキャッシュキーを全て削除
+      final keysToRemove = <String>[];
+      final allKeys = prefs.getKeys();
+      
+      for (final key in allKeys) {
+        if (key.contains('HB_') || key.contains('hb_') || key.startsWith('HB')) {
+          keysToRemove.add(key);
+        }
+      }
+      
+      // キャッシュを削除
+      for (final key in keysToRemove) {
+        await prefs.remove(key);
+        print('🗑️ 削除: $key');
+      }
+      
+      // 特別にHBのキャッシュキーも削除
+      await prefs.remove('HB_ja_v${CacheConfig.CURRENT_CACHE_VERSION}');
+      await prefs.remove('HB_ja_version');
+      
+      // フラグを設定
+      await prefs.setBool('hb_cache_cleared_v3', true);
+      
+      print('✅ DEBUG: HBキャッシュクリア完了');
+    }
   }
 
   // 種目復元と技読み込みを適切な順序で実行
@@ -6740,6 +6778,69 @@ $expertAnswer
                     },
                   ),
                 ),
+                
+                // ローディング表示
+                if (_isSendingMessage)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.blue,
+                          child: Icon(
+                            Icons.sports_gymnastics,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(18),
+                              topRight: Radius.circular(18),
+                              bottomLeft: Radius.circular(4),
+                              bottomRight: Radius.circular(18),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'AIが回答を生成中...',
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 15,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

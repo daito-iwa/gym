@@ -127,7 +127,7 @@ class IntelligentGymnasticsAI:
             
             # OpenAI API呼び出し（同期版を使用）
             response = openai_client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4o-mini",
                 messages=messages,
                 max_tokens=1500,
                 temperature=0.1,  # 正確性を重視
