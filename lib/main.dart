@@ -433,8 +433,12 @@ class RoutineAnalyzer {
   }
 }
 
+// Cache busting timestamp: ${DateTime.now().millisecondsSinceEpoch}
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Debug: Cache clear confirmation
+  print('🚀 App started at ${DateTime.now().toIso8601String()} - Cache cleared for HB skills fix');
   
   // Web広告システムの初期化
   if (kIsWeb) {
