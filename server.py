@@ -184,11 +184,19 @@ class IntelligentGymnasticsAI:
         """改良されたローカル知識ベース検索"""
         question_lower = question.lower()
         
-        # 基本的な体操に関する質問への対応を強化
+        # 1. 基本的な挨拶への対応
+        if any(word in question_lower for word in ["こんにちは", "こんばんは", "はじめまして", "よろしく", "hello", "hi"]):
+            return self._get_greeting_response()
+        
+        # 2. 基本的な体操に関する質問への対応を強化
         if any(word in question_lower for word in ["体操って", "体操とは", "体操競技とは", "体操について", "gymnastics"]):
             return self._get_comprehensive_gymnastics_explanation()
         
-        # その他の質問は既存のロジックを使用（改良版）
+        # 3. 体操以外の質問への対応
+        if any(word in question_lower for word in ["天気", "weather", "今日", "tomorrow", "ニュース", "news"]):
+            return self._get_non_gymnastics_response(question)
+        
+        # 4. その他の質問は既存のロジックを使用（改良版）
         return self._search_knowledge_base_intelligently(question, context)
     
     def _get_comprehensive_gymnastics_explanation(self) -> str:
@@ -221,6 +229,35 @@ class IntelligentGymnasticsAI:
 ジュニアレベルから世界選手権、オリンピックまで、あらゆるレベルで楽しめるスポーツです。
 
 体操競技について他にもご質問があれば、技術的な詳細から歴史まで、何でもお答えします！"""
+    
+    def _get_greeting_response(self) -> str:
+        """基本的な挨拶への対応"""
+        return """こんにちは！🤸‍♂️ 
+
+体操競技専門AIアシスタントです。体操に関するあらゆることにお答えできます！
+
+**ご質問例:**
+• 「体操って何？」→ 体操競技の基礎知識
+• 「床運動について教えて」→ 各種目の詳細  
+• 「Dスコアの計算方法は？」→ 採点システム
+• 「内村航平について」→ 選手の実績や歴史
+
+何でもお気軽にご質問ください！"""
+    
+    def _get_non_gymnastics_response(self, question: str) -> str:
+        """体操以外の質問への対応"""
+        return f"""申し訳ございませんが、「{question}」についてはお答えできません。
+
+🤸‍♂️ **私は体操競技専門のAIです**
+以下のような体操に関するご質問なら詳しくお答えできます：
+
+• **基礎知識**: 体操競技とは？種目の説明
+• **技術情報**: 各種目の技と難度
+• **ルール・採点**: 最新のFIG公式ルール
+• **歴史・人物**: 選手の実績や大会情報
+• **演技構成**: D-スコア計算と構成アドバイス
+
+体操について何かご質問はありませんか？"""
     
     def _search_knowledge_base_intelligently(self, question: str, context: Dict[str, Any] = None) -> str:
         """インテリジェントな知識ベース検索（OpenAI利用不可時のフォールバック）"""
@@ -256,11 +293,13 @@ class IntelligentGymnasticsAI:
         
         # 一般的なトピック検索
         topic_keywords = {
-            "採点": "採点システム: Dスコア（難度点）+ Eスコア（実施点）で最終得点が決定されます。",
-            "難度": "難度は A(0.1) から J(1.0) まで10段階に分かれています。",
-            "減点": "減点は小欠点(0.1)、中欠点(0.3)、大欠点(0.5)、落下(1.0)に分類されます。",
-            "グループ": "各種目には4つのグループがあり、各グループから最低1技の実施が必要です。",
-            "連続技": "連続技ボーナス（CV）は特定の技の組み合わせで加点される仕組みです。"
+            "採点": "**採点システム**\nDスコア（難度点）+ Eスコア（実施点）= 最終得点\n• D-score: 技の難しさと構成\n• E-score: 演技の美しさと正確性（10点満点から減点）",
+            "難度": "**難度体系**\nA(0.1) → B(0.2) → C(0.3) → D(0.4) → E(0.5) → F(0.6) → G(0.7) → H(0.8) → I(0.9) → J(1.0)\n最高難度はJ難度（1.0点）です。",
+            "減点": "**減点分類**\n• 小欠点: 0.1点（わずかな逸脱）\n• 中欠点: 0.3点（明らかな逸脱）\n• 大欠点: 0.5点（重大な逸脱）\n• 落下: 1.0点（器械からの落下・転倒）",
+            "グループ": "**グループ要求**\n各種目には4つのグループ（I〜IV）があり、各グループから最低1技の実施が必要です。\n未充足のグループがあると0.5点の損失となります。",
+            "連続技": "**連続技ボーナス（CV）**\n特定の技を連続で行うことで得られる加点：\n• D+D: +0.2点\n• D+C: +0.1点\n• C+D: +0.1点",
+            "内村": "**内村航平**\n日本の体操界のレジェンド。個人総合6連覇（2009-2015）、オリンピック2連覇（2012,2016）の偉業を達成。",
+            "白井": "**白井健三**\n「ひねり王子」として知られ、床運動で革新的な超高難度技を開発。シライ1〜3の技名で知られる。"
         }
         
         for keyword, info in topic_keywords.items():
