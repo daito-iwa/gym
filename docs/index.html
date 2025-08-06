@@ -349,6 +349,49 @@
             margin: 0 auto;
         }
 
+        /* Desktop Layout Improvements */
+        @media (min-width: 768px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 800px;
+                gap: 2rem;
+            }
+            
+            .features {
+                padding: 3rem 2rem;
+            }
+            
+            .hero {
+                padding: 4rem 2rem 2rem;
+                min-height: 80vh;
+            }
+            
+            .nav {
+                max-width: 1200px;
+                padding: 0 2rem;
+            }
+            
+            .hero-content {
+                max-width: 600px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .features-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 1200px;
+                gap: 2.5rem;
+            }
+            
+            .demo-section {
+                padding: 3rem 2rem;
+            }
+            
+            .cta-section {
+                padding: 3rem 2rem;
+            }
+        }
+
         .feature-card {
             background: var(--bg-card);
             padding: 1.5rem;
