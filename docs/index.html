@@ -7,8 +7,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="cache-bust" content="v4.5-googleplay-195x60-202508062257">
-    <!-- Updated: 2025-08-06 22:57 GOOGLE PLAY BUTTON 195x60 -->
+    <meta name="cache-bust" content="v4.6-force-button-202508062259">
+    <!-- Updated: 2025-08-06 22:59 FORCE BUTTON SIZE -->
     <meta name="description" content="体操競技のD-Score計算、AI演技分析、技データベース検索。高精度な計算とAIによる演技構成分析で競技力向上をサポート。iOS・Android対応。">
     
     <!-- Favicon -->
@@ -451,13 +451,16 @@
             transform: scale(1) !important;
         }
 
-        .download-btn.google-play .store-badge {
+        .download-btn.google-play .store-badge,
+        a.download-btn.google-play img.store-badge,
+        .google-play .store-badge {
             height: 60px !important;
             width: 195px !important;
             object-fit: contain !important;
             max-width: 195px !important;
             min-width: 195px !important;
             transform: scale(1) !important;
+            display: block !important;
         }
 
         .download-btn.app-store,
@@ -1161,7 +1164,7 @@
     
     <script>
         // Force cache clear for desktop layout
-        const currentVersion = 'v4.5-googleplay-195x60-202508062257';
+        const currentVersion = 'v4.6-force-button-202508062259';
         const lastVersion = localStorage.getItem('layout-version');
         
         if (lastVersion !== currentVersion) {
@@ -1194,6 +1197,24 @@
         if (detectDesktop()) {
             document.documentElement.classList.add('force-desktop-layout');
         }
+        
+        // Force Google Play button size
+        function forceGooglePlaySize() {
+            const googlePlayBadges = document.querySelectorAll('.download-btn.google-play .store-badge');
+            googlePlayBadges.forEach(badge => {
+                badge.style.setProperty('width', '195px', 'important');
+                badge.style.setProperty('height', '60px', 'important');
+                badge.style.setProperty('max-width', '195px', 'important');
+                badge.style.setProperty('min-width', '195px', 'important');
+                badge.style.setProperty('object-fit', 'contain', 'important');
+                badge.style.setProperty('transform', 'scale(1)', 'important');
+            });
+        }
+        
+        // Apply on load and periodically check
+        document.addEventListener('DOMContentLoaded', forceGooglePlaySize);
+        window.addEventListener('load', forceGooglePlaySize);
+        setInterval(forceGooglePlaySize, 1000);
 
         // Intersection Observer for animations
         const observerOptions = {
