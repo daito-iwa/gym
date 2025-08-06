@@ -2462,36 +2462,48 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _clearHBCacheIfNeeded() async {
     final prefs = await SharedPreferences.getInstance();
     
-    // 鉄棒の特別なキャッシュクリアフラグをチェック
-    final hbCacheCleared = prefs.getBool('hb_cache_cleared_v3') ?? false;
+    // v4用の鉄棒キャッシュクリアフラグをチェック
+    final hbCacheCleared = prefs.getBool('hb_cache_cleared_v4') ?? false;
     
     if (!hbCacheCleared) {
-      print('🔧 DEBUG: HBキャッシュを強制クリア中...');
+      print('🔧 DEBUG: HBキャッシュを強制クリア中（v4）...');
       
-      // 鉄棒関連のキャッシュキーを全て削除
+      // すべてのキャッシュキーを取得してHB関連をすべて削除
       final keysToRemove = <String>[];
       final allKeys = prefs.getKeys();
       
+      print('🔍 全キーをチェック中: ${allKeys.length}個');
+      
       for (final key in allKeys) {
-        if (key.contains('HB_') || key.contains('hb_') || key.startsWith('HB')) {
+        // HB関連のキーをより広範囲で検出
+        if (key.contains('HB') || 
+            key.contains('hb') || 
+            key.toLowerCase().contains('horizontal') ||
+            key.contains('鉄棒')) {
           keysToRemove.add(key);
+          print('🎯 HB関連キー発見: $key');
         }
       }
       
+      // すべてのバージョンのHBキャッシュを削除
+      final versionsToRemove = [1, 2, 3, 4];
+      for (final version in versionsToRemove) {
+        keysToRemove.add('HB_ja_v$version');
+        keysToRemove.add('HB_en_v$version');
+        keysToRemove.add('HB_ja_version');
+        keysToRemove.add('HB_en_version');
+      }
+      
       // キャッシュを削除
-      for (final key in keysToRemove) {
+      for (final key in keysToRemove.toSet()) { // 重複を除去
         await prefs.remove(key);
         print('🗑️ 削除: $key');
       }
       
-      // 特別にHBのキャッシュキーも削除
-      await prefs.remove('HB_ja_v${CacheConfig.CURRENT_CACHE_VERSION}');
-      await prefs.remove('HB_ja_version');
-      
       // フラグを設定
-      await prefs.setBool('hb_cache_cleared_v3', true);
+      await prefs.setBool('hb_cache_cleared_v4', true);
       
-      print('✅ DEBUG: HBキャッシュクリア完了');
+      print('✅ DEBUG: HBキャッシュクリア完了（v4） - ${keysToRemove.length}個のキーを削除');
     }
   }
 

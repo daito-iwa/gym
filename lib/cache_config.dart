@@ -2,12 +2,13 @@
 class CacheConfig {
   /// 現在のキャッシュ版数
   /// CSVデータやソート処理を更新した時は必ずこの値をインクリメントすること
-  static const int CURRENT_CACHE_VERSION = 3;
+  static const int CURRENT_CACHE_VERSION = 4;
   
   /// キャッシュ版数の履歴（デバッグ用）
   /// v1: 初期版
   /// v2: 2025-08-06 - グループ順ソート追加、skills_ja.csv更新
   /// v3: 2025-08-06 23:02 - キャッシュクリア（またグループ1/A難度問題発生）
+  /// v4: 2025-08-06 23:15 - HB専用キャッシュクリア追加、全キャッシュ強制クリア
   
   /// データ整合性チェックの閾値
   static const double GROUP_1_RATIO_THRESHOLD = 0.8;  // グループ1が80%以上なら異常
