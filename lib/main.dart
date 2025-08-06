@@ -2952,11 +2952,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       print('🔧 DEBUG: First skill apparatus: ${_skillList.first.apparatus}');
     }
     
-    // HBの場合は強制的にキャッシュを無視
-    if (apparatus == 'HB') {
-      print('🔧 HB DEBUG: HBキャッシュを強制的にクリアして再読み込み');
-      _skillDataCache.remove(cacheKey);
-    }
+    // 全ての種目で古いキャッシュを強制的にクリア（一度限りの修正）
+    print('🔧 DEBUG: ${apparatus}キャッシュを強制的にクリアして再読み込み');
+    _skillDataCache.remove(cacheKey);
     
     // Return immediately if already cached
     if (_skillDataCache.containsKey(cacheKey)) {
@@ -4239,8 +4237,12 @@ $expertAnswer
       print('🔧 HB DEBUG: 難度分布: $difficultyCounts');
     }
     
-    // HBの場合は先にグループ順、次に難度順でソート
-    if (apparatus == 'HB') {
+    // 全ての種目で先にグループ順、次に難度順でソート
+    if (apparatus == 'VT') {
+      // 跳馬は技名順のまま
+      skills.sort((a, b) => a.name.compareTo(b.name));
+    } else {
+      // その他の種目はグループ→難度→技名順
       skills.sort((a, b) {
         // まずグループで比較
         int groupComparison = a.group.compareTo(b.group);
@@ -4254,13 +4256,11 @@ $expertAnswer
         return a.name.compareTo(b.name);
       });
       
-      print('🔧 HB DEBUG: ソート後の最初の10技:');
+      print('🔧 ${apparatus} DEBUG: ソート後の最初の10技:');
       for (int i = 0; i < skills.length && i < 10; i++) {
         final skill = skills[i];
-        print('🔧 HB DEBUG: [$i] G${skill.group}-${skill.valueLetter}: ${skill.name}');
+        print('🔧 ${apparatus} DEBUG: [$i] G${skill.group}-${skill.valueLetter}: ${skill.name}');
       }
-    } else {
-      skills.sort((a, b) => a.name.compareTo(b.name));
     }
     
     return skills;

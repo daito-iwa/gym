@@ -89965,8 +89965,9 @@ n=A.V(new A.aV(o,n),n.i("n.E"))
 A.t("\ud83d\udd27 DEBUG: Cache keys available: "+A.k(n))
 A.t("\ud83d\udd27 DEBUG: Current _skillList length: "+J.bi(p.to))
 if(J.ig(p.to))A.t("\ud83d\udd27 DEBUG: First skill apparatus: "+J.n4(p.to).r)
-if(a==="HB"){A.t("\ud83d\udd27 HB DEBUG: HB\u30ad\u30e3\u30c3\u30b7\u30e5\u3092\u5f37\u5236\u7684\u306b\u30af\u30ea\u30a2\u3057\u3066\u518d\u8aad\u307f\u8fbc\u307f")
-o.F(0,l)}if(o.am(0,l)){o=o.h(0,l)
+A.t("\ud83d\udd27 DEBUG: "+a+"\u30ad\u30e3\u30c3\u30b7\u30e5\u3092\u5f37\u5236\u7684\u306b\u30af\u30ea\u30a2\u3057\u3066\u518d\u8aad\u307f\u8fbc\u307f")
+o.F(0,l)
+if(o.am(0,l)){o=o.h(0,l)
 o.toString
 A.t("\ud83d\udd27 DEBUG: Using cached skills for "+l+" ("+J.bi(o)+" skills)")
 p.L(new A.asc(p,l))
@@ -90156,40 +90157,42 @@ case 6:case 1:return A.C(q,r)
 case 2:return A.B(o.at(-1),r)}})
 return A.D($async$nL,r)},
 FA(a,b){return this.afP(a,b)},
-afP(a,a0){var s=0,r=A.E(t.mP),q,p,o,n,m,l,k,j,i,h,g,f,e,d,c,b
-var $async$FA=A.z(function(a1,a2){if(a1===1)return A.B(a2,r)
-while(true)switch(s){case 0:c=t.z
-b=A.aYi(A.b([a],t._m),!0,null,",",'"','"',"\r\n",!0,!0,null).alZ(a,c)
-if(b.length===0){q=A.b([],t.l)
+afP(a,b){var s=0,r=A.E(t.mP),q,p,o,n,m,l,k,j,i,h,g,f,e,d,c
+var $async$FA=A.z(function(a0,a1){if(a0===1)return A.B(a1,r)
+while(true)switch(s){case 0:d=t.z
+c=A.aYi(A.b([a],t._m),!0,null,",",'"','"',"\r\n",!0,!0,null).alZ(a,d)
+if(c.length===0){q=A.b([],t.l)
 s=1
 break}p=A.b([],t.l)
-for(o=a0==="HB",n=t.N,m=1;m<b.length;++m){l=b[m]
+for(o=b==="HB",n=t.N,m=1;m<c.length;++m){l=c[m]
 if(l.length>=4){k=J.cx(l[0])
-if(k===a0){j=J.cx(l[2])
+if(k===b){j=J.cx(l[2])
 i=J.cx(l[3])
 if(o&&p.length<10)A.dS("\ud83d\udd27 HB DEBUG: \u884c"+m+' - \u30b0\u30eb\u30fc\u30d7: "'+j+'", \u96e3\u5ea6: "'+i+'", \u6280\u540d: "'+A.k(l[1])+'"')
-h=A.ak0(A.a_(["id","SKILL_"+B.c.n6(B.j.k(m),3,"0"),"apparatus",k,"name",J.cx(l[1]),"group",j,"value_letter",i,"description",J.cx(l[1])],n,c))
+h=A.ak0(A.a_(["id","SKILL_"+B.c.n6(B.j.k(m),3,"0"),"apparatus",k,"name",J.cx(l[1]),"group",j,"value_letter",i,"description",J.cx(l[1])],n,d))
 if(o&&p.length<10)A.dS("\ud83d\udd27 HB DEBUG: \u5909\u63db\u5f8c - \u30b0\u30eb\u30fc\u30d7: "+h.d+', \u96e3\u5ea6: "'+h.c+'", \u5024: '+A.k(h.e))
-p.push(h)}}}c=p.length
-if(c===0)A.t("\u8b66\u544a: "+a0+"\u7528\u306e\u6280\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093")
-else if(o){A.t("\ud83d\udd27 HB DEBUG: \u5408\u8a08"+c+"\u500b\u306e\u9244\u68d2\u6280\u3092\u8aad\u307f\u8fbc\u307f\u307e\u3057\u305f")
-c=t.S
-g=A.w(c,c)
-f=A.w(n,c)
-for(c=p.length,e=0;e<p.length;p.length===c||(0,A.J)(p),++e){h=p[e]
-n=h.d
-d=g.h(0,n)
-g.m(0,n,(d==null?0:d)+1)
-n=h.c
-d=f.h(0,n)
-f.m(0,n,(d==null?0:d)+1)}A.t("\ud83d\udd27 HB DEBUG: \u30b0\u30eb\u30fc\u30d7\u5206\u5e03: "+g.k(0))
-A.t("\ud83d\udd27 HB DEBUG: \u96e3\u5ea6\u5206\u5e03: "+f.k(0))}if(o){B.b.e5(p,new A.at0())
-A.t("\ud83d\udd27 HB DEBUG: \u30bd\u30fc\u30c8\u5f8c\u306e\u6700\u521d\u306e10\u6280:")
+p.push(h)}}}d=p.length
+if(d===0)A.t("\u8b66\u544a: "+b+"\u7528\u306e\u6280\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093")
+else if(o){A.t("\ud83d\udd27 HB DEBUG: \u5408\u8a08"+d+"\u500b\u306e\u9244\u68d2\u6280\u3092\u8aad\u307f\u8fbc\u307f\u307e\u3057\u305f")
+d=t.S
+g=A.w(d,d)
+f=A.w(n,d)
+for(d=p.length,e=0;e<p.length;p.length===d||(0,A.J)(p),++e){h=p[e]
+o=h.d
+n=g.h(0,o)
+g.m(0,o,(n==null?0:n)+1)
+o=h.c
+n=f.h(0,o)
+f.m(0,o,(n==null?0:n)+1)}A.t("\ud83d\udd27 HB DEBUG: \u30b0\u30eb\u30fc\u30d7\u5206\u5e03: "+g.k(0))
+A.t("\ud83d\udd27 HB DEBUG: \u96e3\u5ea6\u5206\u5e03: "+f.k(0))}if(b==="VT")B.b.e5(p,new A.at0())
+else{B.b.e5(p,new A.at1())
+d="\ud83d\udd27 "+b
+A.t(d+" DEBUG: \u30bd\u30fc\u30c8\u5f8c\u306e\u6700\u521d\u306e10\u6280:")
+d+=" DEBUG: ["
 m=0
 while(!0){if(!(m<p.length&&m<10))break
 h=p[m]
-A.dS("\ud83d\udd27 HB DEBUG: ["+m+"] G"+h.d+"-"+h.c+": "+h.b);++m}}else B.b.e5(p,new A.at1())
-q=p
+A.dS(d+m+"] G"+h.d+"-"+h.c+": "+h.b);++m}}q=p
 s=1
 break
 case 1:return A.C(q,r)}})
@@ -91463,14 +91466,14 @@ s.x1=!1
 s.to=A.b([],t.l)},
 $S:0}
 A.at0.prototype={
+$2(a,b){return B.c.aS(a.b,b.b)},
+$S:63}
+A.at1.prototype={
 $2(a,b){var s,r=B.j.aS(a.d,b.d)
 if(r!==0)return r
 s=B.c.aS(a.c,b.c)
 if(s!==0)return s
 return B.c.aS(a.b,b.b)},
-$S:63}
-A.at1.prototype={
-$2(a,b){return B.c.aS(a.b,b.b)},
 $S:63}
 A.atQ.prototype={
 $0(){A.AK(this.a).fZ()},
