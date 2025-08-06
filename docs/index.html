@@ -142,12 +142,19 @@
             max-width: 1400px !important;
             margin: 0 auto !important;
             display: grid !important;
-            grid-template-columns: 2.8fr 2.2fr !important;
-            gap: 6rem !important;
+            grid-template-columns: 3fr 2fr !important;
+            gap: 4rem !important;
             align-items: center !important;
             width: 100% !important;
             height: 100% !important;
             align-content: center !important;
+        }
+        
+        .force-desktop-layout .hero-text {
+            align-items: center !important;
+            text-align: center !important;
+            padding-left: 3rem !important;
+            padding-right: 1rem !important;
         }
 
         /* Desktop layout - 2-column grid - FORCE DESKTOP */
@@ -166,8 +173,8 @@
                 max-width: 1400px !important;
                 margin: 0 auto !important;
                 display: grid !important;
-                grid-template-columns: 2.8fr 2.2fr !important;
-                gap: 6rem !important;
+                grid-template-columns: 3fr 2fr !important;
+                gap: 4rem !important;
                 align-items: center !important;
                 width: 100% !important;
                 height: 100% !important;
@@ -179,14 +186,16 @@
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                align-items: flex-end;
+                align-items: center;
                 height: 100%;
                 position: relative;
-                padding-right: 2.5rem;
+                padding-left: 3rem;
+                padding-right: 1rem;
+                text-align: center;
             }
             
             .hero-text .app-icon {
-                margin: 0 0 2rem 1rem;
+                margin: 0 0 2rem 0;
                 width: 100px;
                 height: 100px;
                 align-self: center;
