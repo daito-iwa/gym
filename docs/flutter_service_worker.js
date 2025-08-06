@@ -3,11 +3,11 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"flutter_bootstrap.js": "147d6d7bcfb512c8d176bcd6c1e27bbd",
+const RESOURCES = {"flutter_bootstrap.js": "61afa9f19e19f857e7c8e3d58fe6e83d",
 "version.json": "b5d52a3eae84d49b4b5b74717cd65ed8",
 "index.html": "417442171b7965a0d729e87f593ef352",
 "/": "417442171b7965a0d729e87f593ef352",
-"main.dart.js": "f5e5a02f6d1c20fae14b37d5c420e7d9",
+"main.dart.js": "db30386bed749c1479e7f93f2c01d4f2",
 "flutter.js": "83d881c1dbb6d6bcd6b42e274605b69c",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
@@ -36,7 +36,7 @@ const RESOURCES = {"flutter_bootstrap.js": "147d6d7bcfb512c8d176bcd6c1e27bbd",
 "assets/data/difficulty_calculation_system.md": "11354eeca0f8b31d7a2c3a6dde2e22b5",
 "assets/data/skills_hb.json": "95bb929215cd357240b08a470c95c97b",
 "assets/data/skills_en.csv": "c19de33e8f9ebf21d17c5148d1c1b3c6",
-"assets/data/skills_ja.csv": "5046adc0a254d61c9b3e4d14562f7eb7",
+"assets/data/skills_ja.csv": "a4bc7102fb96eb33a302593b7cec2aa9",
 "assets/data/rulebook_ja_full.txt": "c9e72ebbe2e6890f08119587893bf721",
 "assets/data/apparatus_details.md": "13e4ac05fcf8f13907ba6be494aeed06",
 "assets/data/comprehensive_rulebook_analysis.md": "73fa30eb4031a8c49f2b021f432111f1",
