@@ -1,10 +1,10 @@
 'use strict';
-const MANIFEST = 'flutter-app-manifest';
-const TEMP = 'flutter-temp-cache';
-const CACHE_NAME = 'flutter-app-cache';
+const MANIFEST = 'flutter-app-manifest-v10';
+const TEMP = 'flutter-temp-cache-v10';
+const CACHE_NAME = 'flutter-app-cache-v10';
 
 const RESOURCES = {"flutter_bootstrap.js": "236a148bd76431c14dd889bbc463b0d9",
-"version.json": "b5d52a3eae84d49b4b5b74717cd65ed8",
+"version.json": "e4b5f8d2c7a9e3f6b1d4a8c2e7f9b3d5",
 "index.html": "417442171b7965a0d729e87f593ef352",
 "/": "417442171b7965a0d729e87f593ef352",
 "main.dart.js": "748ac7cb30d2cb4110ce1111792bac8e",
@@ -34,7 +34,6 @@ const RESOURCES = {"flutter_bootstrap.js": "236a148bd76431c14dd889bbc463b0d9",
 "assets/data/d_score_master_knowledge.md": "f3b889a2b180c85a2e6da5305816c33e",
 "assets/data/skills_ph.json": "5c6a409395dc29d31485043dafd89792",
 "assets/data/difficulty_calculation_system.md": "11354eeca0f8b31d7a2c3a6dde2e22b5",
-"assets/data/skills_hb.json": "95bb929215cd357240b08a470c95c97b",
 "assets/data/skills_en.csv": "c19de33e8f9ebf21d17c5148d1c1b3c6",
 "assets/data/skills_ja.csv": "a4bc7102fb96eb33a302593b7cec2aa9",
 "assets/data/rulebook_ja_full.txt": "c9e72ebbe2e6890f08119587893bf721",
