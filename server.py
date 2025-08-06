@@ -1,7 +1,299 @@
 from fastapi import FastAPI
 import os
+from openai import OpenAI
+import json
+import logging
+from typing import Optional, Dict, Any
+import asyncio
 
 app = FastAPI()
+
+# ロギング設定
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# OpenAI設定
+openai_client = None
+if os.getenv("OPENAI_API_KEY"):
+    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+if not openai_client:
+    logger.warning("OPENAI_API_KEY not found. Falling back to local knowledge base only.")
+
+# 包括的知識ベースローダー
+class GymnasticsKnowledgeBase:
+    def __init__(self):
+        self.knowledge_cache = {}
+        self.system_prompt = self._create_system_prompt()
+    
+    def _create_system_prompt(self):
+        return """あなたは世界最高レベルの体操競技専門AIアシスタントです。以下の特徴を持ちます：
+
+【専門性】
+- FIG（国際体操連盟）公式ルール2025-2028年版の完全な理解
+- 男子体操6種目（床・あん馬・つり輪・跳馬・平行棒・鉄棒）の専門知識
+- Dスコア計算、連続技ボーナス、ND減点システムの詳細理解
+- 技術的指導と戦略的アドバイスの提供
+
+【回答スタイル】
+- 初心者から専門家まで、質問者のレベルに応じた適切な説明
+- 具体例と実践的なアドバイスを含む包括的な回答
+- 正確性を最優先とし、推測では回答しない
+- 日本語で自然で分かりやすい説明
+
+【対応範囲】
+- 体操競技の基礎知識から高度な技術論まで
+- ルール・採点システムの詳細説明
+- 演技構成の分析と改善提案
+- 技術的質問への専門的回答
+- 歴史・人物・大会に関する情報
+
+あなたは質問の意図を正確に理解し、豊富な知識ベースから最適な回答を生成してください。"""
+
+    def load_all_knowledge_files(self):
+        """全ての知識ファイルを読み込み"""
+        knowledge_files = [
+            "data/comprehensive_rulebook_analysis.md",
+            "data/d_score_master_knowledge.md", 
+            "data/rulebook_ja_summary.md",
+            "data/rulebook_ja_full.txt",
+            "data/apparatus_details.md",
+            "data/difficulty_calculation_system.md",
+            "data/ai_implementation_guide.md",
+            "data/skills_difficulty_tables.md"
+        ]
+        
+        combined_knowledge = ""
+        for file_path in knowledge_files:
+            try:
+                if os.path.exists(file_path):
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        combined_knowledge += f"\n\n=== {file_path} ===\n{content}"
+                        logger.info(f"Loaded knowledge file: {file_path}")
+            except Exception as e:
+                logger.error(f"Error loading {file_path}: {e}")
+        
+        self.knowledge_cache["full_knowledge"] = combined_knowledge
+        return combined_knowledge
+
+knowledge_base = GymnasticsKnowledgeBase()
+
+# インテリジェントな回答システム
+class IntelligentGymnasticsAI:
+    def __init__(self, knowledge_base: GymnasticsKnowledgeBase):
+        self.knowledge_base = knowledge_base
+        self.full_knowledge = None
+    
+    async def get_intelligent_response(self, question: str, context: Dict[str, Any] = None) -> str:
+        """OpenAI APIを使用してインテリジェントな回答を生成"""
+        try:
+            if not openai_client:
+                raise Exception("OpenAI API client not available")
+            
+            # 知識ベースを初回読み込み
+            if not self.full_knowledge:
+                self.full_knowledge = self.knowledge_base.load_all_knowledge_files()
+            
+            # コンテキスト情報を準備
+            context_info = ""
+            if context:
+                context_info = f"""
+【現在のコンテキスト】
+- 種目: {context.get('apparatus', '未選択')}
+- D-スコア: {context.get('d_score', 'N/A')}
+- 技数: {context.get('skill_count', 'N/A')}
+- グループ達成: {context.get('group_fulfillment', 'N/A')}
+"""
+
+            # 知識ベースから関連する部分を抽出（トークン制限対応）
+            knowledge_excerpt = self._extract_relevant_knowledge(question, self.full_knowledge)
+
+            # OpenAI APIに送信するメッセージを構築
+            messages = [
+                {"role": "system", "content": self.knowledge_base.system_prompt},
+                {"role": "system", "content": f"以下は体操競技に関する専門知識です。この情報を参照して正確な回答をしてください：\n\n{knowledge_excerpt}"},
+                {"role": "user", "content": f"{context_info}\n【質問】{question}"}
+            ]
+            
+            # OpenAI API呼び出し（同期版を使用）
+            response = openai_client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=messages,
+                max_tokens=1500,
+                temperature=0.1,  # 正確性を重視
+                presence_penalty=0.1,
+                frequency_penalty=0.1
+            )
+            
+            ai_response = response.choices[0].message.content.strip()
+            logger.info(f"OpenAI response generated for question: {question[:50]}...")
+            
+            return ai_response
+            
+        except Exception as e:
+            logger.error(f"OpenAI API error: {e}")
+            # フォールバックとして改良されたローカル検索を使用
+            return self.get_enhanced_local_response(question, context)
+    
+    def _extract_relevant_knowledge(self, question: str, full_knowledge: str) -> str:
+        """質問に関連する知識を抽出してトークン制限に対応"""
+        question_lower = question.lower()
+        
+        # 質問に関連するキーワードを特定
+        keywords = []
+        if any(word in question_lower for word in ["体操", "gymnastics"]):
+            keywords.extend(["体操", "競技", "種目", "6種目"])
+        if any(word in question_lower for word in ["床", "floor", "fx"]):
+            keywords.extend(["床運動", "FX", "アクロバット"])
+        if any(word in question_lower for word in ["あん馬", "pommel", "ph"]):
+            keywords.extend(["あん馬", "PH", "旋回"])
+        if any(word in question_lower for word in ["つり輪", "rings", "sr"]):
+            keywords.extend(["つり輪", "SR", "静止技"])
+        if any(word in question_lower for word in ["跳馬", "vault", "vt"]):
+            keywords.extend(["跳馬", "VT"])
+        if any(word in question_lower for word in ["平行棒", "parallel", "pb"]):
+            keywords.extend(["平行棒", "PB"])
+        if any(word in question_lower for word in ["鉄棒", "horizontal", "hb"]):
+            keywords.extend(["鉄棒", "HB", "手放し"])
+        if any(word in question_lower for word in ["dスコア", "d-score", "難度"]):
+            keywords.extend(["Dスコア", "難度", "価値点"])
+        if any(word in question_lower for word in ["ルール", "採点", "減点"]):
+            keywords.extend(["ルール", "採点", "減点"])
+        
+        # 関連する部分を抽出
+        lines = full_knowledge.split('\n')
+        relevant_lines = []
+        
+        for line in lines:
+            if any(keyword in line for keyword in keywords):
+                # 関連行の前後も含める
+                start_idx = max(0, lines.index(line) - 2)
+                end_idx = min(len(lines), lines.index(line) + 3)
+                relevant_lines.extend(lines[start_idx:end_idx])
+        
+        # 重複を除去して結合
+        relevant_text = '\n'.join(list(dict.fromkeys(relevant_lines)))
+        
+        # トークン制限（約6000文字）
+        if len(relevant_text) > 6000:
+            relevant_text = relevant_text[:6000] + "..."
+        
+        return relevant_text if relevant_text else full_knowledge[:6000]
+    
+    def get_enhanced_local_response(self, question: str, context: Dict[str, Any] = None) -> str:
+        """改良されたローカル知識ベース検索"""
+        question_lower = question.lower()
+        
+        # 基本的な体操に関する質問への対応を強化
+        if any(word in question_lower for word in ["体操って", "体操とは", "体操競技とは", "体操について", "gymnastics"]):
+            return self._get_comprehensive_gymnastics_explanation()
+        
+        # その他の質問は既存のロジックを使用（改良版）
+        return self._search_knowledge_base_intelligently(question, context)
+    
+    def _get_comprehensive_gymnastics_explanation(self) -> str:
+        """体操競技の包括的説明"""
+        return """🏅 **体操競技について**
+
+## 🤸‍♂️ 体操競技とは
+体操競技は、人間の身体能力を最大限に引き出す美しく技術的なスポーツです。正確性、力強さ、優美さ、そして芸術性を兼ね備えた総合的な競技として、オリンピックの花形種目の一つとなっています。
+
+## 📊 男子体操競技の6種目
+1. **床運動（フロア）** - 12m×12mのマットで行う、宙返りやアクロバット技
+2. **あん馬（ポメル）** - 旋回技を中心とした技術と持久力が必要
+3. **つり輪（リング）** - 筋力による静止技と振動技の組み合わせ
+4. **跳馬（ヴォルト）** - 助走からの跳越技、瞬発力と着地技術
+5. **平行棒（パラレル）** - 2本のバーでの支持振動技と倒立技
+6. **鉄棒（ハイバー）** - 手放し技と車輪系技、スペクタクルな演技
+
+## ⭐ 採点システム
+- **Dスコア（難度点）**: 技の難しさと構成
+- **Eスコア（実施点）**: 演技の美しさと正確性
+- **最終得点**: D-score + E-score
+
+## 🌟 体操競技の魅力
+- **技術の美しさ**: 人間の限界に挑戦する高度な技術
+- **芸術性**: 力強さと優美さの完璧なバランス
+- **総合性**: 柔軟性、筋力、バランス、協調性すべてが必要
+- **進歩性**: 常に新しい技が生まれ続ける革新的スポーツ
+
+## 🏆 競技レベル
+ジュニアレベルから世界選手権、オリンピックまで、あらゆるレベルで楽しめるスポーツです。
+
+体操競技について他にもご質問があれば、技術的な詳細から歴史まで、何でもお答えします！"""
+    
+    def _search_knowledge_base_intelligently(self, question: str, context: Dict[str, Any] = None) -> str:
+        """インテリジェントな知識ベース検索（OpenAI利用不可時のフォールバック）"""
+        question_lower = question.lower()
+        
+        # 知識ベースから関連情報を検索
+        if not self.full_knowledge:
+            self.full_knowledge = self.knowledge_base.load_all_knowledge_files()
+        
+        # キーワードベースの検索
+        search_results = []
+        
+        # 種目特定キーワード
+        apparatus_mapping = {
+            "床": "FX", "floor": "FX", "フロア": "FX",
+            "あん馬": "PH", "pommel": "PH", "ポメル": "PH",
+            "つり輪": "SR", "rings": "SR", "リング": "SR",
+            "跳馬": "VT", "vault": "VT", "ヴォルト": "VT",
+            "平行棒": "PB", "parallel": "PB", "パラレル": "PB",
+            "鉄棒": "HB", "horizontal": "HB", "ハイバー": "HB"
+        }
+        
+        # 種目特定検索
+        for keyword, apparatus in apparatus_mapping.items():
+            if keyword in question_lower:
+                apparatus_info = APPARATUS_KNOWLEDGE.get(apparatus, {})
+                if apparatus_info:
+                    search_results.append(f"**{apparatus_info.get('name', apparatus)}**の情報:")
+                    search_results.append(apparatus_info.get('specific_advice', ''))
+                    if 'connection_rules' in apparatus_info:
+                        search_results.append(f"\n{apparatus_info['connection_rules']}")
+                    break
+        
+        # 一般的なトピック検索
+        topic_keywords = {
+            "採点": "採点システム: Dスコア（難度点）+ Eスコア（実施点）で最終得点が決定されます。",
+            "難度": "難度は A(0.1) から J(1.0) まで10段階に分かれています。",
+            "減点": "減点は小欠点(0.1)、中欠点(0.3)、大欠点(0.5)、落下(1.0)に分類されます。",
+            "グループ": "各種目には4つのグループがあり、各グループから最低1技の実施が必要です。",
+            "連続技": "連続技ボーナス（CV）は特定の技の組み合わせで加点される仕組みです。"
+        }
+        
+        for keyword, info in topic_keywords.items():
+            if keyword in question_lower:
+                search_results.append(info)
+        
+        # 知識ベースからの直接検索
+        if self.full_knowledge:
+            knowledge_lines = self.full_knowledge.split('\n')
+            for line in knowledge_lines[:1000]:  # 最初の1000行から検索
+                if any(word in line.lower() for word in question_lower.split()):
+                    if len(line.strip()) > 10:
+                        search_results.append(line.strip())
+                        if len(search_results) >= 5:  # 最大5件まで
+                            break
+        
+        if search_results:
+            response = "**検索結果**\n\n" + "\n\n".join(search_results[:3])  # 最大3件表示
+            response += "\n\n💡 より詳細な情報については、OpenAI APIが利用可能になり次第、より精密な回答を提供いたします。"
+            return response
+        
+        return f"""「{question}」について、現在利用可能な情報を検索中です。
+
+🤸‍♂️ **基本的な質問には対応可能です:**
+• 各種目（床・あん馬・つり輪・跳馬・平行棒・鉄棒）について
+• 採点システム（DスコアとEスコア）について  
+• 技の難度と価値点について
+• ルールと減点システムについて
+
+より具体的にご質問いただければ、詳しくお答えできます。"""
+
+# AI インスタンスを作成
+intelligent_ai = IntelligentGymnasticsAI(knowledge_base)
 
 # 種目別専門知識ベース
 APPARATUS_KNOWLEDGE = {
@@ -875,8 +1167,47 @@ def get_apparatus_specific_advice(apparatus, fulfilled_groups, required_groups):
     return advice
 
 @app.post("/chat/message")
-def chat(data: dict):
-    message = data.get("message", "").lower()
+async def chat(data: dict):
+    try:
+        message = data.get("message", "")
+        if not message.strip():
+            return {"response": "質問を入力してください。", "conversation_id": "error_empty"}
+        
+        # コンテキスト情報を抽出
+        context = {
+            "apparatus": data.get("apparatus"),
+            "d_score": data.get("d_score"),
+            "skill_count": data.get("skill_count"),
+            "group_fulfillment": data.get("group_fulfillment")
+        }
+        
+        # インテリジェントAIで回答を生成
+        logger.info(f"Processing question: {message[:100]}...")
+        response = await intelligent_ai.get_intelligent_response(message, context)
+        
+        return {
+            "response": response,
+            "conversation_id": "intelligent_ai_001"
+        }
+        
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        # 最終フォールバック
+        return {
+            "response": """申し訳ございません。一時的にサービスに問題が発生しています。
+
+体操競技について基本的なご質問にはお答えできます：
+• 各種目の技術と特徴
+• 採点システムとルール
+• 演技構成のアドバイス
+
+もう一度お試しください。""",
+            "conversation_id": "error_fallback"
+        }
+
+# 従来の機能を維持するため、既存のロジックもバックアップとして保持
+@app.post("/chat/message/legacy")
+def chat_legacy(data: dict):
     
     # 種目別の知識検索
     apparatus_keywords = {
