@@ -7,8 +7,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="cache-bust" content="v4.1-button-fix-202508062250">
-    <!-- Updated: 2025-08-06 22:50 GOOGLE PLAY BUTTON FIX -->
+    <meta name="cache-bust" content="v4.2-layout-force-202508062252">
+    <!-- Updated: 2025-08-06 22:52 LAYOUT FORCE FIX -->
     <meta name="description" content="体操競技のD-Score計算、AI演技分析、技データベース検索。高精度な計算とAIによる演技構成分析で競技力向上をサポート。iOS・Android対応。">
     
     <!-- Favicon -->
@@ -197,16 +197,16 @@
             }
             
             .hero-text {
-                order: 1;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                height: 100%;
-                position: relative;
-                padding-left: 3rem;
-                padding-right: 1rem;
-                text-align: center;
+                order: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                height: 100% !important;
+                position: relative !important;
+                padding-left: 3rem !important;
+                padding-right: 1rem !important;
+                text-align: center !important;
             }
             
             .hero-text .app-icon {
@@ -217,14 +217,14 @@
             }
             
             .hero-visual {
-                order: 2;
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                justify-content: center;
-                gap: 2rem;
-                height: 100%;
-                padding-left: 2.5rem;
+                order: 2 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                gap: 2rem !important;
+                height: 100% !important;
+                padding-left: 2.5rem !important;
             }
             
             .hero-title {
@@ -1154,7 +1154,7 @@
     
     <script>
         // Force cache clear for desktop layout
-        const currentVersion = 'v4.1-button-fix-202508062250';
+        const currentVersion = 'v4.2-layout-force-202508062252';
         const lastVersion = localStorage.getItem('layout-version');
         
         if (lastVersion !== currentVersion) {
