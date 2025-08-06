@@ -131,11 +131,12 @@
         /* Desktop layout - 2-column grid */
         @media screen and (min-width: 768px) {
             .hero {
-                padding: 10rem 2rem 6rem;
+                padding: 8rem 2rem;
                 text-align: left;
                 min-height: 100vh;
                 display: flex;
                 align-items: center;
+                justify-content: center;
             }
             
             .hero-content {
@@ -144,7 +145,7 @@
                 display: grid;
                 grid-template-columns: 3fr 2fr;
                 gap: 6rem;
-                align-items: start;
+                align-items: center;
                 width: 100%;
             }
             
@@ -163,9 +164,9 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: start;
-                gap: 3rem;
-                padding-top: 2rem;
+                justify-content: center;
+                gap: 2rem;
+                height: 100%;
             }
             
             .hero-title {
@@ -495,12 +496,13 @@
         /* Large screens - ensure desktop layout */
         @media screen and (min-width: 1024px) {
             .hero {
-                padding: 12rem 3rem 8rem !important;
+                padding: 8rem 3rem !important;
             }
             
             .hero-content {
                 max-width: 1600px !important;
                 gap: 8rem !important;
+                align-items: center !important;
             }
             
             .hero-title {
