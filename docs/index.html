@@ -7,8 +7,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="cache-bust" content="v2.3-badge-fix-202508051343">
-    <!-- Updated: 2025-08-05 13:43 BADGE SIZE UNIFIED -->
+    <meta name="cache-bust" content="v3.0-desktop-layout-202508062158">
+    <!-- Updated: 2025-08-06 21:58 DESKTOP LAYOUT OVERHAUL -->
     <meta name="description" content="体操競技のD-Score計算、AI演技分析、技データベース検索。高精度な計算とAIによる演技構成分析で競技力向上をサポート。iOS・Android対応。">
     
     <!-- Favicon -->
@@ -129,7 +129,7 @@
         }
 
         /* Desktop layout - 2-column grid */
-        @media (min-width: 768px) {
+        @media screen and (min-width: 768px) {
             .hero {
                 padding: 10rem 2rem 6rem;
                 text-align: left;
@@ -492,8 +492,28 @@
             margin: 0 auto;
         }
 
+        /* Large screens - ensure desktop layout */
+        @media screen and (min-width: 1024px) {
+            .hero {
+                padding: 12rem 3rem 8rem !important;
+            }
+            
+            .hero-content {
+                max-width: 1600px !important;
+                gap: 8rem !important;
+            }
+            
+            .hero-title {
+                font-size: 5rem !important;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.6rem !important;
+            }
+        }
+        
         /* Desktop features grid */
-        @media (min-width: 768px) {
+        @media screen and (min-width: 768px) {
             .features {
                 padding: 8rem 2rem;
                 background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(26, 26, 46, 0.95) 100%);
