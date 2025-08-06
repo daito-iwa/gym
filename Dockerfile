@@ -1,11 +1,13 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY server_world_class_ai.py .
-COPY data/ data/
+COPY . .
 
-CMD ["python", "server_world_class_ai.py"]
+# ヘルスチェック用エンドポイントを追加
+EXPOSE 8080
+
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]

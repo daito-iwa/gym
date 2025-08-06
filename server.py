@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from openai import OpenAI
 import json
@@ -6,7 +7,16 @@ import logging
 from typing import Optional, Dict, Any
 import asyncio
 
-app = FastAPI()
+app = FastAPI(title="Gymnastics AI - FIXED VERSION", version="2.0.0")
+
+# CORS設定を追加
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 本番では特定のドメインに限定
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ロギング設定
 logging.basicConfig(level=logging.INFO)

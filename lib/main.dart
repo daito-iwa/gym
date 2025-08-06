@@ -4186,14 +4186,28 @@ $expertAnswer
         final skillApparatus = row[0].toString();
         
         if (skillApparatus == apparatus) {
+          final groupString = row[2].toString();
+          final difficultyString = row[3].toString();
+          
+          // HB（鉄棒）の場合は詳細デバッグログを出力
+          if (apparatus == 'HB' && skills.length < 10) {
+            print('🔧 HB DEBUG: 行$i - グループ: "$groupString", 難度: "$difficultyString", 技名: "${row[1]}"');
+          }
+          
           final skill = Skill.fromMap({
             'id': 'SKILL_${i.toString().padLeft(3, '0')}',
             'apparatus': skillApparatus,
             'name': row[1].toString(),
-            'group': row[2].toString(), // ローマ数字
-            'value_letter': row[3].toString(),
+            'group': groupString, // ローマ数字
+            'value_letter': difficultyString,
             'description': row[1].toString(),
           });
+          
+          // HB（鉄棒）の場合はSkillオブジェクト作成後の値も確認
+          if (apparatus == 'HB' && skills.length < 10) {
+            print('🔧 HB DEBUG: 変換後 - グループ: ${skill.group}, 難度: "${skill.valueLetter}", 値: ${skill.value}');
+          }
+          
           skills.add(skill);
         }
       }
@@ -4201,9 +4215,44 @@ $expertAnswer
     
     if (skills.isEmpty) {
       print('警告: ${apparatus}用の技が見つかりません');
+    } else if (apparatus == 'HB') {
+      print('🔧 HB DEBUG: 合計${skills.length}個の鉄棒技を読み込みました');
+      
+      // グループ分布を確認
+      final groupCounts = <int, int>{};
+      final difficultyCounts = <String, int>{};
+      for (final skill in skills) {
+        groupCounts[skill.group] = (groupCounts[skill.group] ?? 0) + 1;
+        difficultyCounts[skill.valueLetter] = (difficultyCounts[skill.valueLetter] ?? 0) + 1;
+      }
+      print('🔧 HB DEBUG: グループ分布: $groupCounts');
+      print('🔧 HB DEBUG: 難度分布: $difficultyCounts');
     }
     
-    skills.sort((a, b) => a.name.compareTo(b.name));
+    // HBの場合は先にグループ順、次に難度順でソート
+    if (apparatus == 'HB') {
+      skills.sort((a, b) {
+        // まずグループで比較
+        int groupComparison = a.group.compareTo(b.group);
+        if (groupComparison != 0) return groupComparison;
+        
+        // グループが同じなら難度で比較
+        int diffComparison = a.valueLetter.compareTo(b.valueLetter);
+        if (diffComparison != 0) return diffComparison;
+        
+        // 最後に技名で比較
+        return a.name.compareTo(b.name);
+      });
+      
+      print('🔧 HB DEBUG: ソート後の最初の10技:');
+      for (int i = 0; i < skills.length && i < 10; i++) {
+        final skill = skills[i];
+        print('🔧 HB DEBUG: [$i] G${skill.group}-${skill.valueLetter}: ${skill.name}');
+      }
+    } else {
+      skills.sort((a, b) => a.name.compareTo(b.name));
+    }
+    
     return skills;
   }
 
@@ -10567,7 +10616,26 @@ class _SkillSelectionDialogState extends State<_SkillSelectionDialog> {
     
     // 技データのサンプルを表示
     if (_filteredSkills.isNotEmpty) {
-      print('🔧 DEBUG: 最初の技サンプル: ${_filteredSkills.first.name} (${_filteredSkills.first.valueLetter})');
+      print('🔧 DEBUG: 最初の技サンプル: ${_filteredSkills.first.name} (G${_filteredSkills.first.group}, ${_filteredSkills.first.valueLetter})');
+      
+      // HBの場合は更に詳細なサンプル
+      if (widget.apparatus == 'HB') {
+        print('🔧 HB DEBUG: ダイアログに渡された技の詳細サンプル:');
+        for (int i = 0; i < _filteredSkills.length && i < 10; i++) {
+          final skill = _filteredSkills[i];
+          print('🔧 HB DEBUG: [$i] ${skill.name}: G${skill.group}, ${skill.valueLetter} (${skill.value})');
+        }
+        
+        // グループと難度の分布を確認
+        final groupCounts = <int, int>{};
+        final difficultyCounts = <String, int>{};
+        for (final skill in _filteredSkills) {
+          groupCounts[skill.group] = (groupCounts[skill.group] ?? 0) + 1;
+          difficultyCounts[skill.valueLetter] = (difficultyCounts[skill.valueLetter] ?? 0) + 1;
+        }
+        print('🔧 HB DEBUG: ダイアログ内グループ分布: $groupCounts');
+        print('🔧 HB DEBUG: ダイアログ内難度分布: $difficultyCounts');
+      }
     } else {
       print('🔧 DEBUG: 警告 - フィルタリング後の技が0個です');
     }
