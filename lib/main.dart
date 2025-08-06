@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
+import 'cache_config.dart';
 import 'package:flutter/services.dart' show rootBundle, HapticFeedback;
 import 'package:csv/csv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -2952,9 +2953,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       print('🔧 DEBUG: First skill apparatus: ${_skillList.first.apparatus}');
     }
     
-    // 全ての種目で古いキャッシュを強制的にクリア（一度限りの修正）
-    print('🔧 DEBUG: ${apparatus}キャッシュを強制的にクリアして再読み込み');
-    _skillDataCache.remove(cacheKey);
+    // キャッシュ版数管理システム - 古いキャッシュを自動検出・削除
+    final versionKey = CacheConfig.getVersionKey(apparatus, _currentLang);
+    final prefs = await SharedPreferences.getInstance();
+    final cachedVersion = prefs.getInt(versionKey) ?? 0;
+    
+    if (cachedVersion < CacheConfig.CURRENT_CACHE_VERSION) {
+      print('🔧 DEBUG: ${apparatus}の古いキャッシュ(v${cachedVersion})を検出、最新版(v${CacheConfig.CURRENT_CACHE_VERSION})に更新');
+      _skillDataCache.remove(cacheKey);
+      await prefs.setInt(versionKey, CacheConfig.CURRENT_CACHE_VERSION);
+    } else {
+      print('🔧 DEBUG: ${apparatus}キャッシュは最新版(v${CacheConfig.CURRENT_CACHE_VERSION})');
+    }
     
     // Return immediately if already cached
     if (_skillDataCache.containsKey(cacheKey)) {
@@ -4223,18 +4233,37 @@ $expertAnswer
     
     if (skills.isEmpty) {
       print('警告: ${apparatus}用の技が見つかりません');
-    } else if (apparatus == 'HB') {
-      print('🔧 HB DEBUG: 合計${skills.length}個の鉄棒技を読み込みました');
+    } else {
+      print('🔧 ${apparatus} DEBUG: 合計${skills.length}個の技を読み込みました');
       
-      // グループ分布を確認
+      // 全種目でデータ整合性チェック
       final groupCounts = <int, int>{};
       final difficultyCounts = <String, int>{};
       for (final skill in skills) {
         groupCounts[skill.group] = (groupCounts[skill.group] ?? 0) + 1;
         difficultyCounts[skill.valueLetter] = (difficultyCounts[skill.valueLetter] ?? 0) + 1;
       }
-      print('🔧 HB DEBUG: グループ分布: $groupCounts');
-      print('🔧 HB DEBUG: 難度分布: $difficultyCounts');
+      print('🔧 ${apparatus} DEBUG: グループ分布: $groupCounts');
+      print('🔧 ${apparatus} DEBUG: 難度分布: $difficultyCounts');
+      
+      // データ異常の自動検出
+      if (apparatus != 'VT') {
+        final totalGroups = groupCounts.keys.length;
+        final totalDifficulties = difficultyCounts.keys.length;
+        
+        if (totalGroups < CacheConfig.MIN_GROUPS) {
+          print('⚠️ 警告: ${apparatus}のグループ数が異常に少ない($totalGroups)');
+        }
+        if (totalDifficulties < CacheConfig.MIN_DIFFICULTIES) {
+          print('⚠️ 警告: ${apparatus}の難度数が異常に少ない($totalDifficulties)');
+        }
+        if (groupCounts[1] != null && groupCounts[1]! > skills.length * CacheConfig.GROUP_1_RATIO_THRESHOLD) {
+          print('🚨 異常検出: ${apparatus}でグループ1の技が異常に多い(${groupCounts[1]}/${skills.length})');
+        }
+        if (difficultyCounts['A'] != null && difficultyCounts['A']! > skills.length * CacheConfig.A_DIFFICULTY_RATIO_THRESHOLD) {
+          print('🚨 異常検出: ${apparatus}でA難度の技が異常に多い(${difficultyCounts['A']}/${skills.length})');
+        }
+      }
     }
     
     // 全ての種目で先にグループ順、次に難度順でソート
