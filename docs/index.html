@@ -156,13 +156,19 @@
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
+                align-items: flex-start;
                 height: 100%;
+                position: relative;
             }
             
             .hero-text .app-icon {
+                align-self: center;
                 margin: 0 0 2rem 0;
                 width: 100px;
                 height: 100px;
+                position: relative;
+                left: 50%;
+                transform: translateX(-50%);
             }
             
             .hero-visual {
@@ -178,28 +184,31 @@
             .hero-title {
                 font-size: 4.2rem;
                 margin-bottom: 2.5rem;
-                text-align: left;
+                text-align: center;
                 line-height: 1.1;
                 letter-spacing: -0.03em;
                 font-weight: 900;
+                align-self: center;
             }
             
             .hero-subtitle {
                 font-size: 1.4rem;
                 margin-bottom: 4rem;
-                text-align: left;
+                text-align: center;
                 line-height: 1.5;
                 color: var(--text-secondary);
                 opacity: 0.9;
+                align-self: center;
             }
             
             .download-buttons {
                 flex-direction: row;
                 gap: 2rem;
-                justify-content: flex-start;
+                justify-content: center;
                 align-items: center;
                 margin-bottom: 4rem;
                 flex-wrap: wrap;
+                align-self: center;
             }
             
             .download-btn.app-store,
@@ -214,11 +223,13 @@
             
             .development-status {
                 margin-bottom: 3rem;
-                text-align: left;
+                text-align: center;
+                align-self: center;
             }
             
             .web-app-button {
-                text-align: left;
+                text-align: center;
+                align-self: center;
             }
             
             .web-app-button .download-btn {
