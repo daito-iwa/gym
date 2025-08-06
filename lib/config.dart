@@ -13,7 +13,7 @@ class AppConfig {
   // 環境設定 - 本番環境に切り替え可能
   // 開発時: Environment.development
   // 本番時: Environment.production
-  static const Environment _environment = Environment.development;
+  static const Environment _environment = Environment.production;
   
   // 環境別URL設定
   static const Map<Environment, String> _urls = {
