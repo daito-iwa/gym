@@ -1,0 +1,26 @@
+WARNING:server:OPENAI_API_KEY not found. Falling back to local knowledge base only.
+INFO:     Started server process [34030]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:server:Processing question: 体操って何？...
+ERROR:server:OpenAI API error: OpenAI API client not available
+INFO:     127.0.0.1:60891 - "POST /chat/message HTTP/1.1" 200 OK
+INFO:server:Processing question: Dスコアの計算方法を教えて...
+ERROR:server:OpenAI API error: OpenAI API client not available
+INFO:server:Loaded knowledge file: data/comprehensive_rulebook_analysis.md
+INFO:server:Loaded knowledge file: data/d_score_master_knowledge.md
+INFO:server:Loaded knowledge file: data/rulebook_ja_summary.md
+INFO:server:Loaded knowledge file: data/rulebook_ja_full.txt
+INFO:server:Loaded knowledge file: data/apparatus_details.md
+INFO:server:Loaded knowledge file: data/difficulty_calculation_system.md
+INFO:server:Loaded knowledge file: data/ai_implementation_guide.md
+INFO:server:Loaded knowledge file: data/skills_difficulty_tables.md
+INFO:     127.0.0.1:60914 - "POST /chat/message HTTP/1.1" 200 OK
+INFO:server:Processing question: 床運動について教えて...
+ERROR:server:OpenAI API error: OpenAI API client not available
+INFO:     127.0.0.1:60937 - "POST /chat/message HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [34030]

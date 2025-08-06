@@ -119,6 +119,17 @@
             position: relative;
             z-index: 2;
         }
+        
+        /* モバイル版では従来のレイアウト */
+        .hero-left,
+        .hero-right {
+            display: contents;
+        }
+        
+        .demo-text .section-title,
+        .cta-text .cta-title {
+            text-align: center;
+        }
 
         .app-icon {
             width: 100px;
@@ -353,7 +364,7 @@
         @media (min-width: 768px) {
             .features-grid {
                 grid-template-columns: repeat(2, 1fr);
-                max-width: 800px;
+                max-width: 900px;
                 gap: 2rem;
             }
             
@@ -363,7 +374,7 @@
             
             .hero {
                 padding: 4rem 2rem 2rem;
-                min-height: 80vh;
+                min-height: 70vh;
             }
             
             .nav {
@@ -372,7 +383,83 @@
             }
             
             .hero-content {
-                max-width: 600px;
+                max-width: 1000px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+                text-align: left;
+            }
+            
+            .hero-left {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .hero-right {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .app-icon {
+                margin: 0 0 2rem 0;
+            }
+            
+            .hero-title {
+                text-align: left;
+            }
+            
+            .hero-subtitle {
+                text-align: left;
+                margin-bottom: 2rem;
+            }
+            
+            .download-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                width: 100%;
+                max-width: 400px;
+                align-items: start;
+            }
+            
+            .phone-mockup {
+                max-width: 300px;
+            }
+            
+            .demo-section .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+            }
+            
+            .demo-text {
+                text-align: left;
+            }
+            
+            .demo-text .section-title {
+                text-align: left;
+            }
+            
+            .cta-content {
+                max-width: 1000px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 4rem;
+                align-items: center;
+            }
+            
+            .cta-text {
+                text-align: left;
+            }
+            
+            .cta-text .cta-title {
+                text-align: left;
             }
         }
 
@@ -389,6 +476,16 @@
             
             .cta-section {
                 padding: 3rem 2rem;
+            }
+            
+            .hero-content {
+                max-width: 1200px;
+                grid-template-columns: 1fr 1fr;
+                gap: 6rem;
+            }
+            
+            .phone-mockup {
+                max-width: 350px;
             }
         }
 
@@ -642,40 +739,44 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <div class="app-icon">
-                <img src="app_icon.png" alt="Gymnastics AI アプリアイコン">
+            <div class="hero-left">
+                <div class="app-icon">
+                    <img src="app_icon.png" alt="Gymnastics AI アプリアイコン">
+                </div>
+                
+                <h1 class="hero-title">体操競技を<br>次のレベルへ</h1>
+                
+                <p class="hero-subtitle">
+                    D-Score計算、AI演技分析、技データベース検索<br>
+                    すべてを一つのアプリで実現
+                </p>
+                
+                <div class="download-buttons">
+                    <a href="#" class="download-btn app-store">
+                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
+                    </a>
+                    <a href="#" class="download-btn google-play">
+                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
+                    </a>
+                </div>
+                
+                <div class="development-status">
+                    <span class="status-badge">🚧 モバイルアプリ開発中</span>
+                </div>
+                
+                <div class="web-app-button">
+                    <a href="app.html" class="download-btn secondary">
+                        <span>🌐</span>
+                        <span>Web版を試す</span>
+                    </a>
+                </div>
             </div>
             
-            <h1 class="hero-title">体操競技を<br>次のレベルへ</h1>
-            
-            <p class="hero-subtitle">
-                D-Score計算、AI演技分析、技データベース検索<br>
-                すべてを一つのアプリで実現
-            </p>
-            
-            <div class="download-buttons">
-                <a href="#" class="download-btn app-store">
-                    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
-                </a>
-                <a href="#" class="download-btn google-play">
-                    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
-                </a>
-            </div>
-            
-            <div class="development-status">
-                <span class="status-badge">🚧 モバイルアプリ開発中</span>
-            </div>
-            
-            <div class="web-app-button">
-                <a href="app.html" class="download-btn secondary">
-                    <span>🌐</span>
-                    <span>Web版を試す</span>
-                </a>
-            </div>
-            
-            <div class="app-showcase">
-                <div class="phone-mockup">
-                    <img src="app_screenshot.png" alt="Gymnastics AI アプリスクリーンショット">
+            <div class="hero-right">
+                <div class="app-showcase">
+                    <div class="phone-mockup">
+                        <img src="app_screenshot.png" alt="Gymnastics AI アプリスクリーンショット">
+                    </div>
                 </div>
             </div>
         </div>
@@ -742,7 +843,14 @@
     <!-- Demo Section -->
     <section class="demo-section">
         <div class="container">
-            <h2 class="section-title">D-Score計算デモ</h2>
+            <div class="demo-text">
+                <h2 class="section-title">D-Score計算デモ</h2>
+                <p class="section-subtitle">
+                    FIG公式ルールに基づく正確なD-Score計算を体験。<br>
+                    技の選択から難度、要求グループ、接続ボーナスまで<br>
+                    すべて自動で計算します。
+                </p>
+            </div>
             <div class="demo-card">
                 <div class="demo-header">
                     <div class="demo-title">D-Score Calculator</div>
@@ -774,18 +882,22 @@
     <section class="cta-section">
         <div class="container">
             <div class="cta-content">
-                <h2 class="cta-title">体操競技の新時代を体験</h2>
-                <p class="cta-subtitle">最新のAI技術で、あなたの演技を次のレベルへ</p>
-                <div class="download-buttons">
-                    <a href="#" class="download-btn app-store">
-                        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
-                    </a>
-                    <a href="#" class="download-btn google-play">
-                        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
-                    </a>
+                <div class="cta-text">
+                    <h2 class="cta-title">体操競技の新時代を体験</h2>
+                    <p class="cta-subtitle">最新のAI技術で、あなたの演技を次のレベルへ</p>
                 </div>
-                <div class="development-status">
-                    <span class="status-badge">🚧 モバイルアプリ開発中</span>
+                <div class="cta-buttons">
+                    <div class="download-buttons">
+                        <a href="#" class="download-btn app-store">
+                            <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" class="store-badge">
+                        </a>
+                        <a href="#" class="download-btn google-play">
+                            <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png" alt="Google Play で手に入れよう" class="store-badge">
+                        </a>
+                    </div>
+                    <div class="development-status">
+                        <span class="status-badge">🚧 モバイルアプリ開発中</span>
+                    </div>
                 </div>
             </div>
         </div>
