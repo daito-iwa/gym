@@ -8227,6 +8227,18 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
     }
   }
 
+  // Helper function to convert group number back to Roman numeral for cache consistency
+  String _convertGroupToRoman(int group) {
+    switch (group) {
+      case 1: return 'Ⅰ';
+      case 2: return 'Ⅱ';
+      case 3: return 'Ⅲ';
+      case 4: return 'Ⅳ';
+      case 5: return 'Ⅴ';
+      default: return 'Ⅰ';  // Default to Group 1 for invalid values
+    }
+  }
+
   // 技データキャッシュを保存
   Future<void> _saveSkillDataCache() async {
     try {
@@ -8235,8 +8247,8 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
         cacheToSave[key] = skillList.map((skill) => {
           'id': skill.id,
           'name': skill.name,
-          'group': skill.group,
-          'valueLetter': skill.valueLetter,
+          'group': _convertGroupToRoman(skill.group),  // Convert back to Roman numeral
+          'value_letter': skill.valueLetter,  // Use correct key name
           'description': skill.description,
           'apparatus': skill.apparatus,
           'value': skill.value,
