@@ -90019,15 +90019,15 @@ case 3:l=c
 k=A.cm(J.ao(l.a,m))
 if(k==null)k=0
 i="\ud83d\udd27 DEBUG: "+a
-s=k<5?4:6
+s=k<6?4:6
 break
-case 4:A.r(i+"\u306e\u53e4\u3044\u30ad\u30e3\u30c3\u30b7\u30e5(v"+k+")\u3092\u691c\u51fa\u3001\u6700\u65b0\u7248(v5)\u306b\u66f4\u65b0")
+case 4:A.r(i+"\u306e\u53e4\u3044\u30ad\u30e3\u30c3\u30b7\u30e5(v"+k+")\u3092\u691c\u51fa\u3001\u6700\u65b0\u7248(v6)\u306b\u66f4\u65b0")
 o.E(0,h)
 s=7
-return A.x(l.fa("Int",m,5),$async$kZ)
+return A.x(l.fa("Int",m,6),$async$kZ)
 case 7:s=5
 break
-case 6:A.r(i+"\u30ad\u30e3\u30c3\u30b7\u30e5\u306f\u6700\u65b0\u7248(v5)")
+case 6:A.r(i+"\u30ad\u30e3\u30c3\u30b7\u30e5\u306f\u6700\u65b0\u7248(v6)")
 case 5:if(o.am(0,h)){i=o.h(0,h)
 i.toString
 A.r("\ud83d\udd27 DEBUG: Using cached skills for "+h+" ("+J.bi(i)+" skills)")
