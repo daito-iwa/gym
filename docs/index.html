@@ -763,7 +763,7 @@
         </div>
     </footer>
 
-    <a href="index.html?desktop=1" class="desktop-link">デスクトップ版を見る</a>
+    <a href="desktop.html" class="desktop-link">デスクトップ版を見る</a>
 
     <!-- Google AdSense -->
     <script>
@@ -781,7 +781,7 @@
 
         // Auto-redirect to desktop version on desktop devices
         if (detectDesktop() && !window.location.search.includes('mobile=1')) {
-            window.location.href = 'index.html';
+            window.location.href = 'desktop.html';
         }
 
         // Intersection Observer for animations
