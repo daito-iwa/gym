@@ -1223,12 +1223,23 @@ async def chat(data: dict):
             return {"response": "質問を入力してください。", "conversation_id": "error_empty"}
         
         # コンテキスト情報を抽出
-        context = {
+        context = data.get("context", {})
+        
+        # OpenAI APIキーがcontextで提供された場合、一時的に使用
+        temp_openai_key = context.get("openai_key")
+        if temp_openai_key:
+            global openai_client
+            from openai import OpenAI
+            openai_client = OpenAI(api_key=temp_openai_key)
+            logger.info("🔥 Temporary OpenAI client created from context")
+        
+        # 他のコンテキスト情報も抽出
+        context.update({
             "apparatus": data.get("apparatus"),
             "d_score": data.get("d_score"),
             "skill_count": data.get("skill_count"),
             "group_fulfillment": data.get("group_fulfillment")
-        }
+        })
         
         # インテリジェントAIで回答を生成
         logger.info(f"Processing question: {message[:100]}...")
