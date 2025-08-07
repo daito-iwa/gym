@@ -32,11 +32,61 @@
   <title>gymnasticsai</title>
   <link rel="manifest" href="manifest.json">
   
-  
+  <!-- Mobile Cache Clear Detection -->
+  <style>
+    #mobile-cache-notice {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #ff4444;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      z-index: 9999;
+      display: none;
+    }
+    #mobile-cache-notice a {
+      color: white;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
+  <div id="mobile-cache-notice">
+    📱 モバイルでHBスキルが正しく表示されない場合 → 
+    <a href="mobile-cache-clear.html">キャッシュをクリア</a>
+  </div>
   
   <script>
+    // Mobile detection and cache version check
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+             (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+    }
+    
+    function checkForOldCache() {
+      // Check if using old cache version
+      const cacheKeys = Object.keys(localStorage);
+      const hasOldHBCache = cacheKeys.some(key => 
+        key.includes('HB_') && !key.includes('_v5') && !key.includes('_v4')
+      );
+      
+      return hasOldHBCache;
+    }
+    
+    // Show notice for mobile users with cache issues
+    if (isMobileDevice() && checkForOldCache()) {
+      const notice = document.getElementById('mobile-cache-notice');
+      notice.style.display = 'block';
+      
+      // Hide notice after 10 seconds
+      setTimeout(() => {
+        notice.style.display = 'none';
+      }, 10000);
+    }
     
     // Check URL parameters for mobile reset
     const urlParams = new URLSearchParams(window.location.search);

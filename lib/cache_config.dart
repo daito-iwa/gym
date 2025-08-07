@@ -2,7 +2,7 @@
 class CacheConfig {
   /// 現在のキャッシュ版数
   /// CSVデータやソート処理を更新した時は必ずこの値をインクリメントすること
-  static const int CURRENT_CACHE_VERSION = 6;
+  static const int CURRENT_CACHE_VERSION = 7;
   
   /// キャッシュ版数の履歴（デバッグ用）
   /// v1: 初期版
@@ -11,6 +11,7 @@ class CacheConfig {
   /// v4: 2025-08-06 23:15 - HB専用キャッシュクリア追加、全キャッシュ強制クリア
   /// v5: 2025-08-06 23:45 - キャッシュシリアライゼーション形式の修正（グループ→ローマ数字、value_letter キー修正）
   /// v6: 2025-08-07 - ギンガー技の難度をD難度に変更
+  /// v7: 2025-08-07 - 演技構成復元時のキー不一致問題修正（valueLetter → value_letter）
   
   /// データ整合性チェックの閾値
   static const double GROUP_1_RATIO_THRESHOLD = 0.8;  // グループ1が80%以上なら異常

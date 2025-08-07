@@ -8350,7 +8350,14 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
           // 現在の演技構成を復元
           if (state['routine'] != null) {
             final List<dynamic> routineData = state['routine'];
-            _routine = routineData.map((skillData) => Skill.fromMap(Map<String, dynamic>.from(skillData))).toList();
+            _routine = routineData.map((skillData) => Skill.fromMap({
+              'id': skillData['id'] ?? '',
+              'name': skillData['name'] ?? '',
+              'group': skillData['group'],
+              'value_letter': skillData['valueLetter'] ?? '',
+              'description': skillData['description'] ?? '',
+              'apparatus': skillData['apparatus'] ?? '',
+            })).toList();
           }
           
           if (state['connectionGroups'] != null) {
@@ -8645,16 +8652,15 @@ FIG公式ルールに基づいて、計算過程を分かりやすく説明し�
       final connectionGroups = List<int>.from(routineData['connectionGroups'] ?? []);
       final nextConnectionGroupId = routineData['nextConnectionGroupId'] ?? 1;
       
-      // 技データを復元
-      final skills = routineList.map((skillData) => Skill(
-        id: skillData['id'],
-        name: skillData['name'],
-        group: skillData['group'],
-        valueLetter: skillData['valueLetter'],
-        description: skillData['description'],
-        apparatus: skillData['apparatus'],
-        value: skillData['value'],
-      )).toList();
+      // 技データを復元（Skill.fromMapを使用して適切にデータを復元）
+      final skills = routineList.map((skillData) => Skill.fromMap({
+        'id': skillData['id'] ?? '',
+        'name': skillData['name'] ?? '',
+        'group': skillData['group'],
+        'value_letter': skillData['valueLetter'] ?? '',
+        'description': skillData['description'] ?? '',
+        'apparatus': skillData['apparatus'] ?? '',
+      })).toList();
       
       setState(() {
         _selectedApparatus = apparatus;
