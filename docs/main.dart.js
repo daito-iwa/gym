@@ -89648,7 +89648,7 @@ return A.B(null,r)}})
 return A.C($async$yZ,r)},
 y4(){var s=0,r=A.D(t.y),q,p=2,o=[],n,m,l,k,j,i
 var $async$y4=A.y(function(a,b){if(a===1){o.push(b)
-s=p}while(true)switch(s){case 0:j="http://127.0.0.1:8080/health"
+s=p}while(true)switch(s){case 0:j="https://gymnastics-ai-server-kywkhw6quq-uc.a.run.app/health"
 A.r("  \u2514\u2500 \u5b9f\u969b\u306eURL: "+A.k(j))
 p=4
 A.r("  \u2514\u2500 HTTP\u30ea\u30af\u30a8\u30b9\u30c8\u9001\u4fe1\u4e2d...")
@@ -89904,7 +89904,7 @@ A.r("")
 A.r(u.E)
 A.r("\ud83c\udf10 \u30b5\u30fc\u30d0\u30fc\u63a5\u7d9a\u30c6\u30b9\u30c8\u958b\u59cb")
 A.r(u.E)
-A.r("\ud83d\udce1 URL: http://127.0.0.1:8080/health")
+A.r("\ud83d\udce1 URL: https://gymnastics-ai-server-kywkhw6quq-uc.a.run.app/health")
 A.r("\ud83d\udd50 \u6642\u523b: "+new A.cj(Date.now(),0,!1).k(0))
 s=6
 return A.x(o.y4().p5(0,A.cR(0,0,0,0,5),new A.as5()),$async$xq)
@@ -90571,7 +90571,7 @@ m.ay.pz(0,B.B3)
 p=4
 A.r("\ud83d\udd0d _sendMessage \u30c7\u30d0\u30c3\u30b0: \u30b5\u30fc\u30d0\u30fc\u3092\u512a\u5148\u4f7f\u7528")
 A.r("\ud83d\udd11 \u533f\u540d\u30e6\u30fc\u30b6\u30fc\u30e2\u30fc\u30c9\u3067\u30b5\u30fc\u30d0\u30fc\u306b\u9001\u4fe1")
-f=A.eM("http://127.0.0.1:8080/chat/message",0,null)
+f=A.eM("https://gymnastics-ai-server-kywkhw6quq-uc.a.run.app/chat/message",0,null)
 e=t.N
 d=A.Y(["Content-Type","application/json"],e,e)
 s=7
@@ -90589,7 +90589,7 @@ if(j!=null)m.L(new A.atn(m,j))
 else m.L(new A.ato(m))}else{A.r("Server error: "+l.b)
 f=l
 A.r("Response body: "+A.yB(A.yr(f.e)).cC(0,f.w))
-A.r("Request URL: http://127.0.0.1:8080/chat/message")
+A.r("Request URL: https://gymnastics-ai-server-kywkhw6quq-uc.a.run.app/chat/message")
 i=A.w(e,e)
 J.fi(i,"Content-Type","application/json")
 f=m.id
@@ -92968,7 +92968,7 @@ zi(a){return this.ak2(a)},
 ak2(a){var s=0,r=A.D(t.y),q,p=2,o=[],n,m,l,k,j,i,h,g,f,e,d
 var $async$zi=A.y(function(b,c){if(b===1){o.push(c)
 s=p}while(true)switch(s){case 0:p=4
-n="http://127.0.0.1:8080/purchase/verify"
+n="https://gymnastics-ai-server-kywkhw6quq-uc.a.run.app/purchase/verify"
 h=$.a15()
 g=h?"ios":"android"
 f=t.N
@@ -93048,7 +93048,7 @@ if(q!=null)q.$0()}}},
 uv(){var s=0,r=A.D(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h,g,f,e,d
 var $async$uv=A.y(function(a,b){if(a===1){p.push(b)
 s=q}while(true)switch(s){case 0:q=3
-n="http://127.0.0.1:8080/subscription/status"
+n="https://gymnastics-ai-server-kywkhw6quq-uc.a.run.app/subscription/status"
 g=t.N
 s=6
 return A.x(A.aM7(A.eM(n,0,null),A.Y(["Content-Type","application/json"],g,g)),$async$uv)
